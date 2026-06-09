@@ -1,0 +1,90 @@
+[
+  {
+    "id": "ORD-1778518073299",
+    "createdAt": "2026-05-11T16:47:53.298Z",
+    "customer": {
+      "fullName": "fayaz ali",
+      "email": "fiaz41101@gmail.com",
+      "address": "kot hussain, asscdsc, dscdsdscsd, scd, 2555, Pakistan",
+      "phone": "03134996633",
+      "note": ""
+    },
+    "items": [
+      {
+        "id": "demo-6",
+        "name": "High-Waist Shaping Brief",
+        "price": 1800,
+        "quantity": 1,
+        "selectedColor": "Black",
+        "selectedSize": "S"
+      }
+    ],
+    "paymentMethod": "cash",
+    "subtotal": 1800,
+    "discount": 0,
+    "total": 1800,
+    "status": "PAID",
+    "email": {
+      "sent": true,
+      "lastSentAt": "2026-05-11T16:49:40.728Z"
+    }
+  },
+  {
+    "id": "ORD-1778323130491",
+    "createdAt": "2026-05-09T10:38:50.491Z",
+    "customer": {
+      "fullName": "ali",
+      "email": "hamzagujjarriaz4@gmail.com",
+      "address": "kot hussain",
+      "phone": "03134996633"
+    },
+    "items": [
+      {
+        "id": 2,
+        "name": "Seamless Comfort Underwear",
+        "price": 1200,
+        "quantity": 1,
+        "selectedColor": "Nude",
+        "selectedSize": "S"
+      }
+    ],
+    "paymentMethod": "cash",
+    "subtotal": 1200,
+    "discount": 0,
+    "total": 1200,
+    "status": "CANCELLED",
+    "email": {
+      "sent": true,
+      "lastSentAt": "2026-05-19T19:59:03.926Z"
+    }
+  },
+  {
+    "id": "ORD-1778322991626",
+    "createdAt": "2026-05-09T10:36:31.626Z",
+    "customer": {
+      "fullName": "ali",
+      "email": "hamzagujjarriaz4@gmail.com",
+      "address": "kot hussain",
+      "phone": "03134996633"
+    },
+    "items": [
+      {
+        "id": "P-1778262422195",
+        "name": "undarwear",
+        "price": 666,
+        "quantity": 1,
+        "selectedColor": "Bclack",
+        "selectedSize": "S"
+      }
+    ],
+    "paymentMethod": "cash",
+    "subtotal": 666,
+    "discount": 0,
+    "total": 666,
+    "status": "CONFIRMED",
+    "email": {
+      "sent": true,
+      "lastSentAt": "2026-05-09T10:36:34.460Z"
+    }
+  }
+]

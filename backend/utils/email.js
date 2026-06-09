@@ -1,0 +1,245 @@
+const nodemailer = require('nodemailer');
+
+const createSmtpTransport = () => {
+  const service = process.env.SMTP_SERVICE;
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
+  const user = process.env.SMTP_USER ? String(process.env.SMTP_USER).trim() : undefined;
+  // Gmail app passwords are often copied with spaces; nodemailer expects the 16 chars without spaces.
+  const pass = process.env.SMTP_PASS ? String(process.env.SMTP_PASS).replace(/\s+/g, '') : undefined;
+
+  console.log('[createSmtpTransport] Config:', { service, host, port, user, pass: pass ? '***' : 'MISSING' });
+
+  if (!user || !pass) return null;
+
+  if (service) {
+    return nodemailer.createTransport({
+      service,
+      auth: { user, pass },
+    });
+  }
+
+  if (!host || !port) return null;
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+};
+
+const createEtherealTransport = async () => {
+  const enabled =
+    String(process.env.ETHEREAL || '').toLowerCase() === 'true' ||
+    String(process.env.NODE_ENV || '').toLowerCase() !== 'production';
+
+  console.log('[createEtherealTransport] Enabled:', enabled);
+
+  if (!enabled) return null;
+
+  try {
+    const testAccount = await nodemailer.createTestAccount();
+    console.log('[createEtherealTransport] Created test account:', testAccount.user);
+    return nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+  } catch (err) {
+    console.error('[createEtherealTransport] FAILED:', err.message);
+    return null;
+  }
+};
+
+let cachedTransporter = null;
+
+const getTransporter = async () => {
+  if (cachedTransporter) return cachedTransporter;
+
+  const smtpTransport = createSmtpTransport();
+  if (smtpTransport) {
+    console.log('[getTransporter] Initializing SMTP transport');
+    try {
+      // Verify connection once at creation
+      await smtpTransport.verify();
+      console.log('[getTransporter] SMTP connection verified');
+      cachedTransporter = smtpTransport;
+      return cachedTransporter;
+    } catch (err) {
+      console.error('[getTransporter] SMTP Verification FAILED:', err.message);
+    }
+  }
+
+  console.log('[getTransporter] SMTP failed/missing, trying Ethereal');
+  const ethereal = await createEtherealTransport();
+  if (ethereal) {
+    console.log('[getTransporter] Using Ethereal transport');
+    cachedTransporter = ethereal;
+  } else {
+    console.error('[getTransporter] NO TRANSPORTER AVAILABLE');
+  }
+  return cachedTransporter;
+};
+
+const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
+
+const buildOrderHtml = (order) => {
+  const storeUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const itemsHtml = (order.items || [])
+    .map(
+      (i) =>
+        `<tr>
+          <td style="padding:10px 0; border-bottom:1px solid #eee;">
+            <div style="font-weight:bold; color:#111;">${i.name}</div>
+            <div style="color:#777; font-size:12px;">${i.selectedColor} / ${i.selectedSize}</div>
+          </td>
+          <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111;">x${i.quantity}</td>
+          <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111; font-weight:bold;">${formatMoney(i.price * i.quantity)}</td>
+        </tr>`
+    )
+    .join('');
+
+  const discountLine =
+    order.discount > 0
+      ? `<tr><td colspan="2" style="padding:10px 0; color:#777;">Card Discount (7%)</td><td style="padding:10px 0; text-align:right; color:#d4af37;">- ${formatMoney(order.discount)}</td></tr>`
+      : '';
+
+  return `
+  <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+    <div style="text-align:center; margin-bottom:30px;">
+      <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+      <p style="color:#777; font-size:14px; margin-top:5px;">Thank you for your purchase!</p>
+    </div>
+
+    <div style="margin-bottom:30px;">
+      <h2 style="font-size:18px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:15px; text-transform:uppercase;">Order Summary</h2>
+      <p style="margin:5px 0;"><strong>Order ID:</strong> ${order.id}</p>
+      <p style="margin:5px 0;"><strong>Customer:</strong> ${order.customer?.fullName || ''}</p>
+      <p style="margin:5px 0;"><strong>Delivery to:</strong> ${order.customer?.address || ''}</p>
+      <p style="margin:5px 0;"><strong>Payment:</strong> ${order.paymentMethod === 'cash' ? 'Cash On Delivery' : 'Card Payment'}</p>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+      <thead>
+        <tr style="text-align:left; font-size:12px; text-transform:uppercase; color:#999; letter-spacing:1px;">
+          <th style="padding-bottom:10px; border-bottom:1px solid #111;">Product</th>
+          <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Qty</th>
+          <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="2" style="padding:20px 0 5px; color:#777;">Subtotal</td><td style="padding:20px 0 5px; text-align:right; color:#111;">${formatMoney(order.subtotal)}</td></tr>
+        ${discountLine}
+        <tr>
+          <td colspan="2" style="padding:10px 0; border-top:1px solid #111; font-weight:bold; font-size:18px;">Total Amount</td>
+          <td style="padding:10px 0; border-top:1px solid #111; text-align:right; font-weight:bold; font-size:18px; color:#111;">${formatMoney(order.total)}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div style="text-align:center; margin:40px 0;">
+      <p style="margin-bottom:20px; color:#555;">We hope you love your new items!</p>
+      <a href="${storeUrl}" style="background-color:#111; color:#fff; padding:15px 35px; text-decoration:none; font-weight:bold; border-radius:0; text-transform:uppercase; letter-spacing:1px; display:inline-block;">Thanks for Shopping - Visit Store</a>
+    </div>
+
+    <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+      <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
+      <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+    </div>
+  </div>`;
+};
+
+const sendOrderConfirmationEmail = async ({ to, order }) => {
+  const transporter = await getTransporter();
+  if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+
+  const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject: `Order Confirmation - ${order.id}`,
+    html: buildOrderHtml(order),
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+  return { sent: true, previewUrl };
+};
+
+const sendCustomEmail = async ({ to, subject, html, text }) => {
+  const transporter = await getTransporter();
+  if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+
+  const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject,
+    html,
+    text,
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+  return { sent: true, previewUrl };
+};
+
+const sendOtpEmail = async ({ to, otp }) => {
+  const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
+    <h2 style="margin:0 0 8px;">Your Login Code</h2>
+    <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
+    <div style="font-size:28px; letter-spacing:6px; font-weight:700; padding:14px 16px; border:1px solid #eee; display:inline-block;">${otp}</div>
+    <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
+  </div>`;
+
+  return sendCustomEmail({
+    to,
+    subject: 'Your OTP Login Code',
+    html,
+    text: `Your OTP code is: ${otp}. It expires in 10 minutes.`,
+  });
+};
+
+const sendPasswordResetEmail = async ({ to, resetUrl }) => {
+  console.log('[sendPasswordResetEmail] Attempting to send to:', to);
+  const transporter = await getTransporter();
+  if (!transporter) {
+    console.error('[sendPasswordResetEmail] No transporter available');
+    return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+  }
+
+  const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
+    <h2 style="margin:0 0 8px;">Password Reset Request</h2>
+    <p style="margin:0 0 14px; color:#555;">You requested to reset your password. Click the button below to set a new password. This link expires in 1 hour.</p>
+    <a href="${resetUrl}" style="background-color:#000; color:#fff; padding:12px 24px; text-decoration:none; display:inline-block; font-weight:bold; letter-spacing:1px; text-transform:uppercase; font-size:12px;">Reset Password</a>
+    <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request a password reset, you can ignore this email.</p>
+    <p style="margin:8px 0 0; color:#777; font-size:10px;">Link: ${resetUrl}</p>
+  </div>`;
+
+  try {
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    console.log('[sendPasswordResetEmail] Sending from:', from);
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject: 'Reset Your Password',
+      html,
+      text: `You requested a password reset. Use this link: ${resetUrl}`,
+    });
+
+    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+    console.log('[sendPasswordResetEmail] SUCCESS. Preview:', previewUrl);
+    return { sent: true, previewUrl };
+  } catch (err) {
+    console.error('[sendPasswordResetEmail] FAILED:', err.message);
+    throw err;
+  }
+};
+
+module.exports = { sendOrderConfirmationEmail, sendCustomEmail, sendOtpEmail, sendPasswordResetEmail };

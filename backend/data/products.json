@@ -1,0 +1,158 @@
+[
+  {
+    "id": "P-1778357123614",
+    "name": "underwerar white color and mahroon color stitchable ",
+    "description": "cool and absorable",
+    "price": 800,
+    "originalPrice": 1199,
+    "discount": "30%",
+    "category": "Underwear",
+    "colors": [
+      "black",
+      "White",
+      "Red"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "image": "https://th.bing.com/th/id/OIP.SbekiiihlMzxWfbLvL6LdQHaHa?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
+    "colorImages": {
+      "Red": "data:image/jpeg;base64,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"
+    },
+    "available": true,
+    "stock": 2
+  },
+  {
+    "id": "P-1778262422195",
+    "name": "undarwear",
+    "description": "yet black undar wear",
+    "price": 666,
+    "originalPrice": 200,
+    "discount": "70%",
+    "category": "Bra",
+    "colors": [
+      "Bclack"
+    ],
+    "sizes": [
+      "S",
+      "L"
+    ],
+    "image": "https://img.freepik.com/premium-photo/casual-underwear-white-background-ecommerce-generative-ai_1286331-16672.jpg?w=2000",
+    "available": true,
+    "stock": 2
+  },
+  {
+    "id": "P-1778262329227",
+    "name": "underwear",
+    "description": "yet black pen undarwear",
+    "price": 1000,
+    "originalPrice": 850,
+    "discount": "15%",
+    "category": "Underwear",
+    "colors": [
+      "Black"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XXL"
+    ],
+    "image": "https://img.freepik.com/premium-photo/casual-underwear-white-background-ecommerce-generative-ai_1286331-16672.jpg?w=2000",
+    "available": true,
+    "stock": 4
+  },
+  {
+    "id": 1,
+    "name": "Lace Elegance Bra",
+    "description": "A refined lace bra crafted for those who appreciate true elegance. Features delicate floral patterns and superior support.",
+    "price": 3500,
+    "originalPrice": 4200,
+    "discount": "16% Off",
+    "category": "Bra",
+    "colors": [
+      "Midnight Blue",
+      "Classic Black",
+      "Rose Pink"
+    ],
+    "sizes": [
+      "32B",
+      "34B",
+      "36B",
+      "34C",
+      "36C"
+    ],
+    "available": true,
+    "stock": 50,
+    "image": "data:image/svg+xml;charset=UTF-8,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221000%22%20height%3D%221300%22%20viewBox%3D%220%200%201000%201300%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%230a1128%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%231c2541%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22glow%22%20cx%3D%2240%25%22%20cy%3D%2230%25%22%20r%3D%2270%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23c5a059%22%20stop-opacity%3D%220.35%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c5a059%22%20stop-opacity%3D%220%22%2F%3E%0A%20%20%20%20%3C%2FradialGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23glow)%22%2F%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23c5a059%22%20stroke-width%3D%2210%22%20opacity%3D%220.9%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C280%2C420%20365%2C360%20500%2C360%20C635%2C360%20720%2C420%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C220%2C640%20265%2C735%20335%2C805%20C400%2C870%20445%2C900%20500%2C900%20C555%2C900%20600%2C870%20665%2C805%20C735%2C735%20780%2C640%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M310%2C430%20C270%2C390%20240%2C350%20230%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M690%2C430%20C730%2C390%20760%2C350%20770%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M360%2C620%20C390%2C560%20435%2C530%20500%2C530%20C565%2C530%20610%2C560%20640%2C620%22%20opacity%3D%220.7%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M420%2C760%20C450%2C720%20475%2C700%20500%2C700%20C525%2C700%20550%2C720%20580%2C760%22%20opacity%3D%220.55%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20font-family%3D%22Inter%2C%20Arial%2C%20sans-serif%22%20fill%3D%22white%22%20opacity%3D%220.95%22%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221180%22%20font-size%3D%2252%22%20font-weight%3D%22700%22%20letter-spacing%3D%226%22%3ELACE%20ELEGANCE%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221245%22%20font-size%3D%2226%22%20letter-spacing%3D%223%22%20fill%3D%22rgba(255%2C255%2C255%2C0.75)%22%3EBRA%20COLLECTION%3C%2Ftext%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E"
+  },
+  {
+    "id": 2,
+    "name": "Seamless Comfort Underwear",
+    "description": "Ultra-soft, seamless underwear that provides all-day comfort and a smooth silhouette under any outfit.",
+    "price": 1200,
+    "originalPrice": 1500,
+    "discount": "20% Off",
+    "category": "Underwear",
+    "colors": [
+      "Nude",
+      "Classic Black",
+      "White"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "available": true,
+    "stock": 10,
+    "image": "data:image/svg+xml;charset=UTF-8,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221000%22%20height%3D%221300%22%20viewBox%3D%220%200%201000%201300%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%231c2541%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230a1128%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22glow%22%20cx%3D%2240%25%22%20cy%3D%2230%25%22%20r%3D%2270%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23e3bc9a%22%20stop-opacity%3D%220.35%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23e3bc9a%22%20stop-opacity%3D%220%22%2F%3E%0A%20%20%20%20%3C%2FradialGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23glow)%22%2F%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e3bc9a%22%20stroke-width%3D%2210%22%20opacity%3D%220.9%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C280%2C420%20365%2C360%20500%2C360%20C635%2C360%20720%2C420%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C220%2C640%20265%2C735%20335%2C805%20C400%2C870%20445%2C900%20500%2C900%20C555%2C900%20600%2C870%20665%2C805%20C735%2C735%20780%2C640%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M310%2C430%20C270%2C390%20240%2C350%20230%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M690%2C430%20C730%2C390%20760%2C350%20770%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M360%2C620%20C390%2C560%20435%2C530%20500%2C530%20C565%2C530%20610%2C560%20640%2C620%22%20opacity%3D%220.7%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M420%2C760%20C450%2C720%20475%2C700%20500%2C700%20C525%2C700%20550%2C720%20580%2C760%22%20opacity%3D%220.55%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20font-family%3D%22Inter%2C%20Arial%2C%20sans-serif%22%20fill%3D%22white%22%20opacity%3D%220.95%22%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221180%22%20font-size%3D%2252%22%20font-weight%3D%22700%22%20letter-spacing%3D%226%22%3ESEAMLESS%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221245%22%20font-size%3D%2226%22%20letter-spacing%3D%223%22%20fill%3D%22rgba(255%2C255%2C255%2C0.75)%22%3EUNDERWEAR%3C%2Ftext%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E"
+  },
+  {
+    "id": 3,
+    "name": "Silk Satin Bralette",
+    "description": "Luxurious silk satin bralette with adjustable straps. Perfect for lounging or layering.",
+    "price": 2800,
+    "originalPrice": 3200,
+    "discount": "12% Off",
+    "category": "Bra",
+    "colors": [
+      "Emerald Green",
+      "Champagne",
+      "Black"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "available": true,
+    "stock": 40,
+    "image": "data:image/svg+xml;charset=UTF-8,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221000%22%20height%3D%221300%22%20viewBox%3D%220%200%201000%201300%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%230b2f2a%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230a1128%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22glow%22%20cx%3D%2240%25%22%20cy%3D%2230%25%22%20r%3D%2270%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23c5a059%22%20stop-opacity%3D%220.35%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c5a059%22%20stop-opacity%3D%220%22%2F%3E%0A%20%20%20%20%3C%2FradialGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23glow)%22%2F%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23c5a059%22%20stroke-width%3D%2210%22%20opacity%3D%220.9%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C280%2C420%20365%2C360%20500%2C360%20C635%2C360%20720%2C420%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C220%2C640%20265%2C735%20335%2C805%20C400%2C870%20445%2C900%20500%2C900%20C555%2C900%20600%2C870%20665%2C805%20C735%2C735%20780%2C640%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M310%2C430%20C270%2C390%20240%2C350%20230%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M690%2C430%20C730%2C390%20760%2C350%20770%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M360%2C620%20C390%2C560%20435%2C530%20500%2C530%20C565%2C530%20610%2C560%20640%2C620%22%20opacity%3D%220.7%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M420%2C760%20C450%2C720%20475%2C700%20500%2C700%20C525%2C700%20550%2C720%20580%2C760%22%20opacity%3D%220.55%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20font-family%3D%22Inter%2C%20Arial%2C%20sans-serif%22%20fill%3D%22white%22%20opacity%3D%220.95%22%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221180%22%20font-size%3D%2252%22%20font-weight%3D%22700%22%20letter-spacing%3D%226%22%3ESILK%20SATIN%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221245%22%20font-size%3D%2226%22%20letter-spacing%3D%223%22%20fill%3D%22rgba(255%2C255%2C255%2C0.75)%22%3EBRALETTE%3C%2Ftext%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E"
+  },
+  {
+    "id": 4,
+    "name": "Cotton Daily Panty Pack",
+    "description": "Breathable cotton panties for everyday wear. Pack of 3 in assorted colors.",
+    "price": 2500,
+    "originalPrice": 3000,
+    "discount": "17% Off",
+    "category": "Underwear",
+    "colors": [
+      "Pastel Mix",
+      "Basic Mix"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "available": true,
+    "stock": 100,
+    "image": "data:image/svg+xml;charset=UTF-8,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221000%22%20height%3D%221300%22%20viewBox%3D%220%200%201000%201300%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%232a1b3d%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230a1128%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3CradialGradient%20id%3D%22glow%22%20cx%3D%2240%25%22%20cy%3D%2230%25%22%20r%3D%2270%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23c5a059%22%20stop-opacity%3D%220.35%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c5a059%22%20stop-opacity%3D%220%22%2F%3E%0A%20%20%20%20%3C%2FradialGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%20%20%3Crect%20width%3D%221000%22%20height%3D%221300%22%20fill%3D%22url(%23glow)%22%2F%3E%0A%20%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23c5a059%22%20stroke-width%3D%2210%22%20opacity%3D%220.9%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C280%2C420%20365%2C360%20500%2C360%20C635%2C360%20720%2C420%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M210%2C520%20C220%2C640%20265%2C735%20335%2C805%20C400%2C870%20445%2C900%20500%2C900%20C555%2C900%20600%2C870%20665%2C805%20C735%2C735%20780%2C640%20790%2C520%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M310%2C430%20C270%2C390%20240%2C350%20230%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M690%2C430%20C730%2C390%20760%2C350%20770%2C300%22%20%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M360%2C620%20C390%2C560%20435%2C530%20500%2C530%20C565%2C530%20610%2C560%20640%2C620%22%20opacity%3D%220.7%22%2F%3E%0A%20%20%20%20%3Cpath%20d%3D%22M420%2C760%20C450%2C720%20475%2C700%20500%2C700%20C525%2C700%20550%2C720%20580%2C760%22%20opacity%3D%220.55%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20font-family%3D%22Inter%2C%20Arial%2C%20sans-serif%22%20fill%3D%22white%22%20opacity%3D%220.95%22%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221180%22%20font-size%3D%2252%22%20font-weight%3D%22700%22%20letter-spacing%3D%226%22%3ECOTTON%20DAILY%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2280%22%20y%3D%221245%22%20font-size%3D%2226%22%20letter-spacing%3D%223%22%20fill%3D%22rgba(255%2C255%2C255%2C0.75)%22%3EPANTY%20PACK%3C%2Ftext%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E"
+  }
+]
