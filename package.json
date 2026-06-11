@@ -2,11 +2,17 @@
   "name": "libbaas-ecommerce",
   "version": "1.0.0",
   "description": "LIBBAAS - Luxury Lingerie Store",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "scripts": {
     "start": "cd backend && npm start",
     "build": "cd frontend && npm install && npm run build",
     "vercel-build": "cd frontend && npm install && npm run build",
-    "postinstall": "cd backend && npm install"
+    "postinstall": "cd backend && npm install",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
