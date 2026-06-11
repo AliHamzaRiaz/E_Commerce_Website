@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "LIBBAAS - Luxury Lingerie Store",
   "scripts": {
-    "start": "cd backend && npm start"
+    "start": "cd backend && npm start",
+    "postinstall": "cd backend && npm install"
   },
   "keywords": [],
   "author": "",
