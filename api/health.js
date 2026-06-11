@@ -11,7 +11,8 @@ module.exports = (req, res) => {
     return res.status(200).json({ 
       status: 'ok', 
       message: 'Vercel API is working!',
-      hasDatabaseUrl: !!process.env.DATABASE_URL
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      vercelFunction: true
     });
   }
 

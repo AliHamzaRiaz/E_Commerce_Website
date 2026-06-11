@@ -2,9 +2,7 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/health.js" },
-    { "source": "/api/products", "destination": "/api/products.js" },
-    { "source": "/api/categories", "destination": "/api/categories.js" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
