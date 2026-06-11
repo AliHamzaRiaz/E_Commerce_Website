@@ -50,10 +50,10 @@ const Footer = () => {
           </div>
 
           {/* Navigation Columns */}
-          <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-12">
-            <div className="space-y-8">
+          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8">
+            <div className="space-y-6 sm:space-y-8">
               <h3 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gold">Boutique</h3>
-              <ul className="space-y-4">
+              <ul className="space-y-3 sm:space-y-4">
                 {['New Arrivals', 'Best Sellers', 'Collections', 'Sale'].map(item => (
                   <li key={item}>
                     <Link to="/shop" className="text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors inline-flex items-center group">
@@ -65,9 +65,9 @@ const Footer = () => {
               </ul>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               <h3 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gold">Company</h3>
-              <ul className="space-y-4">
+              <ul className="space-y-3 sm:space-y-4">
                 {['Our Story', 'Craftsmanship', 'Contact', 'Journal'].map(item => (
                   <li key={item}>
                     <Link to={item === 'Contact' ? '/contact' : '/about'} className="text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors">
@@ -78,9 +78,9 @@ const Footer = () => {
               </ul>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               <h3 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gold">Support</h3>
-              <ul className="space-y-4">
+              <ul className="space-y-3 sm:space-y-4">
                 {['Shipping', 'Returns', 'Size Guide', 'FAQ'].map(item => (
                   <li key={item}>
                     <button className="text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors text-left">

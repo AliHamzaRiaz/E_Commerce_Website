@@ -39,20 +39,38 @@ const Contact = () => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-[#fcfcfc] pt-32 pb-24"
+      className="min-h-screen bg-[#fcfcfc] pb-24"
     >
+      {/* Hero Section */}
+      <section className="relative h-[40vh] flex items-center justify-center overflow-hidden bg-[#0b2a3d] mb-24">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-[#0b2a3d]/80 z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1534536281715-e28d76689b4d?auto=format&fit=crop&q=80&w=2000" 
+            alt="Contact Us"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        <div className="relative z-10 text-center px-4 space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <span className="text-gold tracking-[0.6em] uppercase text-[10px] font-bold block mb-2">Concierge Service</span>
+            <h1 className="text-4xl sm:text-6xl font-serif tracking-[0.1em] uppercase text-white">
+              Contact Us
+            </h1>
+            <div className="h-px w-12 bg-gold/50 mx-auto mt-6" />
+          </motion.div>
+        </div>
+      </section>
+
       <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
         
         {/* Header Section */}
         <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto mb-24">
-          <div className="flex items-center justify-center gap-3 text-gold mb-6">
-            <div className="w-12 h-px bg-gold" />
-            <span className="text-[10px] font-bold tracking-[0.4em] uppercase">Connect With Us</span>
-            <div className="w-12 h-px bg-gold" />
-          </div>
-          <h1 className="text-5xl md:text-6xl font-serif tracking-tight text-[#0b2a3d] mb-8">
-            Our Concierge is at <br/> Your Service
-          </h1>
           <p className="text-[#0b2a3d]/60 text-sm leading-relaxed font-medium italic">
             "Whether you seek advice on sizing, styling, or have an inquiry about your order, our dedicated team is here to ensure your LIBBAAS experience is flawless."
           </p>
@@ -94,24 +112,6 @@ const Contact = () => {
                         Liberty Market, Gulberg III,<br/>Lahore, Pakistan
                       </p>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-8 pt-8 border-t border-neutral-100">
-                <h3 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gold">Opening Hours</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70">
-                    <span>Monday — Friday</span>
-                    <span>09:00 — 20:00</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70">
-                    <span>Saturday</span>
-                    <span>10:00 — 18:00</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/30">
-                    <span>Sunday</span>
-                    <span>By Appointment</span>
                   </div>
                 </div>
               </div>
@@ -239,7 +239,5 @@ const Contact = () => {
     </motion.div>
   );
 };
-
-export default Contact;
 
 export default Contact;

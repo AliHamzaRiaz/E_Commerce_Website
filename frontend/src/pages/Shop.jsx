@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import axios from 'axios';
+import { motion } from 'framer-motion';
 import { Heart, ShoppingCart, X, ChevronRight, Filter, ChevronDown, Package, Tag, CheckCircle2, XCircle } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -11,10 +12,10 @@ const ProductCard = ({ product, cartItems, addToCart, toggleFavorite, isFavorite
   const defaultSize = (product.sizes && product.sizes[0]) || 'One Size';
   const [activeColor, setActiveColor] = useState(defaultColor);
   
-  const inCart = cartItems.some(
+  const inCart = (cartItems || []).some(
               (i) =>
                 String(i.id) === String(product.id) &&
-                String(i.selectedColor).toLowerCase() === String(activeColor).toLowerCase() &&
+                String(i.selectedColor || '').toLowerCase() === String(activeColor || '').toLowerCase() &&
                 String(i.selectedSize) === String(defaultSize)
             );
 
@@ -276,6 +277,10 @@ const Shop = () => {
     return match ? match.displayName : c;
   }, [searchParams, categories]);
 
+  const searchQuery = useMemo(() => {
+    return String(searchParams.get('search') || '').trim();
+  }, [searchParams]);
+
   const selectedType = useMemo(() => {
     const t = String(searchParams.get('type') || '').trim();
     if (!t) return '';
@@ -299,7 +304,9 @@ const Shop = () => {
       const pCat = String(p.category || '').toLowerCase();
       const sCat = String(selectedCategory || '').toLowerCase();
       
-      if (pCat === sCat || sCat === 'all') {
+      // If we have a search query, we don't strictly filter by category for the filter options, 
+      // or we do it based on the current filtered results. Let's stick to current logic but handle search.
+      if ((pCat === sCat || sCat === 'all')) {
         (p.colors || []).forEach(c => colors.add(c));
         (p.sizes || []).forEach(s => sizes.add(s));
         if (p.type) subtypes.add(p.type);
@@ -328,6 +335,17 @@ const Shop = () => {
 
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...products];
+
+    // Search Filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        (p.description || '').toLowerCase().includes(query) ||
+        (p.category || '').toLowerCase().includes(query) ||
+        (p.type || '').toLowerCase().includes(query)
+      );
+    }
 
     // Category Filter
     if (selectedCategory !== 'All') {
@@ -448,244 +466,163 @@ const Shop = () => {
   );
 
   return (
-    <div className="pb-24 bg-[#fcfcfc]">
-      <div className="relative h-[30vh] overflow-hidden flex items-center justify-center bg-[#0b2a3d]">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0b2a3d] to-[#0a1128] opacity-90" />
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-3xl sm:text-4xl font-serif tracking-[0.2em] uppercase text-white">
-            {selectedCategory === 'All' ? 'Collections' : selectedCategory}
-          </h1>
-          <p className="mt-2 text-gold/80 text-[10px] tracking-[0.4em] uppercase font-bold">
-            {products.length} Items found
-          </p>
+    <div className="pb-32 bg-white">
+      <div className="relative h-[50vh] flex items-center justify-center overflow-hidden bg-[#0b2a3d]">
+        <motion.div 
+          initial={{ scale: 1.2 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+          className="absolute inset-0 z-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0b2a3d]/90 z-10" />
+          <img 
+            src="/imags/collection-images.jpg" 
+            alt="Shop Header"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=2000";
+            }}
+          />
+        </motion.div>
+        
+        <div className="relative z-20 text-center px-6 max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="space-y-6"
+          >
+            <span className="text-gold tracking-[0.8em] uppercase text-[10px] font-bold block mb-4">
+              {searchQuery ? 'Search Results' : 'The Collections'}
+            </span>
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-serif tracking-tight uppercase text-white leading-none">
+              {searchQuery ? `"${searchQuery}"` : (selectedCategory === 'All' ? 'Art of Lingerie' : selectedCategory)}
+            </h1>
+            <div className="h-px w-24 bg-gold/50 mx-auto mt-10" />
+            <p className="mt-10 text-white/60 text-[10px] tracking-[0.5em] uppercase font-bold">
+              {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'Masterpiece' : 'Curated Masterpieces'}
+            </p>
+            {searchQuery && (
+              <button 
+                onClick={() => {
+                  searchParams.delete('search');
+                  setSearchParams(searchParams);
+                }}
+                className="mt-8 text-white/40 hover:text-gold text-[9px] uppercase tracking-[0.3em] font-bold border-b border-white/10 hover:border-gold transition-all pb-1"
+              >
+                Clear Search
+              </button>
+            )}
+          </motion.div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-        {/* Filters and Sorting Bar */}
-        <div className="flex flex-col space-y-6 mb-12">
-          <div className="flex flex-wrap items-center gap-4 py-4 border-y border-black/5">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-neutral-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:border-[#0b2a3d] transition-all"
-            >
-              <Filter size={14} />
-              Filters
-            </button>
-
-            <div className="h-6 w-px bg-neutral-200 hidden sm:block" />
-
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sort By:</span>
-              <select 
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-transparent text-[10px] font-bold uppercase tracking-widest focus:outline-none cursor-pointer"
+      <div className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 mt-24">
+        {/* Filters and Sorting Bar - High Profile Design */}
+        <div className="flex flex-col space-y-16 mb-24">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12 pb-12 border-b border-[#0b2a3d]/5">
+            <div className="flex flex-wrap items-center gap-10">
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="group flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.4em] text-[#0b2a3d] hover:text-gold transition-all duration-700"
               >
-                <option value="default">Default</option>
-                <option value="newest">Newest Arrivals</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
-            </div>
-            
-            <div className="flex-grow" />
-
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 sm:pb-0">
-              {['All', ...categories.map(c => c.displayName)].map((c) => {
-                const categoryData = categories.find(cat => cat.displayName === c);
-                const hasTypes = categoryData?.types?.length > 0;
-                
-                return (
-                  <div 
-                    key={c} 
-                    className="relative group"
-                    onMouseEnter={() => hasTypes && setHoveredCategory(c)}
-                    onMouseLeave={() => setHoveredCategory(null)}
-                  >
-                    <button
-                      onClick={() => setSearchParams(c === 'All' ? {} : { category: c })}
-                      className={`flex items-center gap-1.5 px-6 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
-                        selectedCategory === c 
-                        ? 'bg-[#0b2a3d] text-white shadow-md' 
-                        : 'bg-white text-gray-500 border border-neutral-100 hover:border-gold'
-                      }`}
-                    >
-                      {c}
-                      {hasTypes && <ChevronDown size={10} className={`transition-transform duration-300 ${hoveredCategory === c ? 'rotate-180' : ''}`} />}
-                    </button>
-
-                    {/* Dropdown for Categories with Types */}
-                    {hasTypes && (
-                      <div className={`absolute top-full right-0 mt-2 w-48 bg-white border border-neutral-100 shadow-xl rounded-xl py-3 z-50 transition-all duration-300 transform origin-top ${hoveredCategory === c ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                        <div className="px-4 py-1 border-b border-neutral-50 mb-2">
-                          <span className="text-[8px] text-neutral-400 font-bold uppercase tracking-widest">Select {c} Style</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setSearchParams({ category: c });
-                            setHoveredCategory(null);
-                          }}
-                          className="w-full text-left px-4 py-2 text-[9px] font-bold uppercase tracking-widest text-[#0b2a3d] hover:bg-neutral-50 transition-colors"
-                        >
-                          All {c}
-                        </button>
-                        {categoryData.types.map((type, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              setSearchParams({ category: c, type: type.name });
-                              setHoveredCategory(null);
-                            }}
-                            className="w-full text-left px-4 py-2 text-[9px] font-bold uppercase tracking-widest text-[#0b2a3d] hover:bg-neutral-50 transition-colors flex items-center justify-between group/item"
-                          >
-                            {type.name}
-                            <div className="w-1.5 h-1.5 rounded-full bg-gold opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Subtype (Style) Quick Filter Bar - Text Tags */}
-          {selectedCategory !== 'All' && availableFilters.subtypes.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 py-4 animate-in fade-in slide-in-from-top-2 duration-500">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-2">Quick Styles:</span>
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams);
-                  params.delete('type');
-                  setSearchParams(params);
-                }}
-                className={`px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${
-                  !selectedType 
-                    ? 'bg-gold text-white shadow-md' 
-                    : 'bg-white text-gray-400 border border-neutral-100 hover:border-gold/30'
-                }`}
-              >
-                All {selectedCategory}
+                <div className={`p-2 rounded-full border transition-all duration-700 ${showFilters ? 'bg-gold border-gold text-white' : 'border-neutral-200 group-hover:border-gold'}`}>
+                  <Filter size={12} strokeWidth={1.5} />
+                </div>
+                <span>{showFilters ? 'Close Filters' : 'Refine Selection'}</span>
               </button>
-              {availableFilters.subtypes.map(typeName => (
+
+              <div className="hidden sm:block h-6 w-px bg-neutral-100" />
+
+              <div className="flex items-center gap-6">
+                <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.4em]">Sort By</span>
+                <div className="relative group">
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="bg-transparent text-[11px] font-bold uppercase tracking-[0.3em] focus:outline-none cursor-pointer text-[#0b2a3d] pr-8 appearance-none"
+                  >
+                    <option value="default">Curation</option>
+                    <option value="newest">New Arrivals</option>
+                    <option value="price-low">Price Ascending</option>
+                    <option value="price-high">Price Descending</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-0 top-1/2 -translate-y-1/2 text-gold pointer-events-none group-hover:translate-y-0 transition-transform duration-500" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide no-scrollbar py-4">
+              {['All', ...categories.map(c => c.displayName)].map((c) => (
                 <button
-                  key={typeName}
-                  onClick={() => {
-                    const params = new URLSearchParams(searchParams);
-                    if (selectedType === typeName) {
-                      params.delete('type');
-                    } else {
-                      params.set('type', typeName);
-                    }
-                    setSearchParams(params);
-                  }}
-                  className={`px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${
-                    selectedType === typeName 
-                      ? 'bg-gold text-white shadow-md' 
-                      : 'bg-white text-gray-500 border border-neutral-100 hover:border-gold'
+                  key={c}
+                  onClick={() => setSearchParams(c === 'All' ? {} : { category: c })}
+                  className={`relative px-10 py-4 text-[10px] font-bold uppercase tracking-[0.4em] transition-all duration-700 rounded-full overflow-hidden ${
+                    selectedCategory === c 
+                    ? 'text-white bg-[#0b2a3d] shadow-2xl shadow-[#0b2a3d]/20 scale-105' 
+                    : 'text-[#0b2a3d]/40 hover:text-[#0b2a3d] bg-neutral-50 hover:bg-neutral-100'
                   }`}
                 >
-                  {typeName}
+                  <span className="relative z-10">{c}</span>
                 </button>
               ))}
             </div>
-          )}
+          </div>
 
-          {/* Subcategory (Type) Visual Selector */}
-          {selectedCategory !== 'All' && categories.find(c => c.displayName === selectedCategory)?.types?.length > 0 && (
-            <div className="py-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gold/10 rounded-lg">
-                    <Tag className="text-gold" size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-serif text-[#0b2a3d] leading-none">Shop by {selectedCategory} Style</h2>
-                    <p className="text-[10px] text-neutral-400 mt-1 uppercase tracking-widest font-bold">Select a style to refine your search</p>
-                  </div>
-                </div>
-                {selectedType && (
-                  <button 
-                    onClick={() => {
-                      const params = new URLSearchParams(searchParams);
-                      params.delete('type');
-                      setSearchParams(params);
-                    }}
-                    className="text-[10px] font-bold uppercase tracking-widest text-gold hover:text-[#0b2a3d] transition-colors flex items-center gap-1 bg-gold/5 px-3 py-1.5 rounded-full"
-                  >
-                    <XCircle size={12} />
-                    Clear Style
-                  </button>
-                )}
+          {/* Subtype (Style) Quick Filter Bar - Luxury Style Edit */}
+          {selectedCategory !== 'All' && availableFilters.subtypes.length > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col space-y-8 animate-in fade-in slide-in-from-top-4 duration-1000"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-px bg-gold/30" />
+                <span className="text-[10px] font-bold text-gold uppercase tracking-[0.6em]">The Style Edit</span>
               </div>
-              
-              <div className="flex gap-4 overflow-x-auto pb-4 pt-2 scrollbar-hide px-1">
-                {/* Show All Card */}
+              <div className="flex flex-wrap items-center gap-4 scrollbar-hide">
                 <button
                   onClick={() => {
                     const params = new URLSearchParams(searchParams);
                     params.delete('type');
                     setSearchParams(params);
                   }}
-                  className={`flex-shrink-0 group relative w-28 sm:w-36 aspect-[4/5] rounded-2xl overflow-hidden border-2 transition-all duration-300 ${!selectedType ? 'border-gold shadow-lg -translate-y-1' : 'border-transparent hover:border-neutral-200'}`}
+                  className={`group relative px-10 py-3 text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-700 rounded-xl border ${
+                    !selectedType 
+                      ? 'bg-[#0b2a3d] text-white border-[#0b2a3d] shadow-xl' 
+                      : 'bg-white text-[#0b2a3d]/40 border-neutral-100 hover:border-gold/30 hover:text-[#0b2a3d]'
+                  }`}
                 >
-                  <div className="absolute inset-0 bg-neutral-50 flex flex-col items-center justify-center text-center p-4">
-                    <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <Package className="text-neutral-400" size={20} />
-                    </div>
-                    <span className="text-[#0b2a3d] font-bold text-[9px] uppercase tracking-widest leading-tight">All<br/>{selectedCategory}</span>
-                  </div>
-                  {!selectedType && (
-                    <div className="absolute top-2 right-2">
-                      <CheckCircle2 size={16} className="text-gold fill-white" />
-                    </div>
-                  )}
+                  All {selectedCategory}
                 </button>
-
-                {/* Specific Type Cards */}
-                {categories.find(c => c.displayName === selectedCategory).types.map((type, idx) => {
-                  const isActive = selectedType === type.name;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        const params = new URLSearchParams(searchParams);
-                        params.set('type', type.name);
-                        setSearchParams(params);
-                      }}
-                      className={`flex-shrink-0 group relative w-28 sm:w-36 aspect-[4/5] rounded-2xl overflow-hidden border-2 transition-all duration-300 ${isActive ? 'border-gold shadow-lg -translate-y-1' : 'border-transparent hover:border-neutral-200'}`}
-                    >
-                      <img 
-                        src={type.image || '/imags/placeholder.jpg'} 
-                        alt={type.name} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className={`absolute inset-0 transition-opacity duration-300 ${isActive ? 'bg-black/20' : 'bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90'}`} />
-                      
-                      <div className="absolute bottom-0 left-0 right-0 p-3 text-center">
-                        <span className="text-white text-[9px] font-bold uppercase tracking-widest drop-shadow-md block leading-tight mb-1">{type.name}</span>
-                        {isActive && (
-                          <div className="w-4 h-0.5 bg-white mx-auto rounded-full" />
-                        )}
-                      </div>
-
-                      {isActive && (
-                        <div className="absolute top-2 right-2">
-                          <CheckCircle2 size={16} className="text-gold fill-white" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+                {availableFilters.subtypes.map(typeName => (
+                  <button
+                    key={typeName}
+                    onClick={() => {
+                      const params = new URLSearchParams(searchParams);
+                      if (selectedType === typeName) {
+                        params.delete('type');
+                      } else {
+                        params.set('type', typeName);
+                      }
+                      setSearchParams(params);
+                    }}
+                    className={`group relative px-10 py-3 text-[9px] font-bold uppercase tracking-[0.3em] transition-all duration-700 rounded-xl border ${
+                      selectedType === typeName 
+                        ? 'bg-gold text-white border-gold shadow-xl shadow-gold/20' 
+                        : 'bg-white text-[#0b2a3d]/40 border-neutral-100 hover:border-gold/50 hover:text-[#0b2a3d]'
+                    }`}
+                  >
+                    {typeName}
+                  </button>
+                ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Expandable Filter Panel */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 p-8 bg-white border border-neutral-100 rounded-2xl shadow-sm animate-in slide-in-from-top-4 duration-300">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-12 p-12 bg-white border border-neutral-100 rounded-[2.5rem] luxury-shadow animate-in slide-in-from-top-6 duration-700">
               {/* Price Range */}
               <div className="space-y-4">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Price Range</span>
@@ -798,24 +735,51 @@ const Shop = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 sm:gap-x-8 gap-y-10 sm:gap-y-16">
-          {filteredAndSortedProducts.map((product) => (
-            <ProductCard 
-              key={product.id}
-              product={product}
-              cartItems={cartItems}
-              addToCart={addToCart}
-              toggleFavorite={toggleFavorite}
-              isFavorite={isFavorite}
-              selectingId={selectingId}
-              setSelectingId={setSelectingId}
-              tempColor={tempColor}
-              setTempColor={setTempColor}
-              tempSize={tempSize}
-              setTempSize={setTempSize}
-            />
-          ))}
-        </div>
+        {/* Product Grid */}
+        {filteredAndSortedProducts.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 sm:gap-x-10 gap-y-16 lg:gap-y-24">
+            {filteredAndSortedProducts.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                cartItems={cartItems}
+                addToCart={addToCart}
+                toggleFavorite={toggleFavorite}
+                isFavorite={isFavorite}
+                selectingId={selectingId}
+                setSelectingId={setSelectingId}
+                tempColor={tempColor}
+                setTempColor={setTempColor}
+                tempSize={tempSize}
+                setTempSize={setTempSize}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-40 text-center space-y-8">
+            <div className="w-24 h-24 bg-neutral-50 rounded-full flex items-center justify-center mx-auto">
+              <Package size={32} className="text-neutral-200" strokeWidth={1} />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-serif text-[#0b2a3d]">No Curations Found</h3>
+              <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 max-w-xs mx-auto leading-relaxed">
+                We couldn't find any pieces matching your request. Try refining your search or exploring our signatures.
+              </p>
+            </div>
+            <button 
+              onClick={() => {
+                setSearchParams({});
+                setPriceRange('all');
+                setSelectedColors([]);
+                setSelectedSizes([]);
+                setSelectedVariations({});
+              }}
+              className="px-10 py-4 bg-[#0b2a3d] text-white text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm hover:bg-gold transition-colors duration-500"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

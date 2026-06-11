@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, User, Search, ChevronDown, Heart, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, Search, ChevronDown, Heart, LogOut, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -59,13 +59,33 @@ const Navbar = ({ onCartClick }) => {
             className="bg-[#0b2a3d] text-white relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
-            <div className="max-w-[1800px] mx-auto px-6 py-2 flex items-center justify-center relative">
-              <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase text-center">
-                Pakistan's Premier Lingerie Destination <span className="mx-4 text-gold/40">|</span> Complimentary Shipping Over Rs. 5000
-              </p>
+            <div className="max-w-[1800px] mx-auto px-6 py-2 flex items-center relative overflow-hidden">
+              <div className="animate-marquee-css flex items-center whitespace-nowrap">
+                <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
+                  <span className="px-10">Welcome to our shop</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">Pakistan's Premier Lingerie Destination</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">Complimentary Shipping Over Rs. 5000</span>
+                </p>
+                <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
+                  <span className="px-10">Welcome to our shop</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">Pakistan's Premier Lingerie Destination</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">Complimentary Shipping Over Rs. 5000</span>
+                </p>
+                <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
+                  <span className="px-10">Welcome to our shop</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">Pakistan's Premier Lingerie Destination</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">Complimentary Shipping Over Rs. 5000</span>
+                </p>
+              </div>
               <button 
                 onClick={() => setShowAnnouncement(false)}
-                className="absolute right-6 p-1 text-white/40 hover:text-white transition-colors"
+                className="absolute right-6 p-1 text-white/40 hover:text-white transition-colors bg-[#0b2a3d] z-10"
               >
                 <X size={10} />
               </button>
@@ -198,28 +218,41 @@ const Navbar = ({ onCartClick }) => {
             <div className="flex-none flex items-center space-x-2 sm:space-x-4">
               <button 
                 onClick={() => setIsSearchOpen(true)}
-                className="p-3 text-[#0b2a3d] hover:text-gold transition-all duration-300"
+                className="p-3 text-[#0b2a3d] hover:text-gold transition-all duration-500 group/search"
                 aria-label="Search"
               >
-                <Search size={18} strokeWidth={1.2} />
+                <svg 
+                  width="20" 
+                  height="20" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="1.2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="transition-transform duration-500 group-hover/search:scale-110"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
               </button>
               
               <div className="hidden md:block">
                 <Link 
                   to={isLoggedIn ? '/account' : '/login'} 
-                  className="p-3 text-[#0b2a3d] hover:text-gold transition-all duration-300"
+                  className="p-3 text-[#0b2a3d] hover:text-gold transition-all duration-500 group/user"
                   aria-label="Account"
                 >
-                  <User size={18} strokeWidth={1.2} />
+                  <User size={20} strokeWidth={1.2} className="transition-transform duration-500 group-hover/user:scale-110" />
                 </Link>
               </div>
 
               <button 
                 onClick={onCartClick} 
-                className="p-3 text-[#0b2a3d] hover:text-gold transition-all duration-300 relative group/cart" 
+                className="p-3 text-[#0b2a3d] hover:text-gold transition-all duration-500 relative group/cart" 
                 aria-label="Cart"
               >
-                <ShoppingCart size={18} strokeWidth={1.2} />
+                <ShoppingCart size={20} strokeWidth={1.2} className="transition-transform duration-500 group-hover/cart:scale-110" />
                 {cartCount > 0 && (
                   <motion.span 
                     initial={{ scale: 0 }}
@@ -250,44 +283,69 @@ const Navbar = ({ onCartClick }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-white/95 backdrop-blur-xl z-[200] flex flex-col"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-start justify-center pt-20"
+            onClick={() => setIsSearchOpen(false)}
           >
-            <div className="p-6 flex justify-end">
-              <button onClick={() => setIsSearchOpen(false)} className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
-                <X size={32} strokeWidth={1} />
-              </button>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-4xl mx-auto w-full">
-              <span className="text-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-8">What are you looking for?</span>
-              <form onSubmit={handleSearch} className="w-full relative">
-                <input 
-                  autoFocus
-                  type="text"
-                  placeholder="Search collections, products..."
-                  className="w-full bg-transparent border-b-2 border-neutral-100 py-6 text-2xl sm:text-4xl font-serif focus:outline-none focus:border-gold transition-colors placeholder:text-neutral-200"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button type="submit" className="absolute right-0 bottom-6 p-2 text-gold hover:scale-110 transition-transform">
-                  <Search size={32} strokeWidth={1.5} />
-                </button>
-              </form>
-              <div className="mt-12 w-full flex flex-wrap justify-center gap-4">
-                {['Bras', 'Underwear', 'Sleepwear', 'New Arrivals'].map(tag => (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-[95%] max-w-2xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.15)] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 sm:p-8 flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-gold text-[9px] font-black uppercase tracking-[0.4em]">Search Our Collection</span>
                   <button 
-                    key={tag}
-                    onClick={() => {
-                      setSearchQuery(tag);
-                      navigate(`/shop?category=${tag}`);
-                      setIsSearchOpen(false);
-                    }}
-                    className="px-6 py-2 rounded-full border border-neutral-100 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:border-gold hover:text-gold transition-all"
+                    onClick={() => setIsSearchOpen(false)} 
+                    className="p-2 hover:bg-neutral-50 rounded-full transition-colors text-neutral-400 hover:text-[#0b2a3d]"
                   >
-                    {tag}
+                    <X size={18} />
                   </button>
-                ))}
+                </div>
+                
+                <form onSubmit={handleSearch} className="relative group mb-8">
+                  <input 
+                    autoFocus
+                    type="text"
+                    placeholder="Search for 'Silk Robes'..."
+                    className="w-full bg-neutral-50 border-none rounded-xl py-4 pl-6 pr-14 text-lg font-serif focus:ring-1 focus:ring-gold/20 transition-all placeholder:text-neutral-300 text-[#0b2a3d]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <button 
+                    type="submit" 
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gold hover:scale-110 transition-transform"
+                  >
+                    <Search size={20} strokeWidth={1.5} />
+                  </button>
+                </form>
+
+                <div className="space-y-4">
+                  <p className="text-[8px] font-black tracking-[0.3em] uppercase text-neutral-400">Quick Filters</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['Bridal', 'Silk', 'New In', 'Sleepwear'].map((tag) => (
+                      <button 
+                        key={tag}
+                        onClick={() => {
+                          setSearchQuery(tag);
+                          navigate(`/shop?search=${encodeURIComponent(tag)}`);
+                          setIsSearchOpen(false);
+                        }}
+                        className="px-4 py-2 rounded-lg bg-neutral-50 text-[10px] font-bold uppercase tracking-widest text-[#0b2a3d]/60 hover:bg-[#0b2a3d] hover:text-white transition-all"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+              <div className="bg-neutral-50 p-4 text-center border-t border-neutral-100">
+                <p className="text-[7px] tracking-[0.3em] uppercase text-neutral-300">
+                  Premium Quality • Fast Delivery Across Pakistan
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -320,32 +378,50 @@ const Navbar = ({ onCartClick }) => {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-6">
-                  {navLinks.map((link) => (
-                    <div key={link.name}>
+              <div className="flex-1 overflow-y-auto px-6 py-8">
+                {/* Mobile Search Trigger */}
+                <button 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsSearchOpen(true);
+                  }}
+                  className="w-full flex items-center gap-4 p-4 bg-neutral-50 rounded-2xl mb-10 text-neutral-400 hover:text-gold transition-colors group"
+                >
+                  <Search size={18} strokeWidth={1.5} className="group-hover:scale-110 transition-transform" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em]">Search Collections...</span>
+                </button>
+
+                <div className="space-y-8">
+                  {navLinks.map((link, idx) => (
+                    <motion.div 
+                      key={link.name}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * idx }}
+                    >
                       {link.hasDropdown ? (
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           <Link 
                             to={link.path} 
-                            className="text-lg font-serif tracking-wide text-[#0b2a3d]"
+                            className="text-2xl font-serif tracking-wide text-[#0b2a3d] flex items-center justify-between"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             {link.name}
+                            <ChevronRight size={18} className="text-gold/50" />
                           </Link>
-                          <div className="grid grid-cols-1 gap-4 pl-4 border-l border-neutral-100">
+                          <div className="grid grid-cols-1 gap-4 pl-4 border-l-2 border-gold/10">
                             <Link 
                               to="/shop" 
-                              className="text-[10px] font-bold uppercase tracking-widest text-[#0b2a3d]/60"
+                              className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0b2a3d]/50 hover:text-gold transition-colors"
                               onClick={() => setIsMenuOpen(false)}
                             >
-                              All Pieces
+                              Explore All
                             </Link>
-                            {categories.map(cat => (
+                            {categories && categories.map(cat => (
                               <Link 
                                 key={cat.id} 
                                 to={`/shop?category=${cat.displayName}`}
-                                className="text-[10px] font-bold uppercase tracking-widest text-[#0b2a3d]/60"
+                                className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0b2a3d]/50 hover:text-gold transition-colors"
                                 onClick={() => setIsMenuOpen(false)}
                               >
                                 {cat.displayName}
@@ -356,13 +432,13 @@ const Navbar = ({ onCartClick }) => {
                       ) : (
                         <Link 
                           to={link.path} 
-                          className="text-lg font-serif tracking-wide text-[#0b2a3d] block"
+                          className="text-2xl font-serif tracking-wide text-[#0b2a3d] block hover:text-gold transition-colors"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           {link.name}
                         </Link>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>

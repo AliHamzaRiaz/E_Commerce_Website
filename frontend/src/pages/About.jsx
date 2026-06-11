@@ -13,9 +13,9 @@ const About = () => {
   return (
     <div className="pb-32">
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-[#0b2a3d]">
+      <section className="relative h-[40vh] flex items-center justify-center overflow-hidden bg-[#0b2a3d]">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-[#0b2a3d]/60 z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-[#0b2a3d]/80 z-10" />
           <img 
             src="https://images.unsplash.com/photo-1620121692029-d088224efc74?auto=format&fit=crop&q=80&w=2000" 
             alt="About LIBBAAS"
@@ -26,23 +26,18 @@ const About = () => {
           />
         </div>
         
-        <div className="relative z-10 text-center space-y-6 px-4">
-          <motion.span 
+        <div className="relative z-10 text-center px-4 space-y-4">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="text-gold tracking-[0.6em] uppercase text-xs font-bold block"
+            transition={{ duration: 0.8 }}
           >
-            Our Story
-          </motion.span>
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="text-4xl sm:text-6xl md:text-7xl font-serif tracking-widest uppercase text-white"
-          >
-            Sophistication <span className="text-gold italic">Redefined</span>
-          </motion.h1>
+            <span className="text-gold tracking-[0.6em] uppercase text-[10px] font-bold block mb-2">Our Heritage</span>
+            <h1 className="text-4xl sm:text-6xl font-serif tracking-[0.1em] uppercase text-white">
+              About Libbaas
+            </h1>
+            <div className="h-px w-12 bg-gold/50 mx-auto mt-6" />
+          </motion.div>
         </div>
       </section>
 
@@ -79,11 +74,11 @@ const About = () => {
           >
             <div className="aspect-[4/5] overflow-hidden shadow-2xl rounded-2xl">
               <img 
-                src="https://images.unsplash.com/photo-1590509835484-4efbf094e9d3?auto=format&fit=crop&q=80&w=2000" 
-                alt="Craftsmanship"
+                src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e12?auto=format&fit=crop&q=80&w=2000" 
+                alt="Luxury Craftsmanship"
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.target.src = "https://images.unsplash.com/photo-1594432242750-f8f9e68e4c7d?auto=format&fit=crop&q=80&w=2000";
+                  e.target.src = "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=2000";
                 }}
               />
             </div>

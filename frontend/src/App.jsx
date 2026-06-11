@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -25,12 +25,17 @@ import { Toaster } from 'react-hot-toast';
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const isAdminHost = window.location.hostname.startsWith('admin.');
   const isAdminPath = location.pathname.startsWith('/admin');
   const showAdmin = isAdminHost || isAdminPath;
 
   return (
-    <div className="min-h-screen flex flex-col bg-primary text-accent">
+    <div className="min-h-screen flex flex-col bg-white text-black">
       <Toaster position="top-center" reverseOrder={false} />
       {!showAdmin ? <Navbar onCartClick={() => setIsCartOpen(true)} /> : null}
       {!showAdmin ? <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} /> : null}

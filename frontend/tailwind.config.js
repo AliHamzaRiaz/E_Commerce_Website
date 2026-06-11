@@ -16,6 +16,15 @@ export default {
         serif: ['"Playfair Display"', 'serif'],
         sans: ['Inter', 'sans-serif'],
       },
+      animation: {
+        marquee: 'marquee 25s linear infinite',
+      },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-33.33%)' },
+        },
+      },
     },
   },
   plugins: [],

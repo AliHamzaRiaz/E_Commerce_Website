@@ -166,9 +166,9 @@ const ProductDetail = () => {
 
   const inCart = useMemo(() => {
     if (!product) return false;
-    return cartItems.some(i => 
+    return (cartItems || []).some(i => 
       String(i.id) === String(product.id) && 
-      String(i.selectedColor).toLowerCase() === String(selectedColor).toLowerCase() && 
+      String(i.selectedColor || '').toLowerCase() === String(selectedColor || '').toLowerCase() && 
       String(i.selectedSize) === String(selectedSize)
     );
   }, [cartItems, product, selectedColor, selectedSize]);
@@ -193,9 +193,9 @@ const ProductDetail = () => {
   return (
     <div className="pb-32 bg-white">
       {/* Navigation Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <button onClick={() => navigate(-1)} className="group flex items-center gap-2 text-gray-400 hover:text-[#0b2a3d] transition-colors text-[10px] font-bold tracking-widest uppercase">
-          <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4">
+        <button onClick={() => navigate(-1)} className="group flex items-center gap-2 text-gray-400 hover:text-[#0b2a3d] transition-colors text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
+          <ChevronLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
           Back
         </button>
       </div>
