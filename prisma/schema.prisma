@@ -61,13 +61,13 @@ model Category {
 model Order {
   id           String   @id
   userId       String?  @map("user_id")
-  userEmail    String   @map("user_email")
+  userEmail    String?  @map("user_email") // Make optional for existing data
   items        Json     @default("[]")
   total        Float    @default(0)
   status       String   @default("pending")
   shippingInfo Json     @default("{}") @map("shipping_info")
   createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at") // Make optional for existing data
 
   user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   reviews      Review[]
@@ -78,16 +78,16 @@ model Order {
 model Review {
   id          Int      @id @default(autoincrement())
   productId   String   @map("product_id")
-  userId      String   @map("user_id")
+  userId      String?  @map("user_id") // Make optional for existing data
   orderId     String?  @map("order_id")
-  rating      Int
-  title       String
-  content     String
+  rating      Int      @default(5) // Add default
+  title       String?  // Make optional for existing data
+  content     String?  // Make optional for existing data
   verified    Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
 
   product     Product  @relation(fields: [productId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@map("reviews")
