@@ -19,10 +19,12 @@ const Home = () => {
           axios.get(apiUrl('/api/products')),
           axios.get(apiUrl('/api/categories'))
         ]);
-        const products = Array.isArray(prodRes.data) ? prodRes.data : [];
+        console.log('API Response Products:', prodRes.data);
+        console.log('API Response Categories:', catRes.data);
+        const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
         setAllProducts(products);
         setFeaturedProducts(products.slice(0, 4));
-        setCategories(catRes.data);
+        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []));
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
