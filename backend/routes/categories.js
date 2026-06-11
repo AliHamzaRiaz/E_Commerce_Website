@@ -15,14 +15,11 @@ const fallbackCategories = [
 // Public route to list categories
 router.get('/', async (req, res) => {
   try {
-    console.log('[GET /api/categories] Fetching categories...');
-    const categories = await listCategories();
-    console.log('[GET /api/categories] Found:', categories.length);
-    res.json(categories);
+    console.log('=== RETURN DEFAULT CATEGORIES ===');
+    return res.json(fallbackCategories);
   } catch (e) {
     console.error('[GET /api/categories]', e);
-    // Fallback to default categories
-    res.json(fallbackCategories);
+    return res.json(fallbackCategories);
   }
 });
 
