@@ -4,7 +4,18 @@
   "description": "LIBBAAS - Luxury Lingerie Store",
   "scripts": {
     "start": "cd backend && npm start",
+    "build": "cd frontend && npm install && npm run build",
     "postinstall": "cd backend && npm install"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.7",
+    "pg": "^8.13.1"
   },
   "keywords": [],
   "author": "",
