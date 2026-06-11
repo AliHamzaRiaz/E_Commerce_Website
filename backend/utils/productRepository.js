@@ -9,15 +9,15 @@ let pool;
 const getPool = () => {
   if (pool) return pool;
   
-  // Try to get connection string from standard or Supabase variables
+  // Try to get connection string from Vercel first, then standard, then Supabase
   let connectionString = 
-    process.env.DATABASE_URL || 
-    process.env.SUPABASE_DATABASE_URL ||
-    process.env.POSTGRES_URL;
+    process.env.POSTGRES_URL || 
+    process.env.DATABASE_URL ||
+    process.env.SUPABASE_DATABASE_URL;
   
   if (!connectionString) {
     throw new Error(
-      'DATABASE_URL is not set. Add it to backend/.env (e.g. postgresql://user:pass@localhost:5432/luxe_lingerie)'
+      'POSTGRES_URL or DATABASE_URL is not set. Add it to your Vercel environment variables.'
     );
   }
   
