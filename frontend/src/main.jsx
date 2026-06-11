@@ -6,7 +6,8 @@ import { BrowserRouter } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
 
-console.log('App is mounting...');
+console.log('App version 2.0.0 is mounting...');
+console.log('=== VERIFIED USING NEW CODE ===');
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
