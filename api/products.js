@@ -1,46 +1,22 @@
-// Try to require Prisma, fallback to local data if it fails
+const { defaultProducts } = require('../backend/data/defaultProducts');
+
 let prisma;
 let useLocalData = true;
+
+// Try to initialize Prisma Client
 try {
+  // We can't use require in Vercel's edge runtime, so wrap in try/catch
   prisma = require('../backend/utils/prisma');
   useLocalData = false;
-} catch (e) {
-  console.log('Prisma not available, using local data');
+  console.log('✅ Prisma Client initialized successfully');
+} catch (error) {
+  console.warn('⚠️ Prisma Client not available, using fallback data');
+  console.warn('Error:', error.message);
   useLocalData = true;
 }
 
-const defaultProducts = [
-  {
-    id: "1",
-    name: "Lace Bralette",
-    description: "Beautiful lace bralette",
-    price: 39.99,
-    originalPrice: 59.99,
-    discount: "33% OFF",
-    category: "bra",
-    colors: ["black", "nude"],
-    sizes: ["S", "M", "L"],
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400",
-    available: true,
-    stock: 50
-  },
-  {
-    id: "2",
-    name: "Silk Panties",
-    description: "Luxurious silk panties",
-    price: 24.99,
-    originalPrice: 34.99,
-    discount: "28% OFF",
-    category: "underwear",
-    colors: ["white", "pink"],
-    sizes: ["XS", "S", "M"],
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400",
-    available: true,
-    stock: 30
-  }
-];
-
 module.exports = async (req, res) => {
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -51,23 +27,38 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
-      // Try to get products from Prisma Postgres
+      // First, try to use Prisma
       if (!useLocalData && prisma) {
-        const products = await prisma.product.findMany();
-        // If no products in DB, seed default ones
+        console.log('📦 Fetching products from database...');
+        
+        // Get all products from DB
+        let products = await prisma.product.findMany();
+        console.log(`✅ Found ${products.length} products in DB`);
+        
+        // If DB is empty, seed it with default products
         if (products.length === 0) {
+          console.log('🗄️ DB is empty—seeding with default products');
           for (const prod of defaultProducts) {
-            await prisma.product.create({ data: prod });
+            await prisma.product.create({
+              data: {
+                ...prod,
+                id: String(prod.id),
+              },
+            });
           }
-          const seededProducts = await prisma.product.findMany();
-          return res.status(200).json(seededProducts);
+          products = await prisma.product.findMany();
         }
+        
         return res.status(200).json(products);
       } else {
+        // Fallback to local data
+        console.log('📦 Using fallback product data');
         return res.status(200).json(defaultProducts);
       }
-    } catch (e) {
-      console.error('Error fetching products:', e);
+    } catch (error) {
+      console.error('❌ Error fetching products:', error);
+      // If DB fails, use fallback data
+      console.log('📦 Using fallback product data due to error');
       return res.status(200).json(defaultProducts);
     }
   }

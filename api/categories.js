@@ -1,14 +1,3 @@
-// Try to require Prisma, fallback to local data if it fails
-let prisma;
-let useLocalData = true;
-try {
-  prisma = require('../backend/utils/prisma');
-  useLocalData = false;
-} catch (e) {
-  console.log('Prisma not available, using local data');
-  useLocalData = true;
-}
-
 const fallbackCategories = [
   { id: 1, name: "bra", displayName: "Bra" },
   { id: 2, name: "underwear", displayName: "Underwear" },
@@ -16,7 +5,22 @@ const fallbackCategories = [
   { id: 4, name: "activewear", displayName: "Activewear" }
 ];
 
+let prisma;
+let useLocalData = true;
+
+// Try to initialize Prisma Client
+try {
+  prisma = require('../backend/utils/prisma');
+  useLocalData = false;
+  console.log('✅ Prisma Client initialized successfully (categories)');
+} catch (error) {
+  console.warn('⚠️ Prisma Client not available, using fallback categories');
+  console.warn('Error:', error.message);
+  useLocalData = true;
+}
+
 module.exports = async (req, res) => {
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -27,23 +31,33 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
-      // Try to get categories from Prisma Postgres
+      // First, try to use Prisma
       if (!useLocalData && prisma) {
-        const categories = await prisma.category.findMany();
-        // If no categories in DB, seed default ones
+        console.log('📦 Fetching categories from database...');
+        
+        // Get all categories from DB
+        let categories = await prisma.category.findMany();
+        console.log(`✅ Found ${categories.length} categories in DB`);
+        
+        // If DB is empty, seed it with default categories
         if (categories.length === 0) {
+          console.log('🗄️ DB is empty—seeding with default categories');
           for (const cat of fallbackCategories) {
             await prisma.category.create({ data: cat });
           }
-          const seededCategories = await prisma.category.findMany();
-          return res.status(200).json(seededCategories);
+          categories = await prisma.category.findMany();
         }
+        
         return res.status(200).json(categories);
       } else {
+        // Fallback to local data
+        console.log('📦 Using fallback categories data');
         return res.status(200).json(fallbackCategories);
       }
-    } catch (e) {
-      console.error('Error fetching categories:', e);
+    } catch (error) {
+      console.error('❌ Error fetching categories:', error);
+      // If DB fails, use fallback data
+      console.log('📦 Using fallback categories data due to error');
       return res.status(200).json(fallbackCategories);
     }
   }
