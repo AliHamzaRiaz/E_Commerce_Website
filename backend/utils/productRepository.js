@@ -8,15 +8,26 @@ let pool;
 
 const getPool = () => {
   if (pool) return pool;
-  const connectionString = process.env.DATABASE_URL;
+  
+  // Try to get connection string from standard or Supabase variables
+  let connectionString = 
+    process.env.DATABASE_URL || 
+    process.env.SUPABASE_DATABASE_URL ||
+    process.env.POSTGRES_URL;
+  
   if (!connectionString) {
     throw new Error(
       'DATABASE_URL is not set. Add it to backend/.env (e.g. postgresql://user:pass@localhost:5432/luxe_lingerie)'
     );
   }
+  
+  // Auto-enable SSL for non-localhost connections
+  const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+  const sslConfig = isLocalhost ? undefined : { rejectUnauthorized: false };
+  
   pool = new Pool({
     connectionString,
-    ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
+    ssl: sslConfig,
     max: 10,
   });
   return pool;
