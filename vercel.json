@@ -1,34 +1,8 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/products.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/categories.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/products",
-      "dest": "/api/products.js"
-    },
-    {
-      "src": "/api/categories",
-      "dest": "/api/categories.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/health.js" },
+    { "source": "/api/products", "destination": "/api/products.js" },
+    { "source": "/api/categories", "destination": "/api/categories.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
