@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String   @id
+  name        String
+  description String   @default("")
+  price       Float    @default(0)
+  originalPrice Float  @default(0) @map("original_price")
+  discount    String   @default("")
+  category    String   @default("Other")
+  colors      Json     @default("[]")
+  sizes       Json     @default("[]")
+  image       String   @default("")
+  available   Boolean  @default(true)
+  stock       Int      @default(0)
+  colorImages Json     @default("{}") @map("color_images")
+  variations  Json     @default("{}")
+  type        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  reviews     Review[]
+
+  @@index([category])
+  @@map("products")
+}
+
+model User {
+  id               String   @id
+  name             String
+  email            String   @unique
+  passwordHash     String   @map("password_hash")
+  favoritesJson    Json     @default("[]") @map("favorites_json")
+  cartJson         Json     @default("[]") @map("cart_json")
+  resetToken       String?  @map("reset_token")
+  resetTokenExpiry DateTime? @map("reset_token_expiry")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  orders           Order[]
+  reviews          Review[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  displayName String   @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("categories")
+}
+
+model Order {
+  id           String   @id
+  userId       String?  @map("user_id")
+  userEmail    String   @map("user_email")
+  items        Json     @default("[]")
+  total        Float    @default(0)
+  status       String   @default("pending")
+  shippingInfo Json     @default("{}") @map("shipping_info")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reviews      Review[]
+
+  @@map("orders")
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  productId   String   @map("product_id")
+  userId      String   @map("user_id")
+  orderId     String?  @map("order_id")
+  rating      Int
+  title       String
+  content     String
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product     Product  @relation(fields: [productId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@map("reviews")
+}
