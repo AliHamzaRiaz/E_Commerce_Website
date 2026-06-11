@@ -6,14 +6,21 @@ import { BrowserRouter } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-)
+console.log('App is mounting...');
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  console.error('Failed to find the root element');
+} else {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <AuthProvider>
+          <CartProvider>
+            <App />
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </React.StrictMode>,
+  )
+}
