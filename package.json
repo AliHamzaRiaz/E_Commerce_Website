@@ -1,0 +1,11 @@
+{
+  "name": "libbaas-ecommerce",
+  "version": "1.0.0",
+  "description": "LIBBAAS - Luxury Lingerie Store",
+  "scripts": {
+    "start": "cd backend && npm start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
