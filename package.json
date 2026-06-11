@@ -5,6 +5,7 @@
   "scripts": {
     "start": "cd backend && npm start",
     "build": "cd frontend && npm install && npm run build",
+    "vercel-build": "cd frontend && npm install && npm run build",
     "postinstall": "cd backend && npm install"
   },
   "dependencies": {
