@@ -6,7 +6,7 @@ const adminRoutes = require('../backend/routes/admin');
 const userRoutes = require('../backend/routes/users');
 const categoryRoutes = require('../backend/routes/categories');
 const reviewRoutes = require('../backend/routes/reviews');
-const { initProductsDb } = require('../backend/utils/productRepository');
+const { initProductsDb, getPool } = require('../backend/utils/productRepository');
 const { initOrdersDb } = require('../backend/utils/orderRepository');
 const { initUsersTable } = require('../backend/utils/userRepository');
 const { initCategoriesTable } = require('../backend/utils/categoryRepository');
@@ -64,15 +64,30 @@ app.options(/.*/, cors());
 app.use(express.json({ limit: '6mb' }));
 app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 
-// Health check route that DOES NOT require DB
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+// Health check route that DOES test DB
+app.get('/api/health', async (req, res) => {
+  const healthCheck = {
+    status: 'ok',
     message: 'API is reachable',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV,
-    hasDbUrl: !!process.env.DATABASE_URL
-  });
+    hasDbUrl: !!process.env.DATABASE_URL,
+    database: 'unchecked'
+  };
+
+  try {
+    const pool = getPool();
+    const result = await pool.query('SELECT NOW()');
+    healthCheck.database = 'connected';
+    healthCheck.dbTime = result.rows[0].now;
+  } catch (dbErr) {
+    healthCheck.status = 'db-error';
+    healthCheck.database = 'failed';
+    healthCheck.dbError = dbErr.message;
+    console.error('Database connection failed:', dbErr);
+  }
+
+  res.json(healthCheck);
 });
 
 // Routes

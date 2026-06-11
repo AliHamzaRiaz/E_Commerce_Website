@@ -4,6 +4,14 @@ const adminAuth = require('../middleware/adminAuth');
 
 const router = express.Router();
 
+// Fallback categories in case DB fails
+const fallbackCategories = [
+  { id: 1, name: 'bra', displayName: 'Bra' },
+  { id: 2, name: 'underwear', displayName: 'Underwear' },
+  { id: 3, name: 'nightwear', displayName: 'Nightwear' },
+  { id: 4, name: 'activewear', displayName: 'Activewear' }
+];
+
 // Public route to list categories
 router.get('/', async (req, res) => {
   try {
@@ -13,7 +21,8 @@ router.get('/', async (req, res) => {
     res.json(categories);
   } catch (e) {
     console.error('[GET /api/categories]', e);
-    res.status(500).json({ message: 'Failed to load categories' });
+    // Fallback to default categories
+    res.json(fallbackCategories);
   }
 });
 
