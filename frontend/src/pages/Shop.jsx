@@ -1,11 +1,12 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { apiUrl } from '../utils/apiUrl';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingCart, X, ChevronRight, Filter, ChevronDown, Package, Tag, CheckCircle2, XCircle } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { apiUrl } from '../utils/apiUrl';
 import { useAuth } from '../context/AuthContext';
+import { fallbackProducts, fallbackCategories } from '../data/fallbackData';
 
 const ProductCard = ({ product, cartItems, addToCart, toggleFavorite, isFavorite, selectingId, setSelectingId, tempColor, setTempColor, tempSize, setTempSize }) => {
   const defaultColor = (product.colors && product.colors[0]) || 'Default';

@@ -14,23 +14,25 @@ const fallbackCategories = [
 
 // Public route to list categories
 router.get('/', async (req, res) => {
+  console.log('[GET /api/categories] Received request');
   try {
-    console.log('=== RETURN DEFAULT CATEGORIES ===');
-    return res.json(fallbackCategories);
+    const categories = await listCategories();
+    console.log('[GET /api/categories] Sending categories:', categories);
+    return res.json(categories);
   } catch (e) {
     console.error('[GET /api/categories]', e);
-    return res.json(fallbackCategories);
+    return res.status(500).json({ message: 'Failed to load categories' });
   }
 });
 
 // Admin protected routes
 router.post('/', adminAuth, async (req, res) => {
   try {
-    const { name, displayName, image } = req.body;
+    const { name, displayName, image, types } = req.body;
     if (!name || !displayName) {
       return res.status(400).json({ message: 'Name and Display Name are required' });
     }
-    const category = await addCategory({ name, displayName, image });
+    const category = await addCategory({ name, displayName, image, types });
     res.status(201).json(category);
   } catch (e) {
     console.error('[POST /api/categories]', e);
@@ -43,12 +45,14 @@ router.post('/', adminAuth, async (req, res) => {
 
 router.put('/:id', adminAuth, async (req, res) => {
   try {
-    const { displayName, image } = req.body;
-    const category = await updateCategory(req.params.id, { displayName, image });
+    console.log('[PUT /api/categories/:id] Incoming request:', { params: req.params, body: req.body });
+    const { displayName, image, types } = req.body;
+    const category = await updateCategory(req.params.id, { displayName, image, types });
+    console.log('[PUT /api/categories/:id] Updated category:', category);
     res.json(category);
   } catch (e) {
-    console.error('[PUT /api/categories]', e);
-    res.status(500).json({ message: 'Failed to update category' });
+    console.error('[PUT /api/categories/:id] Error:', e);
+    res.status(500).json({ message: 'Failed to update category', error: e.message });
   }
 });
 

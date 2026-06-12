@@ -6,12 +6,11 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    // TEMP: Always use default products for testing, ignore DB errors entirely
-    console.log('=== RETURN DEFAULT PRODUCTS ===');
-    return res.json(defaultProducts);
+    const products = await listProducts();
+    return res.json(products);
   } catch (e) {
     console.error('[GET /api/products]', e);
-    return res.json(defaultProducts);
+    return res.status(500).json({ message: 'Failed to load products' });
   }
 });
 

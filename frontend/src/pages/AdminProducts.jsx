@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
   RefreshCcw, 
@@ -29,6 +29,7 @@ const parseList = (s) =>
 
 const AdminProducts = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -44,6 +45,22 @@ const AdminProducts = () => {
     localStorage.removeItem('adminKey');
     navigate(loginPath, { replace: true });
   };
+
+  // Check for edit param in URL
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && products.length > 0) {
+      const productToEdit = products.find(p => p.id === editId);
+      if (productToEdit) {
+        startEdit(productToEdit);
+        // Clear edit param
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('edit');
+        setSearchParams(newParams, { replace: true });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [searchParams, products]);
 
   const emptyForm = useMemo(
     () => ({
@@ -134,6 +151,24 @@ const AdminProducts = () => {
   useEffect(() => {
     load();
   }, []);
+
+  // After load completes, check again for editId
+  useEffect(() => {
+    if (!loading && products.length > 0) {
+      const editId = searchParams.get('edit');
+      if (editId) {
+        const productToEdit = products.find(p => p.id === editId);
+        if (productToEdit) {
+          startEdit(productToEdit);
+          // Clear edit param
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('edit');
+          setSearchParams(newParams, { replace: true });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    }
+  }, [loading, products, searchParams]);
 
   const startCreate = () => {
     setEditingId(null);

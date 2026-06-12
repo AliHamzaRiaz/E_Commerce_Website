@@ -158,52 +158,67 @@ const buildOrderHtml = (order) => {
 };
 
 const sendOrderConfirmationEmail = async ({ to, order }) => {
-  const transporter = await getTransporter();
-  if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+  try {
+    const transporter = await getTransporter();
+    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-  const info = await transporter.sendMail({
-    from,
-    to,
-    subject: `Order Confirmation - ${order.id}`,
-    html: buildOrderHtml(order),
-  });
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject: `Order Confirmation - ${order.id}`,
+      html: buildOrderHtml(order),
+    });
 
-  const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-  return { sent: true, previewUrl };
+    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+    return { sent: true, previewUrl };
+  } catch (err) {
+    console.error('[sendOrderConfirmationEmail] FAILED:', err.message);
+    return { sent: false, reason: err.message };
+  }
 };
 
 const sendCustomEmail = async ({ to, subject, html, text }) => {
-  const transporter = await getTransporter();
-  if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+  try {
+    const transporter = await getTransporter();
+    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-  const info = await transporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-    text,
-  });
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      text,
+    });
 
-  const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-  return { sent: true, previewUrl };
+    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+    return { sent: true, previewUrl };
+  } catch (err) {
+    console.error('[sendCustomEmail] FAILED:', err.message);
+    return { sent: false, reason: err.message };
+  }
 };
 
 const sendOtpEmail = async ({ to, otp }) => {
-  const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
-    <h2 style="margin:0 0 8px;">Your Login Code</h2>
-    <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
-    <div style="font-size:28px; letter-spacing:6px; font-weight:700; padding:14px 16px; border:1px solid #eee; display:inline-block;">${otp}</div>
-    <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
-  </div>`;
+  try {
+    const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
+      <h2 style="margin:0 0 8px;">Your Login Code</h2>
+      <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
+      <div style="font-size:28px; letter-spacing:6px; font-weight:700; padding:14px 16px; border:1px solid #eee; display:inline-block;">${otp}</div>
+      <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
+    </div>`;
 
-  return sendCustomEmail({
-    to,
-    subject: 'Your OTP Login Code',
-    html,
-    text: `Your OTP code is: ${otp}. It expires in 10 minutes.`,
-  });
+    return sendCustomEmail({
+      to,
+      subject: 'Your OTP Login Code',
+      html,
+      text: `Your OTP code is: ${otp}. It expires in 10 minutes.`,
+    });
+  } catch (err) {
+    console.error('[sendOtpEmail] FAILED:', err.message);
+    return { sent: false, reason: err.message };
+  }
 };
 
 const sendPasswordResetEmail = async ({ to, resetUrl }) => {

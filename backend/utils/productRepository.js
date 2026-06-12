@@ -217,11 +217,18 @@ const mergeSeedProducts = async (products) => {
 
 const listProducts = async () => {
   const p = getPool();
+  console.log('\n🔍 QUERYING ALL PRODUCTS FROM DATABASE...');
   const { rows } = await p.query(
-    `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type
+    `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type, created_at
      FROM products ORDER BY created_at DESC, id DESC`
   );
-  return rows.map(rowToProduct);
+  console.log(`✅ FOUND ${rows.length} TOTAL PRODUCTS IN DATABASE:`);
+  rows.forEach((row, i) => {
+    console.log(`  Product ${i+1}: id=${row.id}, name="${row.name}", available=${row.available}`);
+  });
+  const mappedProducts = rows.map(rowToProduct);
+  console.log(`\n✅ MAPPED ${mappedProducts.length} PRODUCTS FOR RESPONSE`);
+  return mappedProducts;
 };
 
 const getProductById = async (id) => {
@@ -378,10 +385,13 @@ const applyOrderStock = async (items) => {
   }
 };
 
-const initProductsDb = async (defaultProducts) => {
+const initProductsDb = async () => {
   await initProductsTable();
-  await seedIfEmpty(defaultProducts);
-  await mergeSeedProducts(defaultProducts);
+  // Only clear products if you want a fresh start—comment this out normally!
+  // const p = getPool();
+  // await p.query('DELETE FROM reviews');
+  // const deleteResult = await p.query('DELETE FROM products');
+  // console.log(`[initProductsDb] Cleared ${deleteResult.rowCount} products from database`);
 };
 
 module.exports = {

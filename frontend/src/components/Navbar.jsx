@@ -1,34 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X, User, Search, ChevronDown, Heart, LogOut, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
-import { apiUrl } from '../utils/apiUrl';
+import { fallbackCategories } from '../data/fallbackData';
 
 const Navbar = ({ onCartClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(true);
-  const [categories, setCategories] = useState([]);
+  const [categories] = useState(fallbackCategories);
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { cartCount } = useCart();
   const { isLoggedIn, logout, user } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await axios.get(apiUrl('/api/categories'));
-        setCategories(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error('Error fetching categories for navbar:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();

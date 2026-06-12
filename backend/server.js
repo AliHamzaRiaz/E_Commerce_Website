@@ -1,6 +1,10 @@
 const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config({ path: path.join(__dirname, '.env') });
+// Try root .env first, then backend .env
+const rootEnvPath = path.join(__dirname, '..', '.env');
+const backendEnvPath = path.join(__dirname, '.env');
+dotenv.config({ path: rootEnvPath });
+dotenv.config({ path: backendEnvPath });
 
 const express = require('express');
 const cors = require('cors');
@@ -27,7 +31,6 @@ app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -39,7 +42,7 @@ app.get('/', (req, res) => {
 
 const start = async () => {
   try {
-    await initProductsDb(defaultProducts);
+    await initProductsDb();
     console.log('Products database ready');
   } catch (err) {
     console.warn('[startup] Products DB init failed — product APIs need DATABASE_URL.');
@@ -73,8 +76,14 @@ const start = async () => {
     console.warn('[startup] Reviews DB init failed.');
     console.warn('[startup]', err?.message || err);
   }
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT} (LAN: use this machine's Wi‑Fi IP + :${PORT})`);
+  
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server is running on port ${PORT} (LAN: use this machine's Wi‑Fi IP + :${PORT})`);
+  });
+
+  // Catch server errors
+  server.on('error', (err) => {
+    console.error('❌ Server error:', err);
   });
 };
 

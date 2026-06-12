@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { 
   Search, 
   RefreshCcw, 
@@ -446,10 +446,28 @@ const AdminOrders = () => {
                                   <h4 className="font-serif text-lg text-slate-900 border-b border-slate-100 pb-2">Order Summary</h4>
                                   <div className="space-y-3">
                                     {(o.items || []).map((item, idx) => (
-                                      <div key={idx} className="flex justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                          {item.image && <img src={item.image} alt="" className="h-8 w-8 rounded object-cover" />}
-                                          <span className="text-slate-600">{item.name} <span className="text-slate-400 text-xs">x{item.quantity}</span></span>
+                                      <div key={idx} className="flex justify-between items-center text-sm">
+                                        <div className="flex items-center gap-3 flex-1">
+                                          {item.image && <img src={item.image} alt="" className="h-10 w-10 rounded-lg object-cover border border-slate-100" />}
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                              <button 
+                                                onClick={() => {
+                                                  const productsPath = isAdminHost ? '/products' : '/admin/products';
+                                                  navigate(`${productsPath}?edit=${encodeURIComponent(item.id)}`);
+                                                }}
+                                                className="text-slate-900 font-semibold hover:text-gold transition-colors flex items-center gap-1"
+                                              >
+                                                {item.name}
+                                                <ExternalLink size={12} />
+                                              </button>
+                                            </div>
+                                            <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                                              <span className="text-slate-400 text-xs">x{item.quantity}</span>
+                                              {item.selectedColor && <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full border border-slate-200" style={{ backgroundColor: item.selectedColor.toLowerCase().includes('black') ? '#1a1a1a' : item.selectedColor.toLowerCase().includes('blue') ? '#0b2a3d' : item.selectedColor.toLowerCase().includes('pink') ? '#fce7f3' : item.selectedColor.toLowerCase().includes('nude') ? '#f3e5d8' : item.selectedColor.toLowerCase().includes('white') ? '#ffffff' : item.selectedColor.toLowerCase().includes('red') ? '#991b1b' : item.selectedColor.toLowerCase().includes('green') ? '#064e3b' : item.selectedColor }}></span> {item.selectedColor}</span>}
+                                              {item.selectedSize && <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">{item.selectedSize}</span>}
+                                            </div>
+                                          </div>
                                         </div>
                                         <span className="font-bold text-slate-900">Rs {(item.price * item.quantity).toLocaleString()}</span>
                                       </div>

@@ -36,20 +36,21 @@ const AdminCategories = () => {
   const addType = () => {
     setForm(p => ({
       ...p,
-      types: [...p.types, { name: '', image: '' }]
+      types: [...(Array.isArray(p.types) ? p.types : []), { name: '', image: '' }]
     }));
   };
 
   const removeType = (index) => {
     setForm(p => ({
       ...p,
-      types: p.types.filter((_, i) => i !== index)
+      types: (Array.isArray(p.types) ? p.types : []).filter((_, i) => i !== index)
     }));
   };
 
   const updateType = (index, field, value) => {
     setForm(p => {
-      const next = [...p.types];
+      const types = Array.isArray(p.types) ? p.types : [];
+      const next = [...types];
       next[index] = { ...next[index], [field]: value };
       return { ...p, types: next };
     });
@@ -105,6 +106,7 @@ const AdminCategories = () => {
   };
 
   const startEdit = (cat) => {
+    console.log('[AdminCategories startEdit] Category data:', cat);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setEditingId(cat.id);
     setForm({
@@ -119,16 +121,20 @@ const AdminCategories = () => {
     e.preventDefault();
     setIsSaving(true);
     setError('');
+    console.log('[AdminCategories save] Saving form:', { editingId, form });
     try {
       if (editingId) {
+        console.log('[AdminCategories save] PUT to', `/categories/${editingId}`);
         await adminApi.put(`/categories/${editingId}`, form);
       } else {
+        console.log('[AdminCategories save] POST to /categories');
         await adminApi.post('/categories', form);
       }
       await load();
       setEditingId(null);
       setForm(emptyForm);
     } catch (err) {
+      console.error('[AdminCategories save] Error:', err);
       setError(err?.response?.data?.message || 'Save failed');
     } finally {
       setIsSaving(false);

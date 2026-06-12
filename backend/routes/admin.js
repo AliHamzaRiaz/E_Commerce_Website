@@ -10,6 +10,13 @@ const {
   updateOrderStatus,
   updateOrderEmailJson,
 } = require('../utils/orderRepository');
+const {
+  listCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory,
+} = require('../utils/categoryRepository');
+
 
 const router = express.Router();
 
@@ -29,6 +36,7 @@ const otpHash = ({ email, otp }) => {
 
 const checkAdminCredentials = async ({ email, password }) => {
   const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const adminPassword = String(process.env.ADMIN_PASSWORD || '').trim();
   const adminPasswordHash = String(process.env.ADMIN_PASSWORD_HASH || '').trim();
 
   if (!email || !password) return { ok: false, status: 400, message: 'Email and password are required' };
@@ -37,9 +45,9 @@ const checkAdminCredentials = async ({ email, password }) => {
     return { ok: false, status: 401, message: 'Invalid credentials' };
   }
 
-  // Temporary fix for "Internal Server Error" - try both hash and plain text
   let ok = false;
-  if (password === 'admin123') {
+  // Check plain password first
+  if (adminPassword && password === adminPassword) {
     ok = true;
   } else if (adminPasswordHash) {
     try {
@@ -83,11 +91,11 @@ router.post('/auth/login', async (req, res) => {
 
     console.log('Generated OTP, attempting to send email...');
 
-    let result;
+    let result = null;
     try {
       result = await sendOtpEmail({ to: check.adminEmail, otp });
     } catch (emailErr) {
-      console.error('Email sending CRASHED:', emailErr);
+      console.error('Email sending CRASHED:', emailErr.message);
       result = { sent: false, reason: 'CRASH', error: emailErr.message };
     }
     
@@ -124,10 +132,7 @@ router.post('/auth/login', async (req, res) => {
   } catch (err) {
     console.error('[admin/auth/login] FATAL ERROR:', err);
     return res.status(500).json({
-      message:
-        err?.code === 'EAUTH'
-          ? 'Email login failed (check SMTP_USER / SMTP_PASS).'
-          : `Admin login failed: ${err.message || 'Internal Error'}`,
+      message: err?.code === 'EAUTH' ? 'Email login failed (check SMTP_USER / SMTP_PASS).' : 'Server error, please try again.',
     });
   }
 });
@@ -178,11 +183,14 @@ router.use(adminAuth);
 
 router.get('/orders', async (req, res) => {
   try {
+    console.log('\n=== ADMIN: Loading Orders ===');
     const orders = await listAllOrders();
+    console.log('✅ Loaded', orders.length, 'orders from DB');
     res.json(orders);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: 'Failed to load orders' });
+    console.error('❌ Failed to load orders:', e.message);
+    console.error(e.stack);
+    res.status(500).json({ message: 'Failed to load orders', error: e.message });
   }
 });
 
@@ -224,11 +232,20 @@ router.post('/orders/:id/message/email', async (req, res) => {
   if (!subject || !message) return res.status(400).json({ message: 'Missing subject or message' });
 
   try {
+    console.log(`\n📧 Attempting to send custom email for order ${req.params.id}`);
     const order = await getOrderById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (!order) {
+      console.error('❌ Order not found:', req.params.id);
+      return res.status(404).json({ message: 'Order not found' });
+    }
 
+    console.log('📦 Order details:', JSON.stringify(order, null, 2));
     const to = order.customer?.email;
-    if (!to) return res.status(400).json({ message: 'Customer email missing' });
+    console.log('📧 Recipient email:', to);
+    if (!to) {
+      console.error('❌ Customer email missing!');
+      return res.status(400).json({ message: 'Customer email missing from order' });
+    }
 
     const result = await sendCustomEmail({
       to,
@@ -259,25 +276,29 @@ router.post('/orders/:id/message/email', async (req, res) => {
         </div>
       </div>`,
     });
+    console.log('📧 Email send result:', result);
+    
     const email = {
       sent: !!result.sent,
       previewUrl: result.previewUrl,
       lastSentAt: new Date().toISOString(),
     };
     await updateOrderEmailJson(order.id, { ...order.email, ...email });
-    return res.json({ sent: !!result.sent, previewUrl: result.previewUrl });
+    return res.json({ sent: !!result.sent, previewUrl: result.previewUrl, reason: result.reason });
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ message: 'Failed to send email' });
+    console.error('❌ Failed to send custom email:', e);
+    return res.status(500).json({ message: 'Failed to send email', error: e.message });
   }
 });
 
 router.get('/products', async (req, res) => {
   try {
+    console.log('\n🟢 ADMIN REQUESTED ALL PRODUCTS');
     const products = await listProducts();
+    console.log(`🟢 SENDING ${products.length} PRODUCTS TO ADMIN FRONTEND`);
     res.json(products);
   } catch (e) {
-    console.error(e);
+    console.error('❌ FAILED TO LOAD PRODUCTS:', e);
     res.status(500).json({ message: 'Failed to load products' });
   }
 });
@@ -316,6 +337,73 @@ router.delete('/products/:id', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: 'Failed to delete product' });
+  }
+});
+
+router.get('/categories', async (req, res) => {
+  console.log('[GET /api/admin/categories] Received request');
+  try {
+    const categories = await listCategories();
+    console.log('[GET /api/admin/categories] Sending categories:', categories);
+    res.json(categories);
+  } catch (e) {
+    console.error('[GET /api/admin/categories] Error:', e);
+    res.status(500).json({ message: 'Failed to load categories' });
+  }
+});
+
+router.post('/categories', async (req, res) => {
+  console.log('\n========== POST /api/admin/categories RECEIVED ==========');
+  console.log('req.body:', req.body);
+  console.log('============================================================\n');
+  try {
+    const body = req.body || {};
+    if (!body.name || !body.displayName) {
+      console.log('Missing name or displayName');
+      return res.status(400).json({ message: 'Missing name or display name' });
+    }
+    const category = await addCategory(body);
+    console.log('Category added successfully:', category);
+    res.status(201).json(category);
+  } catch (e) {
+    console.error('ERROR IN POST /api/admin/categories:', e);
+    if (e.code === '23505') {
+      return res.status(400).json({ message: 'Category name already exists' });
+    }
+    res.status(500).json({ message: 'Failed to create category', error: e.message, stack: e.stack });
+  }
+});
+
+router.put('/categories/:id', async (req, res) => {
+  console.log('\n========== PUT /api/admin/categories/:id RECEIVED ==========');
+  console.log('req.params:', req.params);
+  console.log('req.body:', req.body);
+  console.log('============================================================\n');
+  try {
+    const category = await updateCategory(req.params.id, req.body || {});
+    if (!category) {
+      console.log('Category not found for update');
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    console.log('Category updated successfully:', category);
+    res.json(category);
+  } catch (e) {
+    console.error('ERROR IN PUT /api/admin/categories/:id:', e);
+    res.status(500).json({ message: 'Failed to update category', error: e.message, stack: e.stack });
+  }
+});
+
+router.delete('/categories/:id', async (req, res) => {
+  console.log('\n========== DELETE /api/admin/categories/:id RECEIVED ==========');
+  console.log('req.params:', req.params);
+  console.log('============================================================\n');
+  try {
+    await deleteCategory(req.params.id);
+    console.log('Category deleted successfully');
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('ERROR IN DELETE /api/admin/categories/:id:', e);
+    res.status(500).json({ message: 'Failed to delete category', error: e.message, stack: e.stack });
   }
 });
 

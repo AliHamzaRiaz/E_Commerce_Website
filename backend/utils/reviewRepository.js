@@ -2,6 +2,16 @@ const { getPool } = require('./productRepository');
 
 const initReviewsTable = async () => {
   const p = getPool();
+  
+  // First check what columns exist
+  const { rows: existingColumns } = await p.query(`
+    SELECT column_name FROM information_schema.columns 
+    WHERE table_name = 'reviews'
+  `);
+  
+  console.log('Existing reviews table columns:', existingColumns.map(c => c.column_name));
+  
+  // Create table if it doesn't exist
   await p.query(`
     CREATE TABLE IF NOT EXISTS reviews (
       id SERIAL PRIMARY KEY,
@@ -12,37 +22,90 @@ const initReviewsTable = async () => {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+  
+  // Function to safely add a column
+  const addColumnIfMissing = async (colName, definition) => {
+    try {
+      const colExists = existingColumns.some(c => c.column_name.toLowerCase() === colName.toLowerCase());
+      if (!colExists) {
+        await p.query(`ALTER TABLE reviews ADD COLUMN ${colName} ${definition}`);
+        console.log(`Added column ${colName} to reviews table`);
+      }
+    } catch (e) {
+      console.warn(`Error adding column ${colName}:`, e.message);
+    }
+  };
+  
+  // Add missing columns (with defaults for existing rows)
+  await addColumnIfMissing('user_name', 'TEXT DEFAULT \'Guest\'');
+  await addColumnIfMissing('product_id', 'TEXT DEFAULT \'\'');
+  await addColumnIfMissing('rating', 'INTEGER DEFAULT 5 CHECK (rating >= 1 AND rating <= 5)');
+  await addColumnIfMissing('comment', 'TEXT DEFAULT \'\'');
+  await addColumnIfMissing('created_at', 'TIMESTAMPTZ DEFAULT now()');
 };
 
 const listReviewsByProduct = async (productId) => {
   const p = getPool();
+  
+  // Get existing columns first to handle name variations
+  const { rows: columns } = await p.query(`
+    SELECT column_name FROM information_schema.columns 
+    WHERE table_name = 'reviews'
+  `);
+  const colNames = columns.map(c => c.column_name.toLowerCase());
+  
+  // Determine column names to use
+  const productIdCol = colNames.includes('product_id') ? 'product_id' : (colNames.includes('productid') ? 'productid' : 'id');
+  const userNameCol = colNames.includes('user_name') ? 'user_name' : (colNames.includes('username') ? 'username' : 'user_name');
+  const ratingCol = colNames.includes('rating') ? 'rating' : 'rating';
+  const commentCol = colNames.includes('comment') ? 'comment' : (colNames.includes('content') ? 'content' : (colNames.includes('text') ? 'text' : 'comment'));
+  const createdAtCol = colNames.includes('created_at') ? 'created_at' : (colNames.includes('createdat') ? 'createdat' : 'created_at');
+  
+  // Build query
   const { rows } = await p.query(
-    'SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC',
+    `SELECT * FROM reviews WHERE ${productIdCol} = $1 ORDER BY ${createdAtCol} DESC`,
     [String(productId)]
   );
+  
   return rows.map(row => ({
     id: row.id,
-    productId: row.product_id,
-    userName: row.user_name,
-    rating: row.rating,
-    comment: row.comment,
-    createdAt: row.created_at
+    productId: row[productIdCol],
+    userName: row[userNameCol],
+    rating: row[ratingCol],
+    comment: row[commentCol],
+    createdAt: row[createdAtCol]
   }));
 };
 
 const addReview = async ({ productId, userName, rating, comment }) => {
   const p = getPool();
+  
+  // Get existing columns first
+  const { rows: columns } = await p.query(`
+    SELECT column_name FROM information_schema.columns 
+    WHERE table_name = 'reviews'
+  `);
+  const colNames = columns.map(c => c.column_name.toLowerCase());
+  
+  // Determine column names to use
+  const productIdCol = colNames.includes('product_id') ? 'product_id' : (colNames.includes('productid') ? 'productid' : 'product_id');
+  const userNameCol = colNames.includes('user_name') ? 'user_name' : (colNames.includes('username') ? 'username' : 'user_name');
+  const ratingCol = colNames.includes('rating') ? 'rating' : 'rating';
+  const commentCol = colNames.includes('comment') ? 'comment' : (colNames.includes('content') ? 'content' : (colNames.includes('text') ? 'text' : 'comment'));
+  
+  // Build insert query
   const { rows } = await p.query(
-    'INSERT INTO reviews (product_id, user_name, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *',
+    `INSERT INTO reviews (${productIdCol}, ${userNameCol}, ${ratingCol}, ${commentCol}) VALUES ($1, $2, $3, $4) RETURNING *`,
     [String(productId), userName, rating, comment]
   );
+  
   return {
     id: rows[0].id,
-    productId: rows[0].product_id,
-    userName: rows[0].user_name,
-    rating: rows[0].rating,
-    comment: rows[0].comment,
-    createdAt: rows[0].created_at
+    productId: rows[0][productIdCol],
+    userName: rows[0][userNameCol],
+    rating: rows[0][ratingCol],
+    comment: rows[0][commentCol],
+    createdAt: rows[0].created_at || rows[0].createdat || new Date()
   };
 };
 
