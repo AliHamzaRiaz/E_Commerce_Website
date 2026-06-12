@@ -12,15 +12,15 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
 
-  // Auto-rotate hero images
+  // Auto-rotate hero images - now using categories!
   useEffect(() => {
-    if (allProducts.length > 0) {
+    if (categories.length > 0) {
       const interval = setInterval(() => {
-        setCurrentHeroIndex((prev) => (prev + 1) % allProducts.length);
+        setCurrentHeroIndex((prev) => (prev + 1) % categories.length);
       }, 5000); // Change every 5 seconds
       return () => clearInterval(interval);
     }
-  }, [allProducts]);
+  }, [categories]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,31 +66,32 @@ const Home = () => {
 
   return (
     <div className="pb-32">
-      {/* Hero Section */}
-      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-[#05111a] mb-32">
+      {/* Hero Section - Professional Category Carousel */}
+      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-[#0a1620] mb-32">
         <div className="absolute inset-0 z-0">
-          {/* Luxury Multi-Layer Overlay - Lightened for Product Clarity */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#05111a]/70 via-[#05111a]/40 to-[#05111a]/60 z-20" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(5,17,26,0.55)_100%)] z-20" />
+          {/* Professional Overlay for Clarity & Readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1620]/75 via-[#0a1620]/35 to-[#0a1620]/70 z-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0)_0%,rgba(10,22,32,0.65)_100%)] z-20" />
           
-          {/* Animated Product Carousel with Parallax Auto-Scroll */}
+          {/* Animated Category Carousel */}
           <AnimatePresence mode="wait">
-            {allProducts.length > 0 ? (
+            {categories.length > 0 ? (
               <motion.img
-                key={allProducts[currentHeroIndex].id}
-                src={allProducts[currentHeroIndex].image}
-                alt={allProducts[currentHeroIndex].name}
-                initial={{ opacity: 0, scale: 1.1, y: 0 }}
+                key={categories[currentHeroIndex].id}
+                src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, '/imags/collection-images.jpg')}
+                alt={categories[currentHeroIndex].displayName}
+                initial={{ opacity: 0, scale: 1.08, x: 20 }}
                 animate={{ 
-                  opacity: 1, // Full opacity for maximum clarity
-                  scale: 1.0, // No zoom - perfect view
-                  y: [0, -10, 0], // Gentle vertical parallax
+                  opacity: 1, 
+                  scale: 1.0, 
+                  x: 0,
+                  y: [0, -8, 0] // Gentle vertical float
                 }}
-                exit={{ opacity: 0, scale: 1.05, y: -5 }}
+                exit={{ opacity: 0, scale: 1.05, x: -20 }}
                 transition={{ 
-                  duration: 3, 
+                  duration: 2.8, 
                   ease: "easeInOut",
-                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" } // Continuous gentle float
+                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
                 }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
@@ -100,40 +101,27 @@ const Home = () => {
                 key="fallback"
                 src="/imags/collection-images.jpg"
                 alt="Hero Background"
-                initial={{ opacity: 0, scale: 1.05, y: 0 }}
-                animate={{ 
-                  opacity: 0.9, 
-                  scale: 1.0, 
-                  y: [0, -8, 0] 
-                }}
-                exit={{ opacity: 0, scale: 1.02, y: -4 }}
-                transition={{ 
-                  duration: 2.5, 
-                  ease: "easeInOut",
-                  y: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-                }}
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1.0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2.5, ease: "easeInOut" }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
               />
             )}
           </AnimatePresence>
           
-          {/* Subtle Grain Texture Overlay */}
-          <div className="absolute inset-0 z-25 opacity-8 mix-blend-overlay" style={{
-            backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")"
-          }} />
-          
           {/* Navigation Dots */}
-          {allProducts.length > 1 && (
-            <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center gap-4">
-              {allProducts.map((_, index) => (
+          {categories.length > 1 && (
+            <div className="absolute bottom-16 left-0 right-0 z-30 flex justify-center gap-5">
+              {categories.map((cat, index) => (
                 <button
-                  key={index}
+                  key={cat.id}
                   onClick={() => setCurrentHeroIndex(index)}
-                  className={`h-1.5 rounded-full transition-all duration-700 ${
+                  className={`h-2 rounded-full transition-all duration-700 ${
                     index === currentHeroIndex 
-                      ? 'w-10 bg-gold shadow-lg shadow-gold/40' 
-                      : 'w-3 bg-white/30 hover:bg-white/60'
+                      ? 'w-14 bg-gold shadow-lg shadow-gold/50' 
+                      : 'w-2 bg-white/25 hover:bg-white/50'
                   }`}
                 />
               ))}
@@ -141,46 +129,57 @@ const Home = () => {
           )}
         </div>
         
-        <div className="relative z-10 text-center space-y-16 px-4 max-w-6xl">
+        <div className="relative z-10 text-center space-y-14 px-6 max-w-7xl">
+          {/* Luxury Brand Header */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.5 }}
-            className="space-y-6 sm:space-y-8"
+            transition={{ duration: 1.4, delay: 0.3 }}
+            className="space-y-8"
           >
-            <span className="text-gold tracking-[0.6em] sm:tracking-[0.8em] uppercase text-[9px] sm:text-[11px] font-light block">The Art of Elegance</span>
-            <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-serif tracking-[0.15em] sm:tracking-[0.2em] uppercase text-white leading-none">
+            <span className="text-gold tracking-[0.8em] sm:tracking-[1em] uppercase text-[8px] sm:text-[10px] font-semibold block">Timeless Elegance</span>
+            <h1 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-serif tracking-[0.18em] sm:tracking-[0.25em] uppercase text-white leading-none">
               LIBBAAS
             </h1>
             <motion.div 
               initial={{ width: 0 }}
-              animate={{ width: "5rem" }}
-              transition={{ duration: 1.2, delay: 1.4 }}
-              className="h-0.5 bg-gold mx-auto mt-6 sm:mt-10"
+              animate={{ width: "6rem" }}
+              transition={{ duration: 1.4, delay: 1.2 }}
+              className="h-0.5 bg-gold mx-auto mt-8 sm:mt-12"
             />
           </motion.div>
           
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, delay: 1.8 }}
-            className="max-w-3xl mx-auto text-white/80 leading-relaxed text-lg sm:text-2xl font-light italic"
-          >
-            "True luxury is invisible, yet unforgettable." Discover our curated collection of silk and lace, designed for the sophisticated woman.
-          </motion.p>
+          {/* Current Category Display */}
+          {categories.length > 0 && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              key={categories[currentHeroIndex].id}
+              transition={{ duration: 0.8 }}
+              className="space-y-3"
+            >
+              <span className="text-white/70 tracking-[0.4em] uppercase text-[10px] font-medium block">
+                Discover Our
+              </span>
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif tracking-[0.12em] uppercase text-gold">
+                {categories[currentHeroIndex].displayName}
+              </h2>
+            </motion.div>
+          )}
           
+          {/* Shop Button */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 2.2 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8"
+            transition={{ duration: 1.2, delay: 1.8 }}
+            className="pt-4"
           >
             <Link
               to="/shop"
-              className="w-full sm:w-auto group relative flex items-center justify-center gap-4 bg-white text-[#05111a] px-14 sm:px-20 py-5 sm:py-7 text-[10px] sm:text-[12px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.5em] transition-all hover:bg-gold hover:text-white shadow-2xl overflow-hidden"
+              className="inline-flex items-center justify-center gap-5 bg-white text-[#0a1620] px-20 sm:px-28 py-6 sm:py-8 text-[11px] sm:text-[13px] font-bold uppercase tracking-[0.5em] sm:tracking-[0.6em] transition-all hover:bg-gold hover:text-white shadow-2xl hover:shadow-gold/30 overflow-hidden"
             >
-              <span className="relative z-10">Shop Collection</span>
-              <ArrowRight size={16} className="relative z-10 group-hover:translate-x-3 transition-transform duration-500" />
+              <span className="relative z-10">Explore The Collection</span>
+              <ArrowRight size={18} className="relative z-10 group-hover:translate-x-4 transition-transform duration-500" />
               <div className="absolute inset-0 bg-gold translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
             </Link>
           </motion.div>
