@@ -73,27 +73,27 @@ const Home = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a1620]/80 via-[#0a1620]/45 to-[#0a1620]/80 z-20" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0)_0%,rgba(10,22,32,0.7)_100%)] z-20" />
           
-          {/* Animated Category Carousel - ONLY Category Images, Perfectly Minimized! */}
+          {/* Animated Category Carousel - Perfect Balance: No Blank Spaces, No Oversizing! */}
           <AnimatePresence mode="wait">
             {categories.length > 0 ? (
               <motion.img
                 key={categories[currentHeroIndex].id}
                 src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName)}
                 alt={categories[currentHeroIndex].displayName}
-                initial={{ opacity: 0, x: 8 }}
+                initial={{ opacity: 0, x: 10 }}
                 animate={{ 
                   opacity: 1, 
-                  scale: 0.9, // Even smaller!
+                  scale: 0.95, // Perfect balance - small but fills the hero!
                   x: 0,
-                  y: [0, -3, 0] // Very gentle vertical float
+                  y: [0, -4, 0] // Gentle vertical float
                 }}
-                exit={{ opacity: 0, x: -8 }}
+                exit={{ opacity: 0, x: -10 }}
                 transition={{ 
                   duration: 1.8, 
                   ease: "easeOut",
-                  y: { duration: 9, repeat: Infinity, ease: "easeInOut" }
+                  y: { duration: 8, repeat: Infinity, ease: "easeInOut" }
                 }}
-                className="absolute inset-0 w-full h-full object-contain object-center"
+                className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
               />
             ) : (
@@ -102,10 +102,10 @@ const Home = () => {
                 src="/imags/collection-images.jpg"
                 alt="Hero Background"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 0.95 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 2, ease: "easeInOut" }}
-                className="absolute inset-0 w-full h-full object-contain object-center"
+                className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
               />
             )}
