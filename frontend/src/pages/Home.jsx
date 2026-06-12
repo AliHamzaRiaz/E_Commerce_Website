@@ -14,13 +14,18 @@ const Home = () => {
 
   // Auto-rotate hero images - now using categories!
   useEffect(() => {
+    // Reset index if it's out of bounds
+    if (currentHeroIndex >= categories.length && categories.length > 0) {
+      setCurrentHeroIndex(0);
+    }
+    
     if (categories.length > 0) {
       const interval = setInterval(() => {
         setCurrentHeroIndex((prev) => (prev + 1) % categories.length);
       }, 5000); // Change every 5 seconds
       return () => clearInterval(interval);
     }
-  }, [categories]);
+  }, [categories, currentHeroIndex]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,9 +37,18 @@ const Home = () => {
         console.log('API Response Products:', prodRes.data);
         console.log('API Response Categories:', catRes.data);
         const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
+        const allCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []);
+        
+        // Filter out categories with no displayName!
+        const validCategories = allCategories.filter(cat => 
+          cat.displayName && cat.displayName.trim() !== ''
+        );
+        
+        console.log('[Home] Valid categories:', validCategories);
+        
         setAllProducts(products);
         setFeaturedProducts(products.slice(0, 4));
-        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []));
+        setCategories(validCategories);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
