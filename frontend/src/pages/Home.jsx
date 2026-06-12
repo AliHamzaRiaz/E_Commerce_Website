@@ -199,7 +199,7 @@ const Home = () => {
             <span className="text-gold text-[10px] font-bold tracking-[0.6em] uppercase">The Curation</span>
             <div className="h-px w-12 bg-gold/30" />
           </motion.div>
-          <h2 className="text-4xl md:text-5xl font-serif tracking-tight uppercase text-[#0b2a3d]">Top Categories</h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif tracking-tight uppercase text-[#0b2a3d]">Top Categories</h2>
         </div>
 
         <div className="flex lg:grid lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-10 overflow-x-auto lg:overflow-visible pb-10 sm:pb-12 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0">
@@ -235,18 +235,18 @@ const Home = () => {
       {/* Featured Products */}
       <section className="bg-[#fcfcfc] pt-40 pb-20">
         <div className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
-            <div className="space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-24 gap-8">
+            <div className="space-y-6 text-center md:text-left">
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="flex items-center gap-4"
+                className="flex items-center justify-center md:justify-start gap-4"
               >
                 <div className="w-12 h-px bg-gold" />
                 <span className="text-[10px] font-bold tracking-[0.5em] uppercase text-gold">The Edit</span>
               </motion.div>
-              <h2 className="text-5xl md:text-6xl font-serif tracking-tight text-[#0b2a3d]">Trending Now</h2>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif tracking-tight text-[#0b2a3d]">Trending Now</h2>
             </div>
             <Link to="/shop" className="group flex items-center gap-4 text-[#0b2a3d] text-[10px] font-bold tracking-[0.3em] uppercase border-b border-[#0b2a3d]/10 pb-3 hover:border-gold transition-all duration-500">
               Explore All Masterpieces <ChevronRight size={14} className="group-hover:translate-x-2 transition-transform duration-500" />
