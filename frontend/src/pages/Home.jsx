@@ -66,12 +66,12 @@ const Home = () => {
 
   return (
     <div className="pb-32">
-      {/* Hero Section - Professional Category Carousel */}
-      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-[#0a1620] mb-32">
+      {/* Hero Section - Professional, Fully Responsive Category Carousel */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a1620] mb-24">
         <div className="absolute inset-0 z-0">
           {/* Professional Overlay for Clarity & Readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1620]/75 via-[#0a1620]/35 to-[#0a1620]/70 z-20" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0)_0%,rgba(10,22,32,0.65)_100%)] z-20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1620]/80 via-[#0a1620]/45 to-[#0a1620]/80 z-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0)_0%,rgba(10,22,32,0.7)_100%)] z-20" />
           
           {/* Animated Category Carousel */}
           <AnimatePresence mode="wait">
@@ -80,18 +80,18 @@ const Home = () => {
                 key={categories[currentHeroIndex].id}
                 src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, '/imags/collection-images.jpg')}
                 alt={categories[currentHeroIndex].displayName}
-                initial={{ opacity: 0, scale: 1.08, x: 20 }}
+                initial={{ opacity: 0, scale: 1.1, x: 20 }}
                 animate={{ 
                   opacity: 1, 
                   scale: 1.0, 
                   x: 0,
-                  y: [0, -8, 0] // Gentle vertical float
+                  y: [0, -6, 0] // Gentle vertical float
                 }}
                 exit={{ opacity: 0, scale: 1.05, x: -20 }}
                 transition={{ 
                   duration: 2.8, 
                   ease: "easeInOut",
-                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
+                  y: { duration: 7, repeat: Infinity, ease: "easeInOut" }
                 }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
@@ -113,14 +113,14 @@ const Home = () => {
           
           {/* Navigation Dots */}
           {categories.length > 1 && (
-            <div className="absolute bottom-16 left-0 right-0 z-30 flex justify-center gap-5">
+            <div className="absolute bottom-12 sm:bottom-16 left-0 right-0 z-30 flex justify-center gap-4">
               {categories.map((cat, index) => (
                 <button
                   key={cat.id}
                   onClick={() => setCurrentHeroIndex(index)}
-                  className={`h-2 rounded-full transition-all duration-700 ${
+                  className={`h-1.5 sm:h-2 rounded-full transition-all duration-700 ${
                     index === currentHeroIndex 
-                      ? 'w-14 bg-gold shadow-lg shadow-gold/50' 
+                      ? 'w-10 sm:w-14 bg-gold shadow-lg shadow-gold/50' 
                       : 'w-2 bg-white/25 hover:bg-white/50'
                   }`}
                 />
@@ -129,23 +129,25 @@ const Home = () => {
           )}
         </div>
         
-        <div className="relative z-10 text-center space-y-14 px-6 max-w-7xl">
+        <div className="relative z-10 text-center space-y-10 sm:space-y-14 px-4 sm:px-6 max-w-6xl">
           {/* Luxury Brand Header */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.4, delay: 0.3 }}
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
           >
-            <span className="text-gold tracking-[0.8em] sm:tracking-[1em] uppercase text-[8px] sm:text-[10px] font-semibold block">Timeless Elegance</span>
-            <h1 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-serif tracking-[0.18em] sm:tracking-[0.25em] uppercase text-white leading-none">
+            <span className="text-gold tracking-[0.6em] sm:tracking-[0.8em] md:tracking-[1em] uppercase text-[7px] sm:text-[9px] md:text-[11px] font-semibold block">
+              Timeless Elegance
+            </span>
+            <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] xl:text-[12rem] font-serif tracking-[0.15em] sm:tracking-[0.18em] md:tracking-[0.25em] uppercase text-white leading-none">
               LIBBAAS
             </h1>
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: "6rem" }}
               transition={{ duration: 1.4, delay: 1.2 }}
-              className="h-0.5 bg-gold mx-auto mt-8 sm:mt-12"
+              className="h-0.5 bg-gold mx-auto mt-6 sm:mt-8 md:mt-12"
             />
           </motion.div>
           
@@ -156,18 +158,18 @@ const Home = () => {
               animate={{ opacity: 1 }}
               key={categories[currentHeroIndex].id}
               transition={{ duration: 0.8 }}
-              className="space-y-3"
+              className="space-y-2 sm:space-y-3"
             >
-              <span className="text-white/70 tracking-[0.4em] uppercase text-[10px] font-medium block">
+              <span className="text-white/70 tracking-[0.35em] sm:tracking-[0.4em] uppercase text-[9px] sm:text-[11px] md:text-[12px] font-medium block">
                 Discover Our
               </span>
-              <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif tracking-[0.12em] uppercase text-gold">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-[0.1em] sm:tracking-[0.12em] uppercase text-gold">
                 {categories[currentHeroIndex].displayName}
               </h2>
             </motion.div>
           )}
           
-          {/* Shop Button */}
+          {/* Shop Button - Fixed! */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -176,10 +178,10 @@ const Home = () => {
           >
             <Link
               to="/shop"
-              className="inline-flex items-center justify-center gap-5 bg-white text-[#0a1620] px-20 sm:px-28 py-6 sm:py-8 text-[11px] sm:text-[13px] font-bold uppercase tracking-[0.5em] sm:tracking-[0.6em] transition-all hover:bg-gold hover:text-white shadow-2xl hover:shadow-gold/30 overflow-hidden"
+              className="group inline-flex items-center justify-center gap-4 bg-white text-[#0a1620] px-12 sm:px-20 md:px-28 py-5 sm:py-6 md:py-8 text-[10px] sm:text-[12px] md:text-[13px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.5em] md:tracking-[0.6em] transition-all duration-300 hover:bg-gold hover:text-white shadow-2xl hover:shadow-gold/30 relative overflow-hidden"
             >
               <span className="relative z-10">Explore The Collection</span>
-              <ArrowRight size={18} className="relative z-10 group-hover:translate-x-4 transition-transform duration-500" />
+              <ArrowRight size={16} className="relative z-10 transition-transform duration-500 group-hover:translate-x-3" />
               <div className="absolute inset-0 bg-gold translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
             </Link>
           </motion.div>
