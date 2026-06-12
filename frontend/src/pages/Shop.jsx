@@ -553,14 +553,14 @@ const Shop = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide no-scrollbar py-4">
+            <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto scrollbar-hide no-scrollbar py-3 sm:py-4">
               {['All', ...categories.map(c => c.displayName)].map((c) => (
                 <button
                   key={c}
                   onClick={() => setSearchParams(c === 'All' ? {} : { category: c })}
-                  className={`relative px-10 py-4 text-[10px] font-bold uppercase tracking-[0.4em] transition-all duration-700 rounded-full overflow-hidden ${
+                  className={`relative flex-shrink-0 px-4 sm:px-8 lg:px-10 py-2.5 sm:py-3.5 lg:py-4 text-[8px] sm:text-[9px] lg:text-[10px] font-bold uppercase tracking-[0.35em] sm:tracking-[0.4em] transition-all duration-700 rounded-full overflow-hidden ${
                     selectedCategory === c 
-                    ? 'text-white bg-[#0b2a3d] shadow-2xl shadow-[#0b2a3d]/20 scale-105' 
+                    ? 'text-white bg-[#0b2a3d] shadow-lg shadow-[#0b2a3d]/20 scale-105' 
                     : 'text-[#0b2a3d]/40 hover:text-[#0b2a3d] bg-neutral-50 hover:bg-neutral-100'
                   }`}
                 >

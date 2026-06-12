@@ -202,17 +202,17 @@ const Home = () => {
           <h2 className="text-4xl md:text-5xl font-serif tracking-tight uppercase text-[#0b2a3d]">Top Categories</h2>
         </div>
 
-        <div className="flex lg:grid lg:grid-cols-4 gap-6 sm:gap-10 overflow-x-auto lg:overflow-visible pb-12 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0">
+        <div className="flex lg:grid lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-10 overflow-x-auto lg:overflow-visible pb-10 sm:pb-12 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0">
           {categories.map((cat) => (
             <motion.div 
               key={cat.id}
               whileHover={{ y: -12 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="min-w-[75%] sm:min-w-[40%] lg:min-w-0 snap-center"
+              className="min-w-[80%] sm:min-w-[45%] lg:min-w-0 snap-center"
             >
               <Link
                 to={`/shop?category=${cat.displayName}`}
-                className="group relative block aspect-[3/4] overflow-hidden rounded-[2.5rem] luxury-shadow"
+                className="group relative block aspect-[3/4] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] luxury-shadow"
               >
                 <img 
                   src={cat.image || getCategoryImage(cat.displayName, '/imags/sports-bra.jpg')} 
@@ -220,11 +220,11 @@ const Home = () => {
                   alt={cat.displayName}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0b2a3d]/90 via-[#0b2a3d]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                <div className="absolute inset-0 border border-white/0 group-hover:border-white/10 transition-all duration-700 m-4 rounded-[2rem]" />
+                <div className="absolute inset-0 border border-white/0 group-hover:border-white/10 transition-all duration-700 m-3 sm:m-4 rounded-[1.5rem] sm:rounded-[2rem]" />
                 
-                <div className="absolute bottom-10 left-0 right-0 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
-                  <span className="text-gold text-[8px] font-bold tracking-[0.4em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-700 mb-2 block">Discover</span>
-                  <h3 className="text-white text-xl font-serif tracking-[0.1em] uppercase drop-shadow-2xl">{cat.displayName}</h3>
+                <div className="absolute bottom-8 sm:bottom-10 left-0 right-0 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
+                  <span className="text-gold text-[7px] sm:text-[8px] font-bold tracking-[0.35em] sm:tracking-[0.4em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-700 mb-2 block">Discover</span>
+                  <h3 className="text-white text-lg sm:text-xl font-serif tracking-[0.1em] uppercase drop-shadow-2xl">{cat.displayName}</h3>
                 </div>
               </Link>
             </motion.div>
@@ -258,23 +258,23 @@ const Home = () => {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
-            className="flex lg:grid lg:grid-cols-4 gap-x-6 sm:gap-x-12 gap-y-16 overflow-x-auto lg:overflow-visible pb-12 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0"
+            className="flex lg:grid lg:grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-12 gap-y-12 sm:gap-y-16 overflow-x-auto lg:overflow-visible pb-10 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0"
           >
             {loading ? [1,2,3,4].map(i => (
-              <div key={i} className="min-w-[75%] sm:min-w-[40%] lg:min-w-0 aspect-[3/4] bg-neutral-50 animate-pulse rounded-2xl"></div>
+              <div key={i} className="min-w-[80%] sm:min-w-[45%] lg:min-w-0 aspect-[3/4] bg-neutral-50 animate-pulse rounded-xl sm:rounded-2xl"></div>
             )) : featuredProducts.map(p => (
-              <motion.div key={p.id} variants={fadeInUp} className="min-w-[75%] sm:min-w-[40%] lg:min-w-0 snap-center">
-                <Link to={`/product/${p.id}`} className="group block space-y-8">
-                  <div className="aspect-[3/4] overflow-hidden bg-white relative rounded-2xl luxury-shadow transition-all duration-700 group-hover:-translate-y-2">
+              <motion.div key={p.id} variants={fadeInUp} className="min-w-[80%] sm:min-w-[45%] lg:min-w-0 snap-center">
+                <Link to={`/product/${p.id}`} className="group block space-y-6 sm:space-y-8">
+                  <div className="aspect-[3/4] overflow-hidden bg-white relative rounded-xl sm:rounded-2xl luxury-shadow transition-all duration-700 group-hover:-translate-y-2">
                     <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" />
                     <div className="absolute inset-0 bg-[#0b2a3d]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="absolute bottom-8 left-8 right-8 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700 z-20">
-                      <button className="w-full bg-white text-[#0b2a3d] py-5 text-[9px] font-bold tracking-[0.3em] uppercase hover:bg-gold hover:text-white transition-all duration-500 rounded-xl shadow-xl">Quick View</button>
+                    <div className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-6 sm:right-8 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700 z-20">
+                      <button className="w-full bg-white text-[#0b2a3d] py-4 sm:py-5 text-[8px] sm:text-[9px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase hover:bg-gold hover:text-white transition-all duration-500 rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl">Quick View</button>
                     </div>
                   </div>
-                  <div className="text-center space-y-3 px-4">
-                    <h3 className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#0b2a3d]/80 group-hover:text-gold transition-colors duration-500">{p.name}</h3>
-                    <p className="text-gold font-serif text-xl tracking-tight">Rs {p.price?.toLocaleString()}</p>
+                  <div className="text-center space-y-2 sm:space-y-3 px-3 sm:px-4">
+                    <h3 className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-[#0b2a3d]/80 group-hover:text-gold transition-colors duration-500">{p.name}</h3>
+                    <p className="text-gold font-serif text-lg sm:text-xl tracking-tight">Rs {p.price?.toLocaleString()}</p>
                   </div>
                 </Link>
               </motion.div>
