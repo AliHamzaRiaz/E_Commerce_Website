@@ -69,9 +69,9 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-[#05111a] mb-32">
         <div className="absolute inset-0 z-0">
-          {/* Luxury Multi-Layer Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#05111a]/90 via-[#05111a]/60 to-[#05111a]/80 z-20" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(5,17,26,0.75)_100%)] z-20" />
+          {/* Luxury Multi-Layer Overlay - Lightened for Product Clarity */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#05111a]/70 via-[#05111a]/40 to-[#05111a]/60 z-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(5,17,26,0.55)_100%)] z-20" />
           
           {/* Animated Product Carousel with Parallax Auto-Scroll */}
           <AnimatePresence mode="wait">
@@ -80,17 +80,17 @@ const Home = () => {
                 key={allProducts[currentHeroIndex].id}
                 src={allProducts[currentHeroIndex].image}
                 alt={allProducts[currentHeroIndex].name}
-                initial={{ opacity: 0, scale: 1.15, y: 0 }}
+                initial={{ opacity: 0, scale: 1.1, y: 0 }}
                 animate={{ 
-                  opacity: 0.7, 
-                  scale: 1.05, 
-                  y: [0, -15, 0], // Subtle vertical parallax auto-scroll
+                  opacity: 1, // Full opacity for maximum clarity
+                  scale: 1.0, // No zoom - perfect view
+                  y: [0, -10, 0], // Gentle vertical parallax
                 }}
-                exit={{ opacity: 0, scale: 1.1, y: -10 }}
+                exit={{ opacity: 0, scale: 1.05, y: -5 }}
                 transition={{ 
-                  duration: 3.5, 
+                  duration: 3, 
                   ease: "easeInOut",
-                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" } // Continuous gentle float
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" } // Continuous gentle float
                 }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
@@ -100,17 +100,17 @@ const Home = () => {
                 key="fallback"
                 src="/imags/collection-images.jpg"
                 alt="Hero Background"
-                initial={{ opacity: 0, scale: 1.1, y: 0 }}
+                initial={{ opacity: 0, scale: 1.05, y: 0 }}
                 animate={{ 
-                  opacity: 0.6, 
+                  opacity: 0.9, 
                   scale: 1.0, 
-                  y: [0, -12, 0] 
+                  y: [0, -8, 0] 
                 }}
-                exit={{ opacity: 0, scale: 1.05, y: -8 }}
+                exit={{ opacity: 0, scale: 1.02, y: -4 }}
                 transition={{ 
-                  duration: 3, 
+                  duration: 2.5, 
                   ease: "easeInOut",
-                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                  y: { duration: 4, repeat: Infinity, ease: "easeInOut" }
                 }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
@@ -119,7 +119,7 @@ const Home = () => {
           </AnimatePresence>
           
           {/* Subtle Grain Texture Overlay */}
-          <div className="absolute inset-0 z-25 opacity-15 mix-blend-overlay" style={{
+          <div className="absolute inset-0 z-25 opacity-8 mix-blend-overlay" style={{
             backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")"
           }} />
           
