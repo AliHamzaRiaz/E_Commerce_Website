@@ -10,7 +10,17 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [heroImg, setHeroImg] = useState('/imags/collection-images.jpg');
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+
+  // Auto-rotate hero images
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentHeroIndex((prev) => (prev + 1) % allProducts.length);
+      }, 5000); // Change every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [allProducts]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,47 +67,104 @@ const Home = () => {
   return (
     <div className="pb-32">
       {/* Hero Section */}
-      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-[#0b2a3d] mb-32">
-        <motion.div 
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.6 }}
-          transition={{ duration: 2, ease: "easeOut" }}
-          className="absolute inset-0 z-0"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-[#0b2a3d]/40 z-10" />
-          <img 
-            src={heroImg} 
-            alt="Hero Background"
-            className="w-full h-full object-cover"
-            loading="eager"
-            onError={() => setHeroImg("/imags/hero-bg.png")}
-          />
-        </motion.div>
+      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-[#05111a] mb-32">
+        <div className="absolute inset-0 z-0">
+          {/* Luxury Multi-Layer Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#05111a]/90 via-[#05111a]/60 to-[#05111a]/80 z-20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(5,17,26,0.75)_100%)] z-20" />
+          
+          {/* Animated Product Carousel with Parallax Auto-Scroll */}
+          <AnimatePresence mode="wait">
+            {allProducts.length > 0 ? (
+              <motion.img
+                key={allProducts[currentHeroIndex].id}
+                src={allProducts[currentHeroIndex].image}
+                alt={allProducts[currentHeroIndex].name}
+                initial={{ opacity: 0, scale: 1.15, y: 0 }}
+                animate={{ 
+                  opacity: 0.7, 
+                  scale: 1.05, 
+                  y: [0, -15, 0], // Subtle vertical parallax auto-scroll
+                }}
+                exit={{ opacity: 0, scale: 1.1, y: -10 }}
+                transition={{ 
+                  duration: 3.5, 
+                  ease: "easeInOut",
+                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" } // Continuous gentle float
+                }}
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                loading="eager"
+              />
+            ) : (
+              <motion.img
+                key="fallback"
+                src="/imags/collection-images.jpg"
+                alt="Hero Background"
+                initial={{ opacity: 0, scale: 1.1, y: 0 }}
+                animate={{ 
+                  opacity: 0.6, 
+                  scale: 1.0, 
+                  y: [0, -12, 0] 
+                }}
+                exit={{ opacity: 0, scale: 1.05, y: -8 }}
+                transition={{ 
+                  duration: 3, 
+                  ease: "easeInOut",
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                loading="eager"
+              />
+            )}
+          </AnimatePresence>
+          
+          {/* Subtle Grain Texture Overlay */}
+          <div className="absolute inset-0 z-25 opacity-15 mix-blend-overlay" style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")"
+          }} />
+          
+          {/* Navigation Dots */}
+          {allProducts.length > 1 && (
+            <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center gap-4">
+              {allProducts.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentHeroIndex(index)}
+                  className={`h-1.5 rounded-full transition-all duration-700 ${
+                    index === currentHeroIndex 
+                      ? 'w-10 bg-gold shadow-lg shadow-gold/40' 
+                      : 'w-3 bg-white/30 hover:bg-white/60'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
         
-        <div className="relative z-10 text-center space-y-12 px-4 max-w-5xl">
+        <div className="relative z-10 text-center space-y-16 px-4 max-w-6xl">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="space-y-4 sm:space-y-6"
+            transition={{ duration: 1.2, delay: 0.5 }}
+            className="space-y-6 sm:space-y-8"
           >
-            <span className="text-gold tracking-[0.4em] sm:tracking-[0.6em] uppercase text-[10px] sm:text-sm font-bold block mb-2 sm:mb-4">The Art of Elegance</span>
-            <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-serif tracking-[0.1em] sm:tracking-[0.15em] uppercase text-white leading-none">
+            <span className="text-gold tracking-[0.6em] sm:tracking-[0.8em] uppercase text-[9px] sm:text-[11px] font-light block">The Art of Elegance</span>
+            <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-serif tracking-[0.15em] sm:tracking-[0.2em] uppercase text-white leading-none">
               LIBBAAS
             </h1>
             <motion.div 
               initial={{ width: 0 }}
-              animate={{ width: "4rem" }}
-              transition={{ duration: 1, delay: 1.2 }}
-              className="h-px bg-gold mx-auto mt-4 sm:mt-8"
+              animate={{ width: "5rem" }}
+              transition={{ duration: 1.2, delay: 1.4 }}
+              className="h-0.5 bg-gold mx-auto mt-6 sm:mt-10"
             />
           </motion.div>
           
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.5 }}
-            className="max-w-2xl mx-auto text-white/90 leading-relaxed text-base sm:text-xl font-light italic px-4"
+            transition={{ duration: 1.2, delay: 1.8 }}
+            className="max-w-3xl mx-auto text-white/80 leading-relaxed text-lg sm:text-2xl font-light italic"
           >
             "True luxury is invisible, yet unforgettable." Discover our curated collection of silk and lace, designed for the sophisticated woman.
           </motion.p>
@@ -105,16 +172,16 @@ const Home = () => {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1.8 }}
+            transition={{ duration: 1.2, delay: 2.2 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8"
           >
             <Link
               to="/shop"
-              className="w-full sm:w-auto group relative flex items-center justify-center gap-4 bg-white text-[#0b2a3d] px-10 sm:px-16 py-4 sm:py-6 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] transition-all hover:bg-gold hover:text-white shadow-2xl overflow-hidden"
+              className="w-full sm:w-auto group relative flex items-center justify-center gap-4 bg-white text-[#05111a] px-14 sm:px-20 py-5 sm:py-7 text-[10px] sm:text-[12px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.5em] transition-all hover:bg-gold hover:text-white shadow-2xl overflow-hidden"
             >
               <span className="relative z-10">Shop Collection</span>
-              <ArrowRight size={14} className="relative z-10 group-hover:translate-x-2 transition-transform duration-300" />
-              <div className="absolute inset-0 bg-gold translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <ArrowRight size={16} className="relative z-10 group-hover:translate-x-3 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gold translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
             </Link>
           </motion.div>
         </div>
