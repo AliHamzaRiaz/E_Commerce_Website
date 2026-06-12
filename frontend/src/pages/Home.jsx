@@ -80,17 +80,17 @@ const Home = () => {
                 key={categories[currentHeroIndex].id}
                 src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, '/imags/collection-images.jpg')}
                 alt={categories[currentHeroIndex].displayName}
-                initial={{ opacity: 0, scale: 1.1, x: 20 }}
+                initial={{ opacity: 0, scale: 1.08, x: 15 }}
                 animate={{ 
                   opacity: 1, 
                   scale: 1.0, 
                   x: 0,
                   y: [0, -6, 0] // Gentle vertical float
                 }}
-                exit={{ opacity: 0, scale: 1.05, x: -20 }}
+                exit={{ opacity: 0, scale: 1.03, x: -15 }}
                 transition={{ 
-                  duration: 2.8, 
-                  ease: "easeInOut",
+                  duration: 2, 
+                  ease: "easeOut",
                   y: { duration: 7, repeat: Infinity, ease: "easeInOut" }
                 }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
@@ -151,13 +151,13 @@ const Home = () => {
             />
           </motion.div>
           
-          {/* Current Category Display */}
+          {/* Current Category Display - Timed to sync with image! */}
           {categories.length > 0 && (
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               key={categories[currentHeroIndex].id}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 1, delay: 0.5 }}
               className="space-y-2 sm:space-y-3"
             >
               <span className="text-white/70 tracking-[0.35em] sm:tracking-[0.4em] uppercase text-[9px] sm:text-[11px] md:text-[12px] font-medium block">
@@ -173,7 +173,7 @@ const Home = () => {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 1.8 }}
+            transition={{ duration: 1.2, delay: 2.2 }}
             className="pt-4"
           >
             <Link
