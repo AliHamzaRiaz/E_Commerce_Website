@@ -49,6 +49,7 @@ const Home = () => {
         setAllProducts(products);
         setFeaturedProducts(products.slice(0, 4));
         setCategories(validCategories);
+        setCurrentHeroIndex(0); // Reset index to first category to prevent unknown image!
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -87,9 +88,9 @@ const Home = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a1620]/80 via-[#0a1620]/45 to-[#0a1620]/80 z-20" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0)_0%,rgba(10,22,32,0.7)_100%)] z-20" />
           
-          {/* Animated Category Carousel - Perfect Balance: No Blank Spaces, No Oversizing! */}
+          {/* Animated Category Carousel - Only Categories, No Fallback! */}
           <AnimatePresence mode="wait">
-            {categories.length > 0 ? (
+            {categories.length > 0 && (
               <motion.img
                 key={categories[currentHeroIndex].id}
                 src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName)}
@@ -107,18 +108,6 @@ const Home = () => {
                   ease: "easeOut",
                   y: { duration: 8, repeat: Infinity, ease: "easeInOut" }
                 }}
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                loading="eager"
-              />
-            ) : (
-              <motion.img
-                key="fallback"
-                src="/imags/collection-images.jpg"
-                alt="Hero Background"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, scale: 0.95 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 2, ease: "easeInOut" }}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="eager"
               />
