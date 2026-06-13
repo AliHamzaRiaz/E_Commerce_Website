@@ -1,35 +1,10 @@
 const fs = require('fs/promises');
 const path = require('path');
-const { Pool } = require('pg');
+const pool = require('./db');
 
 const LEGACY_PRODUCTS_JSON = path.join(__dirname, '..', 'data', 'products.json');
 
-let pool;
-
 const getPool = () => {
-  if (pool) return pool;
-  
-  // Try to get connection string from Vercel first, then standard, then Supabase
-  let connectionString = 
-    process.env.POSTGRES_URL || 
-    process.env.DATABASE_URL ||
-    process.env.SUPABASE_DATABASE_URL;
-  
-  if (!connectionString) {
-    throw new Error(
-      'POSTGRES_URL or DATABASE_URL is not set. Add it to your Vercel environment variables.'
-    );
-  }
-  
-  // Auto-enable SSL for non-localhost connections
-  const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-  const sslConfig = isLocalhost ? undefined : { rejectUnauthorized: false };
-  
-  pool = new Pool({
-    connectionString,
-    ssl: sslConfig,
-    max: 10,
-  });
   return pool;
 };
 

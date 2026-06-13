@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Package, ShoppingBag, LogOut, LayoutDashboard } from 'lucide-react';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 const AdminNav = () => {
+  const { logout } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -69,11 +71,7 @@ const AdminNav = () => {
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => {
-                localStorage.removeItem('adminKey');
-                localStorage.removeItem('adminToken');
-                navigate(loginPath);
-              }}
+              onClick={logout}
               className="flex items-center gap-2 text-white/70 hover:text-white text-[11px] uppercase tracking-widest transition-colors font-medium group"
             >
               <span className="hidden sm:inline">Logout</span>

@@ -13,8 +13,10 @@ import {
   KeyRound
 } from 'lucide-react';
 import adminApi from '../utils/adminApi';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 const AdminLogin = () => {
+  const { login } = useAdminAuth();
   const [email, setEmail] = useState(localStorage.getItem('adminEmail') || '');
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -53,8 +55,7 @@ const AdminLogin = () => {
       }
       const token = String(res.data?.token || '');
       if (!token) throw new Error('Login failed');
-      localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminEmail', adminEmailNormalized);
+      login(token, adminEmailNormalized);
       navigate(ordersPath);
     } catch (err) {
       localStorage.removeItem('adminToken');
@@ -77,8 +78,7 @@ const AdminLogin = () => {
       const res = await adminApi.post('/auth/verify-otp', { email: adminEmailNormalized, code: otpCode });
       const token = String(res.data?.token || '');
       if (!token) throw new Error('Login failed');
-      localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminEmail', adminEmailNormalized);
+      login(token, adminEmailNormalized);
       navigate(ordersPath);
     } catch (err) {
       localStorage.removeItem('adminToken');

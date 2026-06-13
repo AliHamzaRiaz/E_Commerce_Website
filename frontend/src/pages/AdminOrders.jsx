@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import AdminNav from '../components/AdminNav';
 import adminApi from '../utils/adminApi';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 const getStatusConfig = (status) => {
   const config = {
@@ -34,6 +35,7 @@ const getStatusConfig = (status) => {
 };
 
 const AdminOrders = () => {
+  const { logout } = useAdminAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,9 +79,7 @@ const AdminOrders = () => {
   const isAdminHost = window.location.hostname.startsWith('admin.');
   const loginPath = isAdminHost ? '/login' : '/admin/login';
   const logoutToLogin = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminKey');
-    navigate(loginPath, { replace: true });
+    logout();
   };
 
   const fetchOrders = async () => {
