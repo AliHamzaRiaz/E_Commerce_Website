@@ -2,6 +2,10 @@ const { getPool } = require('./productRepository');
 
 const initOrdersTable = async () => {
   const p = getPool();
+  if (!p) {
+    console.log('⚠️ No database available, skipping orders table init');
+    return;
+  }
   
   // First, try to create table with all columns
   try {
@@ -56,8 +60,12 @@ const initOrdersTable = async () => {
     }
   }
   
-  await p.query(`CREATE INDEX IF NOT EXISTS idx_orders_customer_email_lower ON orders (lower(customer_email));`);
-  await p.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at DESC);`);
+  try {
+    await p.query(`CREATE INDEX IF NOT EXISTS idx_orders_customer_email_lower ON orders (lower(customer_email));`);
+    await p.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at DESC);`);
+  } catch (err) {
+    console.warn('[initOrdersTable] Failed to create indexes:', err.message);
+  }
 };
 
 const rowToOrder = (row) => {
