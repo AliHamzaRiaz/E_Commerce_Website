@@ -92,21 +92,42 @@ const listCategories = async () => {
 
 const addCategory = async ({ name, displayName, image, types = [] }) => {
   const p = getPool();
-  const { rows } = await p.query(
-    'INSERT INTO categories (name, display_name, image, types) VALUES ($1, $2, $3, $4) RETURNING *',
-    [name.toLowerCase().trim(), displayName.trim(), image, JSON.stringify(types)]
-  );
-  return rows[0];
+  if (!p) {
+    console.log('⚠️ No database available, not adding category');
+    return null;
+  }
+  try {
+    const { rows } = await p.query(
+      'INSERT INTO categories (name, display_name, image, types) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name.toLowerCase().trim(), displayName.trim(), image, JSON.stringify(types)]
+    );
+    return rows[0];
+  } catch (e) {
+    console.error('❌ Failed to add category:', e);
+    return null;
+  }
 };
 
 const deleteCategory = async (id) => {
   const p = getPool();
-  const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-  await p.query('DELETE FROM categories WHERE id = $1', [numericId]);
+  if (!p) {
+    console.log('⚠️ No database available, not deleting category');
+    return;
+  }
+  try {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    await p.query('DELETE FROM categories WHERE id = $1', [numericId]);
+  } catch (e) {
+    console.error('❌ Failed to delete category:', e);
+  }
 };
 
 const updateCategory = async (id, { displayName, image, types }) => {
   const p = getPool();
+  if (!p) {
+    console.log('⚠️ No database available, not updating category');
+    return null;
+  }
   try {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
     console.log('[updateCategory] Updating category', { id: numericId, displayName, image, types });
@@ -134,7 +155,7 @@ const updateCategory = async (id, { displayName, image, types }) => {
     return rows[0];
   } catch (e) {
     console.error('[updateCategory] Error:', e);
-    throw e;
+    return null;
   }
 };
 

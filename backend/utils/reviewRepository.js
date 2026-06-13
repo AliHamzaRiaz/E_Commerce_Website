@@ -97,36 +97,41 @@ const addReview = async ({ productId, userName, rating, comment }) => {
   const p = getPool();
   if (!p) {
     console.log('⚠️ No database available, skipping addReview');
-    throw new Error('Database not available');
+    return null;
   }
   
-  // Get existing columns first
-  const { rows: columns } = await p.query(`
-    SELECT column_name FROM information_schema.columns 
-    WHERE table_name = 'reviews'
-  `);
-  const colNames = columns.map(c => c.column_name.toLowerCase());
-  
-  // Determine column names to use
-  const productIdCol = colNames.includes('product_id') ? 'product_id' : (colNames.includes('productid') ? 'productid' : 'product_id');
-  const userNameCol = colNames.includes('user_name') ? 'user_name' : (colNames.includes('username') ? 'username' : 'user_name');
-  const ratingCol = colNames.includes('rating') ? 'rating' : 'rating';
-  const commentCol = colNames.includes('comment') ? 'comment' : (colNames.includes('content') ? 'content' : (colNames.includes('text') ? 'text' : 'comment'));
-  
-  // Build insert query
-  const { rows } = await p.query(
-    `INSERT INTO reviews (${productIdCol}, ${userNameCol}, ${ratingCol}, ${commentCol}) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [String(productId), userName, rating, comment]
-  );
-  
-  return {
-    id: rows[0].id,
-    productId: rows[0][productIdCol],
-    userName: rows[0][userNameCol],
-    rating: rows[0][ratingCol],
-    comment: rows[0][commentCol],
-    createdAt: rows[0].created_at || rows[0].createdat || new Date()
-  };
+  try {
+    // Get existing columns first
+    const { rows: columns } = await p.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'reviews'
+    `);
+    const colNames = columns.map(c => c.column_name.toLowerCase());
+    
+    // Determine column names to use
+    const productIdCol = colNames.includes('product_id') ? 'product_id' : (colNames.includes('productid') ? 'productid' : 'product_id');
+    const userNameCol = colNames.includes('user_name') ? 'user_name' : (colNames.includes('username') ? 'username' : 'user_name');
+    const ratingCol = colNames.includes('rating') ? 'rating' : 'rating';
+    const commentCol = colNames.includes('comment') ? 'comment' : (colNames.includes('content') ? 'content' : (colNames.includes('text') ? 'text' : 'comment'));
+    
+    // Build insert query
+    const { rows } = await p.query(
+      `INSERT INTO reviews (${productIdCol}, ${userNameCol}, ${ratingCol}, ${commentCol}) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [String(productId), userName, rating, comment]
+    );
+    
+    return {
+      id: rows[0].id,
+      productId: rows[0][productIdCol],
+      userName: rows[0][userNameCol],
+      rating: rows[0][ratingCol],
+      comment: rows[0][commentCol],
+      createdAt: rows[0].created_at || rows[0].createdat || new Date()
+    };
+  } catch (e) {
+    console.error('❌ Failed to add review:', e);
+    return null;
+  }
 };
 
 module.exports = {

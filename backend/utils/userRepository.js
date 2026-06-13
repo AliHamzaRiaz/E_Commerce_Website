@@ -49,91 +49,159 @@ const rowToUser = (row) => ({
 
 const createUser = async ({ id, name, email, passwordHash }) => {
   const p = getPool();
-  const { rows } = await p.query(
-    `INSERT INTO users (id, name, email, password_hash)
-     VALUES ($1, $2, lower($3), $4)
-     RETURNING id, name, email, favorites_json, cart_json, reset_token, reset_token_expiry, created_at`,
-    [String(id), String(name), String(email), String(passwordHash)]
-  );
-  return rowToUser(rows[0]);
+  if (!p) {
+    console.log('⚠️ No database available, not creating user');
+    return null;
+  }
+  try {
+    const { rows } = await p.query(
+      `INSERT INTO users (id, name, email, password_hash)
+       VALUES ($1, $2, lower($3), $4)
+       RETURNING id, name, email, favorites_json, cart_json, reset_token, reset_token_expiry, created_at`,
+      [String(id), String(name), String(email), String(passwordHash)]
+    );
+    return rowToUser(rows[0]);
+  } catch (e) {
+    console.error('❌ Failed to create user:', e);
+    return null;
+  }
 };
 
 const findUserWithPasswordByEmail = async (email) => {
   const p = getPool();
-  const { rows } = await p.query(
-    `SELECT id, name, email, password_hash, favorites_json, cart_json, reset_token, reset_token_expiry, created_at
-     FROM users
-     WHERE lower(email) = lower($1)
-     LIMIT 1`,
-    [String(email || '').trim()]
-  );
-  if (!rows[0]) return null;
-  return {
-    ...rowToUser(rows[0]),
-    passwordHash: rows[0].password_hash,
-  };
+  if (!p) {
+    console.log('⚠️ No database available, returning null');
+    return null;
+  }
+  try {
+    const { rows } = await p.query(
+      `SELECT id, name, email, password_hash, favorites_json, cart_json, reset_token, reset_token_expiry, created_at
+       FROM users
+       WHERE lower(email) = lower($1)
+       LIMIT 1`,
+      [String(email || '').trim()]
+    );
+    if (!rows[0]) return null;
+    return {
+      ...rowToUser(rows[0]),
+      passwordHash: rows[0].password_hash,
+    };
+  } catch (e) {
+    console.error('❌ Failed to find user with password:', e);
+    return null;
+  }
 };
 
 const findUserByResetToken = async (token) => {
   const p = getPool();
-  const { rows } = await p.query(
-    `SELECT id, name, email, password_hash, favorites_json, cart_json, reset_token, reset_token_expiry, created_at
-     FROM users
-     WHERE reset_token = $1 AND reset_token_expiry > now()
-     LIMIT 1`,
-    [String(token)]
-  );
-  if (!rows[0]) return null;
-  return {
-    ...rowToUser(rows[0]),
-    passwordHash: rows[0].password_hash,
-  };
+  if (!p) {
+    console.log('⚠️ No database available, returning null');
+    return null;
+  }
+  try {
+    const { rows } = await p.query(
+      `SELECT id, name, email, password_hash, favorites_json, cart_json, reset_token, reset_token_expiry, created_at
+       FROM users
+       WHERE reset_token = $1 AND reset_token_expiry > now()
+       LIMIT 1`,
+      [String(token)]
+    );
+    if (!rows[0]) return null;
+    return {
+      ...rowToUser(rows[0]),
+      passwordHash: rows[0].password_hash,
+    };
+  } catch (e) {
+    console.error('❌ Failed to find user by reset token:', e);
+    return null;
+  }
 };
 
 const findUserById = async (id) => {
   const p = getPool();
-  const { rows } = await p.query(
-    `SELECT id, name, email, favorites_json, cart_json, reset_token, reset_token_expiry, created_at
-     FROM users
-     WHERE id = $1
-     LIMIT 1`,
-    [String(id)]
-  );
-  return rows[0] ? rowToUser(rows[0]) : null;
+  if (!p) {
+    console.log('⚠️ No database available, returning null');
+    return null;
+  }
+  try {
+    const { rows } = await p.query(
+      `SELECT id, name, email, favorites_json, cart_json, reset_token, reset_token_expiry, created_at
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [String(id)]
+    );
+    return rows[0] ? rowToUser(rows[0]) : null;
+  } catch (e) {
+    console.error('❌ Failed to find user by id:', e);
+    return null;
+  }
 };
 
 const updateUserResetToken = async (email, token, expiry) => {
   const p = getPool();
-  const res = await p.query(
-    `UPDATE users SET reset_token = $2, reset_token_expiry = $3 WHERE lower(email) = lower($1) RETURNING id`,
-    [String(email), token, expiry]
-  );
-  console.log('[updateUserResetToken] Update result rows:', res.rowCount);
+  if (!p) {
+    console.log('⚠️ No database available, not updating reset token');
+    return;
+  }
+  try {
+    const res = await p.query(
+      `UPDATE users SET reset_token = $2, reset_token_expiry = $3 WHERE lower(email) = lower($1) RETURNING id`,
+      [String(email), token, expiry]
+    );
+    console.log('[updateUserResetToken] Update result rows:', res.rowCount);
+  } catch (e) {
+    console.error('❌ Failed to update user reset token:', e);
+  }
 };
 
 const updateUserPassword = async (id, passwordHash) => {
   const p = getPool();
-  const res = await p.query(
-    `UPDATE users SET password_hash = $2, reset_token = NULL, reset_token_expiry = NULL WHERE id = $1 RETURNING id`,
-    [String(id), String(passwordHash)]
-  );
-  console.log('[updateUserPassword] Update result rows:', res.rowCount);
+  if (!p) {
+    console.log('⚠️ No database available, not updating password');
+    return;
+  }
+  try {
+    const res = await p.query(
+      `UPDATE users SET password_hash = $2, reset_token = NULL, reset_token_expiry = NULL WHERE id = $1 RETURNING id`,
+      [String(id), String(passwordHash)]
+    );
+    console.log('[updateUserPassword] Update result rows:', res.rowCount);
+  } catch (e) {
+    console.error('❌ Failed to update user password:', e);
+  }
 };
 
 const updateUserFavorites = async (id, favorites) => {
   const p = getPool();
-  await p.query(`UPDATE users SET favorites_json = $2::jsonb WHERE id = $1`, [
-    String(id),
-    JSON.stringify(Array.isArray(favorites) ? favorites : []),
-  ]);
+  if (!p) {
+    console.log('⚠️ No database available, not updating favorites');
+    return;
+  }
+  try {
+    await p.query(`UPDATE users SET favorites_json = $2::jsonb WHERE id = $1`, [
+      String(id),
+      JSON.stringify(Array.isArray(favorites) ? favorites : []),
+    ]);
+  } catch (e) {
+    console.error('❌ Failed to update user favorites:', e);
+  }
 };
 
 const updateUserCart = async (id, cart) => {
   const p = getPool();
-  await p.query(`UPDATE users SET cart_json = $2::jsonb WHERE id = $1`, [
-    String(id),
-    JSON.stringify(Array.isArray(cart) ? cart : []),
-  ]);
+  if (!p) {
+    console.log('⚠️ No database available, not updating cart');
+    return;
+  }
+  try {
+    await p.query(`UPDATE users SET cart_json = $2::jsonb WHERE id = $1`, [
+      String(id),
+      JSON.stringify(Array.isArray(cart) ? cart : []),
+    ]);
+  } catch (e) {
+    console.error('❌ Failed to update user cart:', e);
+  }
 };
 
 module.exports = {

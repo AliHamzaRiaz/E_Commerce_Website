@@ -160,83 +160,133 @@ const insertOrder = async ({
   emailMeta,
 }) => {
   const p = getPool();
-  const emailNorm = String(customer?.email || '').trim().toLowerCase();
-  await p.query(
-    `INSERT INTO orders (
-      id, customer_email, customer_json, items_json, payment_method, payment_details_json,
-      subtotal, discount, total, status, status_updated_at, signature_image, email_json
-    ) VALUES ($1,$2,$3::jsonb,$4::jsonb,$5,$6::jsonb,$7,$8,$9,$10,now(),$11,$12::jsonb)`,
-    [
-      id,
-      emailNorm,
-      JSON.stringify({
-        fullName: customer.fullName,
-        email: customer.email,
-        address: customer.address,
-        phone: customer.phone,
-        note: customer.note || '',
-      }),
-      JSON.stringify(items),
-      paymentMethod,
-      paymentDetails ? JSON.stringify(paymentDetails) : null,
-      subtotal,
-      discount,
-      total,
-      status,
-      String(signatureImage || ''),
-      JSON.stringify(emailMeta || {}),
-    ]
-  );
+  if (!p) {
+    console.log('⚠️ No database available, not inserting order');
+    return;
+  }
+  try {
+    const emailNorm = String(customer?.email || '').trim().toLowerCase();
+    await p.query(
+      `INSERT INTO orders (
+        id, customer_email, customer_json, items_json, payment_method, payment_details_json,
+        subtotal, discount, total, status, status_updated_at, signature_image, email_json
+      ) VALUES ($1,$2,$3::jsonb,$4::jsonb,$5,$6::jsonb,$7,$8,$9,$10,now(),$11,$12::jsonb)`,
+      [
+        id,
+        emailNorm,
+        JSON.stringify({
+          fullName: customer.fullName,
+          email: customer.email,
+          address: customer.address,
+          phone: customer.phone,
+          note: customer.note || '',
+        }),
+        JSON.stringify(items),
+        paymentMethod,
+        paymentDetails ? JSON.stringify(paymentDetails) : null,
+        subtotal,
+        discount,
+        total,
+        status,
+        String(signatureImage || ''),
+        JSON.stringify(emailMeta || {}),
+      ]
+    );
+  } catch (e) {
+    console.error('❌ Failed to insert order:', e);
+  }
 };
 
 const listAllOrders = async () => {
   const p = getPool();
-  console.log('🔍 Querying orders from DB...');
-  // Select ALL columns to make sure we capture everything!
-  const { rows } = await p.query(
-    `SELECT * FROM orders ORDER BY created_at DESC, id DESC`
-  );
-  console.log('📦 Found', rows.length, 'order(s) in DB');
-  console.log('📄 Raw rows:', JSON.stringify(rows, null, 2));
-  return rows.map(rowToOrder);
+  if (!p) {
+    console.log('⚠️ No database available, returning empty array');
+    return [];
+  }
+  try {
+    console.log('🔍 Querying orders from DB...');
+    const { rows } = await p.query(
+      `SELECT * FROM orders ORDER BY created_at DESC, id DESC`
+    );
+    console.log('📦 Found', rows.length, 'order(s) in DB');
+    return rows.map(rowToOrder);
+  } catch (e) {
+    console.error('❌ Failed to list orders:', e);
+    return [];
+  }
 };
 
 const listRecentOrdersByEmail = async (email, limit = 10) => {
   const p = getPool();
-  const e = String(email || '').trim().toLowerCase();
-  const { rows } = await p.query(
-    `SELECT id, created_at, customer_email, customer_json, items_json, payment_method, payment_details_json,
-            subtotal, discount, total, status, status_updated_at, signature_image, email_json
-     FROM orders WHERE lower(customer_email) = lower($1)
-     ORDER BY created_at DESC LIMIT $2`,
-    [e, Math.min(50, Math.max(1, Number(limit) || 10))]
-  );
-  return rows.map(rowToOrder);
+  if (!p) {
+    console.log('⚠️ No database available, returning empty array');
+    return [];
+  }
+  try {
+    const e = String(email || '').trim().toLowerCase();
+    const { rows } = await p.query(
+      `SELECT id, created_at, customer_email, customer_json, items_json, payment_method, payment_details_json,
+              subtotal, discount, total, status, status_updated_at, signature_image, email_json
+       FROM orders WHERE lower(customer_email) = lower($1)
+       ORDER BY created_at DESC LIMIT $2`,
+      [e, Math.min(50, Math.max(1, Number(limit) || 10))]
+    );
+    return rows.map(rowToOrder);
+  } catch (e) {
+    console.error('❌ Failed to list recent orders:', e);
+    return [];
+  }
 };
 
 const getOrderById = async (id) => {
   const p = getPool();
-  const { rows } = await p.query(
-    `SELECT id, created_at, customer_email, customer_json, items_json, payment_method, payment_details_json,
-            subtotal, discount, total, status, status_updated_at, signature_image, email_json
-     FROM orders WHERE id = $1`,
-    [String(id)]
-  );
-  return rows[0] ? rowToOrder(rows[0]) : null;
+  if (!p) {
+    console.log('⚠️ No database available, returning null');
+    return null;
+  }
+  try {
+    const { rows } = await p.query(
+      `SELECT id, created_at, customer_email, customer_json, items_json, payment_method, payment_details_json,
+              subtotal, discount, total, status, status_updated_at, signature_image, email_json
+       FROM orders WHERE id = $1`,
+      [String(id)]
+    );
+    return rows[0] ? rowToOrder(rows[0]) : null;
+  } catch (e) {
+    console.error('❌ Failed to get order:', e);
+    return null;
+  }
 };
 
 const updateOrderStatus = async (id, status) => {
   const p = getPool();
-  const { rowCount } = await p.query(
-    `UPDATE orders SET status = $2, status_updated_at = now() WHERE id = $1`,
-    [String(id), String(status)]
-  );
-  return rowCount > 0;
+  if (!p) {
+    console.log('⚠️ No database available, not updating order status');
+    return false;
+  }
+  try {
+    const { rowCount } = await p.query(
+      `UPDATE orders SET status = $2, status_updated_at = now() WHERE id = $1`,
+      [String(id), String(status)]
+    );
+    return rowCount > 0;
+  } catch (e) {
+    console.error('❌ Failed to update order status:', e);
+    return false;
+  }
 };
 
 const updateOrderEmailJson = async (id, emailJson) => {
   const p = getPool();
-  await p.query(`UPDATE orders SET email_json = $2::jsonb WHERE id = $1`, [String(id), JSON.stringify(emailJson || {})]);
+  if (!p) {
+    console.log('⚠️ No database available, not updating order email json');
+    return;
+  }
+  try {
+    await p.query(`UPDATE orders SET email_json = $2::jsonb WHERE id = $1`, [String(id), JSON.stringify(emailJson || {})]);
+  } catch (e) {
+    console.error('❌ Failed to update order email json:', e);
+  }
 };
 
 const initOrdersDb = async () => {

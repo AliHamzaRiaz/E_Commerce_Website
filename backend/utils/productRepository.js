@@ -8,7 +8,7 @@ const LEGACY_PRODUCTS_JSON = path.join(__dirname, '..', 'data', 'products.json')
 let pool;
 
 const getPool = () => {
-  if (pool) return pool;
+  if (pool !== undefined) return pool;
   
   // Try to get connection string from Vercel first, then standard, then Supabase
   let connectionString = 
@@ -16,20 +16,43 @@ const getPool = () => {
     process.env.DATABASE_URL ||
     process.env.SUPABASE_DATABASE_URL;
   
+  console.log('[DEBUG] PostgreSQL environment variables:');
+  console.log('  POSTGRES_URL:', process.env.POSTGRES_URL ? '(set)' : '(not set)');
+  console.log('  DATABASE_URL:', process.env.DATABASE_URL ? '(set)' : '(not set)');
+  console.log('  SUPABASE_DATABASE_URL:', process.env.SUPABASE_DATABASE_URL ? '(set)' : '(not set)');
+  
+  // Log all PG* variables
+  console.log('[DEBUG] All PG* environment variables:');
+  Object.keys(process.env)
+    .filter(key => key.startsWith('PG'))
+    .forEach(key => console.log(`  ${key}:`, process.env[key]));
+  
+  console.log('  Using connection string:', connectionString ? `(length ${connectionString.length})` : '(not set)');
+  
   if (!connectionString) {
-    return null; // No database available, use fallback
+    console.log('⚠️ No DATABASE_URL/POSTGRES_URL found, not using PostgreSQL');
+    pool = null;
+    return pool;
   }
   
-  // Auto-enable SSL for non-localhost connections
-  const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-  const sslConfig = isLocalhost ? undefined : { rejectUnauthorized: false };
-  
-  pool = new Pool({
-    connectionString,
-    ssl: sslConfig,
-    max: 10,
-  });
-  return pool;
+  try {
+    // Auto-enable SSL for non-localhost connections
+    const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+    const sslConfig = isLocalhost ? undefined : { rejectUnauthorized: false };
+    
+    console.log('[DEBUG] Creating PostgreSQL pool with connection string (first 30 chars):', connectionString.substring(0, 30) + '...');
+    
+    pool = new Pool({
+      connectionString,
+      ssl: sslConfig,
+      max: 10,
+    });
+    return pool;
+  } catch (e) {
+    console.error('❌ Failed to create PostgreSQL pool:', e);
+    pool = null;
+    return pool;
+  }
 };
 
 const jsonbToStringArray = (value) => {
@@ -289,28 +312,37 @@ const insertProduct = async (body) => {
   };
 
   const p = getPool();
-  await p.query(
-    `INSERT INTO products (id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12,$13::jsonb,$14::jsonb,$15)`,
-    [
-      product.id,
-      product.name,
-      product.description,
-      product.price,
-      product.originalPrice,
-      product.discount,
-      product.category,
-      JSON.stringify(product.colors),
-      JSON.stringify(product.sizes),
-      product.image,
-      product.available,
-      product.stock,
-      JSON.stringify(product.colorImages),
-      JSON.stringify(product.variations),
-      product.type,
-    ]
-  );
-  return product;
+  if (!p) {
+    console.log('⚠️ No database available, not inserting product');
+    return product;
+  }
+  try {
+    await p.query(
+      `INSERT INTO products (id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12,$13::jsonb,$14::jsonb,$15)`,
+      [
+        product.id,
+        product.name,
+        product.description,
+        product.price,
+        product.originalPrice,
+        product.discount,
+        product.category,
+        JSON.stringify(product.colors),
+        JSON.stringify(product.sizes),
+        product.image,
+        product.available,
+        product.stock,
+        JSON.stringify(product.colorImages),
+        JSON.stringify(product.variations),
+        product.type,
+      ]
+    );
+    return product;
+  } catch (e) {
+    console.error('❌ Failed to insert product:', e);
+    return product;
+  }
 };
 
 const updateProduct = async (id, body, prev) => {
@@ -333,36 +365,54 @@ const updateProduct = async (id, body, prev) => {
   };
 
   const p = getPool();
-  await p.query(
-    `UPDATE products SET
-      name = $2, description = $3, price = $4, original_price = $5, discount = $6, category = $7,
-      colors = $8::jsonb, sizes = $9::jsonb, image = $10, available = $11, stock = $12, color_images = $13::jsonb, variations = $14::jsonb, type = $15
-     WHERE id = $1`,
-    [
-      String(id),
-      next.name,
-      next.description,
-      next.price,
-      next.originalPrice,
-      next.discount,
-      next.category,
-      JSON.stringify(next.colors),
-      JSON.stringify(next.sizes),
-      next.image,
-      next.available,
-      next.stock,
-      JSON.stringify(next.colorImages),
-      JSON.stringify(next.variations),
-      next.type,
-    ]
-  );
-  return next;
+  if (!p) {
+    console.log('⚠️ No database available, not updating product');
+    return next;
+  }
+  try {
+    await p.query(
+      `UPDATE products SET
+        name = $2, description = $3, price = $4, original_price = $5, discount = $6, category = $7,
+        colors = $8::jsonb, sizes = $9::jsonb, image = $10, available = $11, stock = $12, color_images = $13::jsonb, variations = $14::jsonb, type = $15
+       WHERE id = $1`,
+      [
+        String(id),
+        next.name,
+        next.description,
+        next.price,
+        next.originalPrice,
+        next.discount,
+        next.category,
+        JSON.stringify(next.colors),
+        JSON.stringify(next.sizes),
+        next.image,
+        next.available,
+        next.stock,
+        JSON.stringify(next.colorImages),
+        JSON.stringify(next.variations),
+        next.type,
+      ]
+    );
+    return next;
+  } catch (e) {
+    console.error('❌ Failed to update product:', e);
+    return next;
+  }
 };
 
 const deleteProduct = async (id) => {
   const p = getPool();
-  const { rowCount } = await p.query('DELETE FROM products WHERE id = $1', [String(id)]);
-  return rowCount > 0;
+  if (!p) {
+    console.log('⚠️ No database available, not deleting product');
+    return false;
+  }
+  try {
+    const { rowCount } = await p.query('DELETE FROM products WHERE id = $1', [String(id)]);
+    return rowCount > 0;
+  } catch (e) {
+    console.error('❌ Failed to delete product:', e);
+    return false;
+  }
 };
 
 const applyOrderStock = async (items) => {
