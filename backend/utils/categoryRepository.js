@@ -1,12 +1,5 @@
 const { getPool } = require('./productRepository');
 
-// Default categories fallback
-const defaultCategories = [
-  { id: 1, name: 'bra', displayName: 'Bra', image: '/imags/pushup-bra.jpg', types: [] },
-  { id: 2, name: 'panty', displayName: 'Panty', image: '/imags/padded-bra.jpg', types: [] },
-  { id: 3, name: 'lingerie', displayName: 'Lingerie', image: '/imags/sports-bra.jpg', types: [] }
-];
-
 const initCategoriesTable = async () => {
   const p = getPool();
   if (!p) {
@@ -61,8 +54,8 @@ const initCategoriesTable = async () => {
 const listCategories = async () => {
   const p = getPool();
   if (!p) {
-    console.log('⚠️ No database available, using default categories');
-    return defaultCategories;
+    console.log('⚠️ No database available, returning empty array');
+    return [];
   }
   try {
     const { rows } = await p.query('SELECT * FROM categories ORDER BY display_name ASC');
@@ -90,10 +83,10 @@ const listCategories = async () => {
         createdAt: row.created_at
       };
     });
-    return mapped.length > 0 ? mapped : defaultCategories;
+    return mapped;
   } catch (e) {
-    console.error('❌ Database query failed, using default categories:', e);
-    return defaultCategories;
+    console.error('❌ Database query failed, returning empty array:', e);
+    return [];
   }
 };
 

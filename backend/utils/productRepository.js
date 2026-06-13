@@ -225,8 +225,8 @@ const mergeSeedProducts = async (products) => {
 const listProducts = async () => {
   const p = getPool();
   if (!p) {
-    console.log('⚠️ No database available, using default products');
-    return defaultProducts;
+    console.log('⚠️ No database available, returning empty array');
+    return [];
   }
   try {
     console.log('\n🔍 QUERYING ALL PRODUCTS FROM DATABASE...');
@@ -240,18 +240,18 @@ const listProducts = async () => {
     });
     const mappedProducts = rows.map(rowToProduct);
     console.log(`\n✅ MAPPED ${mappedProducts.length} PRODUCTS FOR RESPONSE`);
-    return mappedProducts.length > 0 ? mappedProducts : defaultProducts;
+    return mappedProducts;
   } catch (e) {
-    console.error('❌ Database query failed, using default products:', e);
-    return defaultProducts;
+    console.error('❌ Database query failed, returning empty array:', e);
+    return [];
   }
 };
 
 const getProductById = async (id) => {
   const p = getPool();
   if (!p) {
-    console.log('⚠️ No database available, finding product in defaults');
-    return defaultProducts.find(p => String(p.id) === String(id));
+    console.log('⚠️ No database available, returning null');
+    return null;
   }
   try {
     const { rows } = await p.query(
@@ -261,10 +261,10 @@ const getProductById = async (id) => {
     );
     console.log('--- GET PRODUCT BY ID DB ROW ---');
     console.log('Row Keys:', rows[0] ? Object.keys(rows[0]) : 'No row');
-    return rows[0] ? rowToProduct(rows[0]) : defaultProducts.find(p => String(p.id) === String(id));
+    return rows[0] ? rowToProduct(rows[0]) : null;
   } catch (e) {
-    console.error('❌ Database query failed, finding product in defaults:', e);
-    return defaultProducts.find(p => String(p.id) === String(id));
+    console.error('❌ Database query failed, returning null:', e);
+    return null;
   }
 };
 
