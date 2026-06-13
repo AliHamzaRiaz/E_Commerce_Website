@@ -2,30 +2,38 @@ const { getPool } = require('./productRepository');
 
 const initUsersTable = async () => {
   const p = getPool();
+  if (!p) {
+    console.log('⚠️ No database available, skipping users table init');
+    return;
+  }
   
   // First ensure table exists with basic columns
-  await p.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      favorites_json JSONB NOT NULL DEFAULT '[]'::jsonb,
-      cart_json JSONB NOT NULL DEFAULT '[]'::jsonb,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-  `);
-
-  // Explicitly add missing columns if they don't exist (migration)
   try {
-    await p.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT;`);
-    await p.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMPTZ;`);
-    console.log('User table columns verified');
-  } catch (err) {
-    console.error('Migration error:', err.message);
-  }
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        favorites_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+        cart_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    `);
 
-  await p.query(`CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (lower(email));`);
+    // Explicitly add missing columns if they don't exist (migration)
+    try {
+      await p.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT;`);
+      await p.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMPTZ;`);
+      console.log('User table columns verified');
+    } catch (err) {
+      console.error('Migration error:', err.message);
+    }
+
+    await p.query(`CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (lower(email));`);
+  } catch (err) {
+    console.warn('⚠️ Failed to init users table:', err.message);
+  }
 };
 
 const rowToUser = (row) => ({
