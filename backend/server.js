@@ -24,20 +24,8 @@ const { defaultProducts } = require('./data/defaultProducts');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configure CORS for production
-const corsOptions = {
-  origin: [
-    'http://localhost:4002',
-    'http://localhost:5173',
-    'https://libbaas-pk.vercel.app',
-    process.env.FRONTEND_URL // Allow custom frontend URL from env
-  ].filter(Boolean),
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
+app.use(cors());
+app.options(/.*/, cors());
 app.use(express.json({ limit: '6mb' }));
 app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 

@@ -1,14 +1,24 @@
-/** API origin for browser requests. */
+/**
+ * Get the base API URL, which should include any origin and path prefix.
+ * - In development: use Vite proxy (empty string)
+ * - In production: use VITE_API_URL environment variable
+ */
 export const getApiOrigin = () => {
-  // Use VITE_API_URL environment variable if available
-  return import.meta.env.VITE_API_URL || '';
+  if (import.meta.env.PROD) {
+    return import.meta.env.VITE_API_URL || '';
+  }
+  return '';
 };
 
-/** Full URL for an API path, e.g. `/api/products` */
-export const apiUrl = (path) => {
-  const p = path.startsWith('/') ? path : `/${path}`;
+/**
+ * Build a complete API URL from a relative path like /api/products.
+ */
+export const getApiUrl = (path) => {
   const origin = getApiOrigin();
-  const fullUrl = origin ? `${origin}${p}` : p;
-  console.log('apiUrl called, returning:', fullUrl);
-  return fullUrl;
+  return `${origin}${path}`;
 };
+
+/**
+ * Alias for getApiUrl for backward compatibility (existing files import 'apiUrl'
+ */
+export const apiUrl = getApiUrl;
