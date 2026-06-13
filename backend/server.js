@@ -19,6 +19,7 @@ const { initOrdersDb } = require('./utils/orderRepository');
 const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable } = require('./utils/categoryRepository');
 const { initReviewsTable } = require('./utils/reviewRepository');
+const { defaultProducts } = require('./data/defaultProducts');
 
 const app = express();
 const PORT = process.env.PORT || 5000;

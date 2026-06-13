@@ -1,6 +1,8 @@
 /** API origin for browser requests. */
 export const getApiOrigin = () => {
-  return 'https://libbaas-backend.onrender.com';
+  // In development, use relative path for Vite proxy
+  // In production, set this to your backend URL (e.g., https://your-backend.onrender.com)
+  return import.meta.env.PROD ? 'https://your-backend-url-here' : '';
 };
 
 /** Full URL for an API path, e.g. `/api/products` */

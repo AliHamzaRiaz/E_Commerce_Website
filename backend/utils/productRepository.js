@@ -1,14 +1,13 @@
 const fs = require('fs/promises');
 const path = require('path');
 const { Pool } = require('pg');
-const { defaultProducts } = require('../data/defaultProducts');
 
 const LEGACY_PRODUCTS_JSON = path.join(__dirname, '..', 'data', 'products.json');
 
 let pool;
 
 const getPool = () => {
-  if (pool !== undefined) return pool;
+  if (pool) return pool;
   
   // Try to get connection string from Vercel first, then standard, then Supabase
   let connectionString = 
@@ -16,43 +15,22 @@ const getPool = () => {
     process.env.DATABASE_URL ||
     process.env.SUPABASE_DATABASE_URL;
   
-  console.log('[DEBUG] PostgreSQL environment variables:');
-  console.log('  POSTGRES_URL:', process.env.POSTGRES_URL ? '(set)' : '(not set)');
-  console.log('  DATABASE_URL:', process.env.DATABASE_URL ? '(set)' : '(not set)');
-  console.log('  SUPABASE_DATABASE_URL:', process.env.SUPABASE_DATABASE_URL ? '(set)' : '(not set)');
-  
-  // Log all PG* variables
-  console.log('[DEBUG] All PG* environment variables:');
-  Object.keys(process.env)
-    .filter(key => key.startsWith('PG'))
-    .forEach(key => console.log(`  ${key}:`, process.env[key]));
-  
-  console.log('  Using connection string:', connectionString ? `(length ${connectionString.length})` : '(not set)');
-  
   if (!connectionString) {
-    console.log('⚠️ No DATABASE_URL/POSTGRES_URL found, not using PostgreSQL');
-    pool = null;
-    return pool;
+    throw new Error(
+      'POSTGRES_URL or DATABASE_URL is not set. Add it to your Vercel environment variables.'
+    );
   }
   
-  try {
-    // Auto-enable SSL for non-localhost connections
-    const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-    const sslConfig = isLocalhost ? undefined : { rejectUnauthorized: false };
-    
-    console.log('[DEBUG] Creating PostgreSQL pool with connection string (first 30 chars):', connectionString.substring(0, 30) + '...');
-    
-    pool = new Pool({
-      connectionString,
-      ssl: sslConfig,
-      max: 10,
-    });
-    return pool;
-  } catch (e) {
-    console.error('❌ Failed to create PostgreSQL pool:', e);
-    pool = null;
-    return pool;
-  }
+  // Auto-enable SSL for non-localhost connections
+  const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+  const sslConfig = isLocalhost ? undefined : { rejectUnauthorized: false };
+  
+  pool = new Pool({
+    connectionString,
+    ssl: sslConfig,
+    max: 10,
+  });
+  return pool;
 };
 
 const jsonbToStringArray = (value) => {
@@ -115,43 +93,35 @@ const rowToProduct = (row) => {
 
 const initProductsTable = async () => {
   const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, skipping products table init');
-    return;
-  }
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      price DOUBLE PRECISION NOT NULL DEFAULT 0,
+      original_price DOUBLE PRECISION NOT NULL DEFAULT 0,
+      discount TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT 'Other',
+      colors JSONB NOT NULL DEFAULT '[]'::jsonb,
+      sizes JSONB NOT NULL DEFAULT '[]'::jsonb,
+      image TEXT NOT NULL DEFAULT '',
+      available BOOLEAN NOT NULL DEFAULT true,
+      stock INTEGER NOT NULL DEFAULT 0,
+      color_images JSONB NOT NULL DEFAULT '{}'::jsonb,
+      variations JSONB NOT NULL DEFAULT '{}'::jsonb,
+      type TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  // Ensure color_images, variations, and type columns exist if table already exists
   try {
-    await p.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT NOT NULL DEFAULT '',
-        price DOUBLE PRECISION NOT NULL DEFAULT 0,
-        original_price DOUBLE PRECISION NOT NULL DEFAULT 0,
-        discount TEXT NOT NULL DEFAULT '',
-        category TEXT NOT NULL DEFAULT 'Other',
-        colors JSONB NOT NULL DEFAULT '[]'::jsonb,
-        sizes JSONB NOT NULL DEFAULT '[]'::jsonb,
-        image TEXT NOT NULL DEFAULT '',
-        available BOOLEAN NOT NULL DEFAULT true,
-        stock INTEGER NOT NULL DEFAULT 0,
-        color_images JSONB NOT NULL DEFAULT '{}'::jsonb,
-        variations JSONB NOT NULL DEFAULT '{}'::jsonb,
-        type TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      );
-    `);
-    // Ensure color_images, variations, and type columns exist if table already exists
-    try {
-      await p.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS color_images JSONB NOT NULL DEFAULT '{}'::jsonb;`);
-      await p.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS variations JSONB NOT NULL DEFAULT '{}'::jsonb;`);
-      await p.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS type TEXT;`);
-    } catch (e) {
-      console.error("Error adding extra columns:", e.message);
-    }
-    await p.query(`CREATE INDEX IF NOT EXISTS idx_products_category_lower ON products (lower(category));`);
+    await p.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS color_images JSONB NOT NULL DEFAULT '{}'::jsonb;`);
+    await p.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS variations JSONB NOT NULL DEFAULT '{}'::jsonb;`);
+    await p.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS type TEXT;`);
   } catch (e) {
-    console.error('❌ Failed to init products table:', e);
+    console.error("Error adding extra columns:", e.message);
   }
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_products_category_lower ON products (lower(category));`);
 };
 
 const loadLegacyJsonProducts = async () => {
@@ -247,48 +217,30 @@ const mergeSeedProducts = async (products) => {
 
 const listProducts = async () => {
   const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, returning empty array');
-    return [];
-  }
-  try {
-    console.log('\n🔍 QUERYING ALL PRODUCTS FROM DATABASE...');
-    const { rows } = await p.query(
-      `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type, created_at
-       FROM products ORDER BY created_at DESC, id DESC`
-    );
-    console.log(`✅ FOUND ${rows.length} TOTAL PRODUCTS IN DATABASE:`);
-    rows.forEach((row, i) => {
-      console.log(`  Product ${i+1}: id=${row.id}, name="${row.name}", available=${row.available}`);
-    });
-    const mappedProducts = rows.map(rowToProduct);
-    console.log(`\n✅ MAPPED ${mappedProducts.length} PRODUCTS FOR RESPONSE`);
-    return mappedProducts;
-  } catch (e) {
-    console.error('❌ Database query failed, returning empty array:', e);
-    return [];
-  }
+  console.log('\n🔍 QUERYING ALL PRODUCTS FROM DATABASE...');
+  const { rows } = await p.query(
+    `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type, created_at
+     FROM products ORDER BY created_at DESC, id DESC`
+  );
+  console.log(`✅ FOUND ${rows.length} TOTAL PRODUCTS IN DATABASE:`);
+  rows.forEach((row, i) => {
+    console.log(`  Product ${i+1}: id=${row.id}, name="${row.name}", available=${row.available}`);
+  });
+  const mappedProducts = rows.map(rowToProduct);
+  console.log(`\n✅ MAPPED ${mappedProducts.length} PRODUCTS FOR RESPONSE`);
+  return mappedProducts;
 };
 
 const getProductById = async (id) => {
   const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, returning null');
-    return null;
-  }
-  try {
-    const { rows } = await p.query(
-      `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type
-       FROM products WHERE id = $1`,
-      [String(id)]
-    );
-    console.log('--- GET PRODUCT BY ID DB ROW ---');
-    console.log('Row Keys:', rows[0] ? Object.keys(rows[0]) : 'No row');
-    return rows[0] ? rowToProduct(rows[0]) : null;
-  } catch (e) {
-    console.error('❌ Database query failed, returning null:', e);
-    return null;
-  }
+  const { rows } = await p.query(
+    `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type
+     FROM products WHERE id = $1`,
+    [String(id)]
+  );
+  console.log('--- GET PRODUCT BY ID DB ROW ---');
+  console.log('Row Keys:', rows[0] ? Object.keys(rows[0]) : 'No row');
+  return rows[0] ? rowToProduct(rows[0]) : null;
 };
 
 const insertProduct = async (body) => {
@@ -312,37 +264,28 @@ const insertProduct = async (body) => {
   };
 
   const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, not inserting product');
-    return product;
-  }
-  try {
-    await p.query(
-      `INSERT INTO products (id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12,$13::jsonb,$14::jsonb,$15)`,
-      [
-        product.id,
-        product.name,
-        product.description,
-        product.price,
-        product.originalPrice,
-        product.discount,
-        product.category,
-        JSON.stringify(product.colors),
-        JSON.stringify(product.sizes),
-        product.image,
-        product.available,
-        product.stock,
-        JSON.stringify(product.colorImages),
-        JSON.stringify(product.variations),
-        product.type,
-      ]
-    );
-    return product;
-  } catch (e) {
-    console.error('❌ Failed to insert product:', e);
-    return product;
-  }
+  await p.query(
+    `INSERT INTO products (id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12,$13::jsonb,$14::jsonb,$15)`,
+    [
+      product.id,
+      product.name,
+      product.description,
+      product.price,
+      product.originalPrice,
+      product.discount,
+      product.category,
+      JSON.stringify(product.colors),
+      JSON.stringify(product.sizes),
+      product.image,
+      product.available,
+      product.stock,
+      JSON.stringify(product.colorImages),
+      JSON.stringify(product.variations),
+      product.type,
+    ]
+  );
+  return product;
 };
 
 const updateProduct = async (id, body, prev) => {
@@ -365,54 +308,36 @@ const updateProduct = async (id, body, prev) => {
   };
 
   const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, not updating product');
-    return next;
-  }
-  try {
-    await p.query(
-      `UPDATE products SET
-        name = $2, description = $3, price = $4, original_price = $5, discount = $6, category = $7,
-        colors = $8::jsonb, sizes = $9::jsonb, image = $10, available = $11, stock = $12, color_images = $13::jsonb, variations = $14::jsonb, type = $15
-       WHERE id = $1`,
-      [
-        String(id),
-        next.name,
-        next.description,
-        next.price,
-        next.originalPrice,
-        next.discount,
-        next.category,
-        JSON.stringify(next.colors),
-        JSON.stringify(next.sizes),
-        next.image,
-        next.available,
-        next.stock,
-        JSON.stringify(next.colorImages),
-        JSON.stringify(next.variations),
-        next.type,
-      ]
-    );
-    return next;
-  } catch (e) {
-    console.error('❌ Failed to update product:', e);
-    return next;
-  }
+  await p.query(
+    `UPDATE products SET
+      name = $2, description = $3, price = $4, original_price = $5, discount = $6, category = $7,
+      colors = $8::jsonb, sizes = $9::jsonb, image = $10, available = $11, stock = $12, color_images = $13::jsonb, variations = $14::jsonb, type = $15
+     WHERE id = $1`,
+    [
+      String(id),
+      next.name,
+      next.description,
+      next.price,
+      next.originalPrice,
+      next.discount,
+      next.category,
+      JSON.stringify(next.colors),
+      JSON.stringify(next.sizes),
+      next.image,
+      next.available,
+      next.stock,
+      JSON.stringify(next.colorImages),
+      JSON.stringify(next.variations),
+      next.type,
+    ]
+  );
+  return next;
 };
 
 const deleteProduct = async (id) => {
   const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, not deleting product');
-    return false;
-  }
-  try {
-    const { rowCount } = await p.query('DELETE FROM products WHERE id = $1', [String(id)]);
-    return rowCount > 0;
-  } catch (e) {
-    console.error('❌ Failed to delete product:', e);
-    return false;
-  }
+  const { rowCount } = await p.query('DELETE FROM products WHERE id = $1', [String(id)]);
+  return rowCount > 0;
 };
 
 const applyOrderStock = async (items) => {
@@ -426,17 +351,12 @@ const applyOrderStock = async (items) => {
     : [];
   if (normalized.length === 0) return;
 
-  const p = getPool();
-  if (!p) {
-    console.log('⚠️ No database available, skipping stock update');
-    return;
-  }
-
   const byId = new Map();
   for (const it of normalized) {
     byId.set(it.id, (byId.get(it.id) || 0) + it.quantity);
   }
 
+  const p = getPool();
   const client = await p.connect();
   try {
     await client.query('BEGIN');
@@ -466,18 +386,12 @@ const applyOrderStock = async (items) => {
 };
 
 const initProductsDb = async () => {
-  try {
-    await initProductsTable();
-    // Only clear products if you want a fresh start—comment this out normally!
-    // const p = getPool();
-    // if (p) {
-    //   await p.query('DELETE FROM reviews');
-    //   const deleteResult = await p.query('DELETE FROM products');
-    //   console.log(`[initProductsDb] Cleared ${deleteResult.rowCount} products from database`);
-    // }
-  } catch (e) {
-    console.warn('⚠️ Products DB init failed, will use defaults', e);
-  }
+  await initProductsTable();
+  // Only clear products if you want a fresh start—comment this out normally!
+  // const p = getPool();
+  // await p.query('DELETE FROM reviews');
+  // const deleteResult = await p.query('DELETE FROM products');
+  // console.log(`[initProductsDb] Cleared ${deleteResult.rowCount} products from database`);
 };
 
 module.exports = {
