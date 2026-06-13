@@ -1,43 +1,41 @@
-const { PrismaClient } = require('@prisma/client');
-require('dotenv').config();
+const path = require("path");
+const dotenv = require("dotenv");
 
-console.log('🔍 Checking database connection...');
-console.log('DATABASE_URL from .env:', process.env.DATABASE_URL);
-console.log('POSTGRES_URL from .env:', process.env.POSTGRES_URL);
+// Load .env files
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
+dotenv.config({ path: path.join(__dirname, ".env") });
 
-const prisma = new PrismaClient({
-  log: ['info', 'query', 'warn', 'error'],
-});
+const pool = require("./utils/db");
 
 async function testConnection() {
   try {
-    console.log('\n🚀 Trying to connect to database...');
-    await prisma.$connect();
-    console.log('✅ SUCCESS: Database connected!');
-
-    // Try to fetch some data to confirm it's working
-    console.log('\n📦 Fetching products...');
-    const products = await prisma.product.findMany();
-    console.log(`✅ Found ${products.length} products!`);
-    if (products.length > 0) {
-      console.log('First product:', products[0].name);
-    }
-
-    console.log('\n📦 Fetching categories...');
-    const categories = await prisma.category.findMany();
-    console.log(`✅ Found ${categories.length} categories!`);
-
-    console.log('\n📦 Fetching orders...');
-    const orders = await prisma.order.findMany();
-    console.log(`✅ Found ${orders.length} orders!`);
-
-    console.log('\n🎉 Database connection test complete!');
+    console.log("Testing database connection...");
+    
+    // Test the connection
+    const client = await pool.connect();
+    console.log("✅ Successfully connected to Neon PostgreSQL database!");
+    
+    // Test a simple query
+    const result = await client.query("SELECT NOW()");
+    console.log("📅 Database time:", result.rows[0].now);
+    
+    // List tables
+    const tablesResult = await client.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `);
+    console.log("📊 Tables in database:", tablesResult.rows.map(r => r.table_name));
+    
+    client.release();
+    console.log("Connection test complete!");
+    
   } catch (error) {
-    console.error('❌ ERROR: Could not connect to database!');
-    console.error('Error details:', error.message);
-    console.error('Full error:', error);
+    console.error("❌ Database connection failed:", error.message);
+    console.error("Error details:", error);
   } finally {
-    await prisma.$disconnect();
+    // Close the pool to exit the script
+    await pool.end();
   }
 }
 
