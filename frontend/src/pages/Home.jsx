@@ -27,15 +27,14 @@ const Home = () => {
     }
   }, [categories, currentHeroIndex]);
 
+  // Optimized fetching for faster navigation
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [prodRes, catRes] = await Promise.all([
-          axios.get(apiUrl('/api/products')),
-          axios.get(apiUrl('/api/categories'))
+          axios.get(apiUrl('/api/products'), { timeout: 5000 }),
+          axios.get(apiUrl('/api/categories'), { timeout: 5000 })
         ]);
-        console.log('API Response Products:', prodRes.data);
-        console.log('API Response Categories:', catRes.data);
         const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
         const allCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []);
         
@@ -44,12 +43,10 @@ const Home = () => {
           cat.displayName && cat.displayName.trim() !== ''
         );
         
-        console.log('[Home] Valid categories:', validCategories);
-        
         setAllProducts(products);
         setFeaturedProducts(products.slice(0, 4));
         setCategories(validCategories);
-        setCurrentHeroIndex(0); // Reset index to first category to prevent unknown image!
+        setCurrentHeroIndex(0); // Reset index to first category
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
