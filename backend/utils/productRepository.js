@@ -403,4 +403,6 @@ module.exports = {
   updateProduct,
   deleteProduct,
   applyOrderStock,
+  seedIfEmpty,
+  mergeSeedProducts,
 };

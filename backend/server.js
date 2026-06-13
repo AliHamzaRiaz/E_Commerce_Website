@@ -14,7 +14,7 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
 const reviewRoutes = require('./routes/reviews');
-const { initProductsDb } = require('./utils/productRepository');
+const { initProductsDb, seedIfEmpty } = require('./utils/productRepository');
 const { initOrdersDb } = require('./utils/orderRepository');
 const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable } = require('./utils/categoryRepository');
@@ -44,6 +44,8 @@ const start = async () => {
   try {
     await initProductsDb();
     console.log('Products database ready');
+    await seedIfEmpty(defaultProducts);
+    console.log('Products seeded (if empty)');
   } catch (err) {
     console.warn('[startup] Products DB init failed — product APIs need DATABASE_URL.');
     console.warn('[startup]', err?.message || err);
