@@ -20,6 +20,7 @@ const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable, seedCategoriesIfEmpty } = require('./utils/categoryRepository');
 const { initReviewsTable } = require('./utils/reviewRepository');
 const { defaultProducts } = require('./data/defaultProducts');
+const { sendCustomEmail } = require('./utils/email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -72,6 +73,43 @@ app.get('/api/debug/admin-creds', (req, res) => {
     adminEmailFirst3: adminEmail.substring(0, 3) + '...',
     adminPasswordLength: adminPassword.length,
   });
+});
+
+app.get('/api/debug/test-email', async (req, res) => {
+  const to = req.query.to || process.env.ADMIN_EMAIL;
+  if (!to) {
+    return res.status(400).json({ error: 'Please provide a "to" query parameter' });
+  }
+  try {
+    console.log('📧 Testing email send to:', to);
+    const result = await sendCustomEmail({
+      to,
+      subject: 'Test Email from LIBBAAS',
+      html: `<div style="font-family: Arial, sans-serif; line-height:1.6;">
+        <h1>Test Email from LIBBAAS</h1>
+        <p>This is a test email to verify your SMTP configuration is working!</p>
+        <p>If you received this, your email setup is correct!</p>
+      </div>`,
+      text: 'This is a test email from LIBBAAS'
+    });
+    console.log('📧 Test email result:', result);
+    res.json({ 
+      success: true, 
+      sent: !!result.sent, 
+      previewUrl: result.previewUrl,
+      reason: result.reason,
+      smtpConfig: {
+        service: process.env.SMTP_SERVICE,
+        host: process.env.SMTP_HOST,
+        user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set',
+        hasPass: !!process.env.SMTP_PASS,
+        mailFrom: process.env.MAIL_FROM
+      }
+    });
+  } catch (err) {
+    console.error('❌ Test email failed:', err);
+    res.status(500).json({ success: false, error: err.message, stack: err.stack });
+  }
 });
 
 const start = async () => {
