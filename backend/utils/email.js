@@ -44,8 +44,8 @@ const createSmtpTransport = () => {
 };
 
 const createEtherealTransport = async () => {
-  // Only use Ethereal if explicitly enabled with ETHEREAL=true
-  const enabled = String(process.env.ETHEREAL || '').toLowerCase() === 'true';
+  // Use Ethereal by default, unless explicitly disabled with ETHEREAL=false
+  const enabled = String(process.env.ETHEREAL || '').toLowerCase() !== 'false';
 
   console.log('[createEtherealTransport] Enabled:', enabled);
 
