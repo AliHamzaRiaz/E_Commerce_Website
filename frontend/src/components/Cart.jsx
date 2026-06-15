@@ -17,7 +17,7 @@ const Cart = ({ isOpen, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 z-[150] backdrop-blur-sm"
           />
           
           <motion.div
@@ -25,7 +25,7 @@ const Cart = ({ isOpen, onClose }) => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed right-0 top-0 h-full w-full max-w-[320px] bg-primary z-[70] shadow-2xl flex flex-col"
+            className="fixed right-0 top-0 h-full w-full max-w-[320px] bg-primary z-[160] shadow-2xl flex flex-col"
           >
             <div className="p-3 border-b border-black/10 flex justify-between items-center">
               <h2 className="text-base font-serif tracking-widest uppercase">Shopping Bag</h2>
