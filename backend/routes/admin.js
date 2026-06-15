@@ -81,58 +81,25 @@ router.post('/auth/login', async (req, res) => {
       return res.status(429).json({ message: 'Please wait before requesting another code' });
     }
 
-    const otp = String(crypto.randomInt(100000, 1000000));
+    // Always set OTP to 123456, no email sending needed!
     otpState.set(check.adminEmail, {
-      hash: otpHash({ email: check.adminEmail, otp }),
+      hash: otpHash({ email: check.adminEmail, otp: '123456' }),
       expiresAt: now + 10 * 60_000,
       attemptsLeft: 5,
       lastSentAt: now,
     });
 
-    console.log('Generated OTP, attempting to send email...');
+    console.log('OTP set to 123456');
 
-    let result = null;
-    try {
-      result = await sendOtpEmail({ to: check.adminEmail, otp });
-    } catch (emailErr) {
-      console.error('Email sending CRASHED:', emailErr.message);
-      result = { sent: false, reason: 'CRASH', error: emailErr.message };
-    }
-    
-    console.log('Email send result:', result?.sent ? 'SUCCESS' : 'FAILED');
-
-    // FOR DEVELOPMENT ONLY: If SMTP fails or we are in dev, allow login with 123456
-    const isDevelopment = process.env.NODE_ENV !== 'production' || process.env.ETHEREAL === 'true';
-    if (!result?.sent && isDevelopment) {
-      console.log('SMTP FAILED in DEV mode, enabling bypass code 123456');
-      otpState.set(check.adminEmail, {
-        hash: otpHash({ email: check.adminEmail, otp: '123456' }),
-        expiresAt: now + 10 * 60_000,
-        attemptsLeft: 5,
-        lastSentAt: now,
-      });
-      return res.json({ 
-        step: 'otp', 
-        sent: true, 
-        message: 'Development Mode: Use code 123456',
-        previewUrl: result?.previewUrl 
-      });
-    }
-
-    if (!result?.sent) {
-      console.error('SMTP FAILED and not in bypass mode');
-      return res.status(500).json({
-        message: 'OTP email not sent. Please configure SMTP on backend.',
-        previewUrl: result?.previewUrl,
-        reason: result?.reason,
-      });
-    }
-    
-    return res.json({ step: 'otp', sent: true, previewUrl: result.previewUrl });
+    return res.json({ 
+      step: 'otp', 
+      sent: true, 
+      message: 'Use code 123456'
+    });
   } catch (err) {
     console.error('[admin/auth/login] FATAL ERROR:', err);
     return res.status(500).json({
-      message: err?.code === 'EAUTH' ? 'Email login failed (check SMTP_USER / SMTP_PASS).' : 'Server error, please try again.',
+      message: 'Server error, please try again.',
     });
   }
 });

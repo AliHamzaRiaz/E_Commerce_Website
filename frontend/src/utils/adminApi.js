@@ -6,7 +6,9 @@ const getAdminBase = () => {
   return origin ? `${origin}/api/admin` : '/api/admin';
 };
 
-const adminApi = axios.create();
+const adminApi = axios.create({
+  timeout: 15000, // 15 seconds timeout
+});
 
 adminApi.interceptors.request.use((config) => {
   // Set dynamic base URL for every request!
