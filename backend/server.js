@@ -70,7 +70,10 @@ const start = async () => {
     console.log('📦 Final products:', JSON.stringify(productsAfter.map(p => ({id: p.id, name: p.name})), null, 2));
   } catch (err) {
     console.error('[startup] ❌ Products DB init failed!');
-    console.error('[startup]', err?.message || err);
+    console.error('[startup] Full error:', err);
+    console.error('[startup] Error name:', err?.name);
+    console.error('[startup] Error message:', err?.message);
+    console.error('[startup] Error code:', err?.code);
     console.error('[startup] Stack trace:', err?.stack);
   }
   try {
