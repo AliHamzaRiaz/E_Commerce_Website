@@ -39,7 +39,12 @@ const createEtherealTransport = async () => {
   if (!enabled) return null;
 
   try {
-    const testAccount = await nodemailer.createTestAccount();
+    // Add timeout for creating test account
+    const createAccountPromise = nodemailer.createTestAccount();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Timeout creating Ethereal account')), 5000);
+    });
+    const testAccount = await Promise.race([createAccountPromise, timeoutPromise]);
     console.log('[createEtherealTransport] Created test account:', testAccount.user);
     return nodemailer.createTransport({
       host: testAccount.smtp.host,
@@ -63,16 +68,9 @@ const getTransporter = async () => {
 
   const smtpTransport = createSmtpTransport();
   if (smtpTransport) {
-    console.log('[getTransporter] Initializing SMTP transport');
-    try {
-      // Verify connection once at creation
-      await smtpTransport.verify();
-      console.log('[getTransporter] SMTP connection verified');
-      cachedTransporter = smtpTransport;
-      return cachedTransporter;
-    } catch (err) {
-      console.error('[getTransporter] SMTP Verification FAILED:', err.message);
-    }
+    console.log('[getTransporter] Initializing SMTP transport (no verification)');
+    cachedTransporter = smtpTransport;
+    return cachedTransporter;
   }
 
   console.log('[getTransporter] SMTP failed/missing, trying Ethereal');
