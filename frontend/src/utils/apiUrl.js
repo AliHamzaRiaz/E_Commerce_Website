@@ -5,7 +5,7 @@
  */
 export const getApiOrigin = () => {
   if (import.meta.env.PROD) {
-    return import.meta.env.VITE_API_URL || '';
+    return import.meta.env.VITE_API_URL || 'https://libbaas-pk-backend.onrender.com';
   }
   return '';
 };

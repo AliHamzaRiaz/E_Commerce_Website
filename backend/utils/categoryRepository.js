@@ -1,5 +1,12 @@
 const { getPool } = require('./productRepository');
 
+const defaultCategories = [
+  { name: 'bra', displayName: 'Bra', image: '', types: ['Push-Up', 'Bralette', 'Sports', 'Lace', 'Seamless'] },
+  { name: 'underwear', displayName: 'Underwear', image: '', types: ['Hipster', 'Thong', 'Brief', 'High-Waist'] },
+  { name: 'nightwear', displayName: 'Nightwear', image: '', types: ['Chemise', 'Nightgown', 'Robe'] },
+  { name: 'activewear', displayName: 'Activewear', image: '', types: ['Sports Bra', 'Leggings'] }
+];
+
 const initCategoriesTable = async () => {
   const p = getPool();
   await p.query(`
@@ -120,10 +127,28 @@ const updateCategory = async (id, { displayName, image, types }) => {
   }
 };
 
+const seedCategoriesIfEmpty = async () => {
+  const p = getPool();
+  const { rows } = await p.query('SELECT COUNT(*)::int AS c FROM categories');
+  if (rows[0].c > 0) return;
+
+  for (const cat of defaultCategories) {
+    try {
+      await addCategory(cat);
+    } catch (e) {
+      // Ignore duplicates (in case of race conditions)
+      console.warn('[seedCategoriesIfEmpty] Skipping category:', cat.name, e.message);
+    }
+  }
+  console.log('[seedCategoriesIfEmpty] Seeded default categories');
+};
+
 module.exports = {
   initCategoriesTable,
   listCategories,
   addCategory,
   deleteCategory,
-  updateCategory
+  updateCategory,
+  seedCategoriesIfEmpty,
+  defaultCategories
 };
