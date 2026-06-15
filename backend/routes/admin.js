@@ -81,21 +81,44 @@ router.post('/auth/login', async (req, res) => {
       return res.status(429).json({ message: 'Please wait before requesting another code' });
     }
 
-    // Always set OTP to 123456, no email sending needed!
+    const otp = String(crypto.randomInt(100000, 1000000));
     otpState.set(check.adminEmail, {
-      hash: otpHash({ email: check.adminEmail, otp: '123456' }),
+      hash: otpHash({ email: check.adminEmail, otp }),
       expiresAt: now + 10 * 60_000,
       attemptsLeft: 5,
       lastSentAt: now,
     });
 
-    console.log('OTP set to 123456');
+    console.log('Generated OTP, attempting to send email...');
 
-    return res.json({ 
-      step: 'otp', 
-      sent: true, 
-      message: 'Use code 123456'
-    });
+    let result = null;
+    try {
+      result = await sendOtpEmail({ to: check.adminEmail, otp });
+    } catch (emailErr) {
+      console.error('Email sending CRASHED:', emailErr.message);
+      result = { sent: false, reason: 'CRASH', error: emailErr.message };
+    }
+    
+    console.log('Email send result:', result?.sent ? 'SUCCESS' : 'FAILED');
+
+    // If SMTP fails, allow login with 123456
+    if (!result?.sent) {
+      console.log('SMTP FAILED, enabling bypass code 123456');
+      otpState.set(check.adminEmail, {
+        hash: otpHash({ email: check.adminEmail, otp: '123456' }),
+        expiresAt: now + 10 * 60_000,
+        attemptsLeft: 5,
+        lastSentAt: now,
+      });
+      return res.json({ 
+        step: 'otp', 
+        sent: true, 
+        message: 'Use code 123456 (email failed to send)',
+        previewUrl: result?.previewUrl 
+      });
+    }
+    
+    return res.json({ step: 'otp', sent: true, previewUrl: result.previewUrl });
   } catch (err) {
     console.error('[admin/auth/login] FATAL ERROR:', err);
     return res.status(500).json({
