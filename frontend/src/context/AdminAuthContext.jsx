@@ -27,7 +27,7 @@ export const AdminAuthProvider = ({ children }) => {
     setShowTimeoutWarning(false);
     setRemainingSeconds(30);
 
-    // Set warning timer (shows 10 seconds before timeout)
+    // Set warning timer (shows after 2 minutes of inactivity, with 30 second countdown)
     warningTimeoutRef.current = setTimeout(() => {
       setShowTimeoutWarning(true);
       // Start countdown
@@ -40,12 +40,12 @@ export const AdminAuthProvider = ({ children }) => {
           clearInterval(countdownRef.current);
         }
       }, 1000);
-    }, 10000);
+    }, 120000); // 2 minutes (120,000ms)
 
-    // Set auto-logout timer
+    // Set auto-logout timer (2.5 minutes total)
     timeoutRef.current = setTimeout(() => {
       logout();
-    }, 40000);
+    }, 150000);
   }, [isAuthenticated]);
 
   const logout = useCallback(() => {
