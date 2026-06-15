@@ -163,12 +163,20 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
     if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const info = await transporter.sendMail({
+    const sendPromise = transporter.sendMail({
       from,
       to,
       subject: `Order Confirmation - ${order.id}`,
       html: buildOrderHtml(order),
     });
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 10000);
+    });
+    
+    const info = await Promise.race([sendPromise, timeoutPromise]);
+    if (info?.sent === false) {
+      return info;
+    }
 
     const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
     return { sent: true, previewUrl };
@@ -184,13 +192,21 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
     if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const info = await transporter.sendMail({
+    const sendPromise = transporter.sendMail({
       from,
       to,
       subject,
       html,
       text,
     });
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 10000);
+    });
+    
+    const info = await Promise.race([sendPromise, timeoutPromise]);
+    if (info?.sent === false) {
+      return info;
+    }
 
     const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
     return { sent: true, previewUrl };
