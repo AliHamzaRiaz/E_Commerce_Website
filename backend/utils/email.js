@@ -12,6 +12,20 @@ const createSmtpTransport = () => {
 
   if (!user || !pass) return null;
 
+  // Explicit Gmail configuration for reliability
+  if (service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) {
+    console.log('[createSmtpTransport] Using Gmail explicit configuration');
+    return nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // Use STARTTLS
+      auth: { user, pass },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+  }
+
   if (service) {
     return nodemailer.createTransport({
       service,
@@ -30,9 +44,8 @@ const createSmtpTransport = () => {
 };
 
 const createEtherealTransport = async () => {
-  const enabled =
-    String(process.env.ETHEREAL || '').toLowerCase() === 'true' ||
-    (String(process.env.NODE_ENV || '').toLowerCase() !== 'production' && !process.env.SMTP_USER);
+  // Only use Ethereal if explicitly enabled with ETHEREAL=true
+  const enabled = String(process.env.ETHEREAL || '').toLowerCase() === 'true';
 
   console.log('[createEtherealTransport] Enabled:', enabled);
 
