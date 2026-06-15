@@ -1,16 +1,17 @@
 import axios from 'axios';
 import { getApiOrigin } from './apiUrl';
 
-const adminBase = () => {
+const getAdminBase = () => {
   const origin = getApiOrigin();
   return origin ? `${origin}/api/admin` : '/api/admin';
 };
 
-const adminApi = axios.create({
-  baseURL: adminBase(),
-});
+const adminApi = axios.create();
 
 adminApi.interceptors.request.use((config) => {
+  // Set dynamic base URL for every request!
+  config.baseURL = getAdminBase();
+  
   const adminToken = localStorage.getItem('adminToken') || '';
   const adminKey = localStorage.getItem('adminKey') || '';
   const authHeaders = adminToken

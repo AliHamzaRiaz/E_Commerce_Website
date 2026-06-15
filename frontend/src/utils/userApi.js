@@ -1,11 +1,12 @@
 import axios from 'axios';
 import { apiUrl } from './apiUrl';
 
-const userApi = axios.create({
-  baseURL: apiUrl('/api/users'),
-});
+const userApi = axios.create();
 
 userApi.interceptors.request.use((config) => {
+  // Set dynamic base URL for every request!
+  config.baseURL = apiUrl('/api/users');
+  
   const token = localStorage.getItem('userToken') || '';
   if (!token) return config;
   return {
