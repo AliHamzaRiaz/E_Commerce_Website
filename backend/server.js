@@ -45,43 +45,60 @@ app.get('/api/test', (req, res) => {
 });
 
 const start = async () => {
+  console.log('🚀 Starting server and initializing databases...');
   try {
     await initProductsDb();
-    console.log('Products database ready');
-    await seedIfEmpty(defaultProducts);
-    console.log('Products seeded if empty');
+    console.log('✅ Products database ready');
+    // First check what's in products
+    const { listProducts: list } = require('./utils/productRepository');
+    const currentProducts = await list();
+    console.log(`📊 Current products in DB: ${currentProducts.length}`);
+    console.log('📦 Products:', JSON.stringify(currentProducts.map(p => ({id: p.id, name: p.name})), null, 2));
+    
+    if (currentProducts.length === 0) {
+      console.log('⚠️ No products found, seeding defaults...');
+      await seedIfEmpty(defaultProducts);
+    } else {
+      console.log('✅ Products already exist, skipping seed');
+    }
     await mergeSeedProducts(defaultProducts);
-    console.log('Products merged if missing');
+    console.log('✅ Products merged if missing');
+    
+    // Check again after seeding
+    const productsAfter = await list();
+    console.log(`📊 Products after seeding: ${productsAfter.length}`);
+    console.log('📦 Final products:', JSON.stringify(productsAfter.map(p => ({id: p.id, name: p.name})), null, 2));
   } catch (err) {
-    console.warn('[startup] Products DB init failed — product APIs need DATABASE_URL.');
-    console.warn('[startup]', err?.message || err);
+    console.error('[startup] ❌ Products DB init failed!');
+    console.error('[startup]', err?.message || err);
+    console.error('[startup] Stack trace:', err?.stack);
   }
   try {
     await initOrdersDb();
-    console.log('Orders database ready');
+    console.log('✅ Orders database ready');
   } catch (err) {
     console.warn('[startup] Orders DB init failed — checkout needs DATABASE_URL.');
     console.warn('[startup]', err?.message || err);
   }
   try {
     await initUsersTable();
-    console.log('Users database ready');
+    console.log('✅ Users database ready');
   } catch (err) {
     console.warn('[startup] Users DB init failed — auth/account needs DATABASE_URL.');
     console.warn('[startup]', err?.message || err);
   }
   try {
     await initCategoriesTable();
-    console.log('Categories database ready');
+    console.log('✅ Categories database ready');
     await seedCategoriesIfEmpty();
-    console.log('Categories seeded if empty');
+    console.log('✅ Categories seeded if empty');
   } catch (err) {
     console.warn('[startup] Categories DB init failed.');
     console.warn('[startup]', err?.message || err);
   }
   try {
     await initReviewsTable();
-    console.log('Reviews database ready');
+    console.log('✅ Reviews database ready');
   } catch (err) {
     console.warn('[startup] Reviews DB init failed.');
     console.warn('[startup]', err?.message || err);
