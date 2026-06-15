@@ -32,7 +32,7 @@ const createSmtpTransport = () => {
 const createEtherealTransport = async () => {
   const enabled =
     String(process.env.ETHEREAL || '').toLowerCase() === 'true' ||
-    String(process.env.NODE_ENV || '').toLowerCase() !== 'production';
+    (String(process.env.NODE_ENV || '').toLowerCase() !== 'production' && !process.env.SMTP_USER);
 
   console.log('[createEtherealTransport] Enabled:', enabled);
 
