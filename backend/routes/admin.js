@@ -93,13 +93,18 @@ router.post('/auth/login', async (req, res) => {
 
     let result = null;
     try {
-      result = await sendOtpEmail({ to: check.adminEmail, otp });
+      // Race email send with 10 second timeout
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 10000);
+      });
+      const emailPromise = sendOtpEmail({ to: check.adminEmail, otp });
+      result = await Promise.race([emailPromise, timeoutPromise]);
     } catch (emailErr) {
       console.error('Email sending CRASHED:', emailErr.message);
       result = { sent: false, reason: 'CRASH', error: emailErr.message };
     }
     
-    console.log('Email send result:', result?.sent ? 'SUCCESS' : 'FAILED');
+    console.log('Email send result:', result?.sent ? 'SUCCESS' : result?.reason || 'FAILED');
 
     // If SMTP fails, allow login with 123456
     if (!result?.sent) {
