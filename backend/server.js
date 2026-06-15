@@ -60,6 +60,20 @@ app.get('/api/debug/seed-products', async (req, res) => {
   }
 });
 
+app.get('/api/debug/admin-creds', (req, res) => {
+  const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const adminPassword = String(process.env.ADMIN_PASSWORD || '');
+  const hasAdminEmail = !!adminEmail;
+  const hasAdminPassword = !!adminPassword;
+  res.json({
+    hasAdminEmail,
+    hasAdminPassword,
+    adminEmailLength: adminEmail.length,
+    adminEmailFirst3: adminEmail.substring(0, 3) + '...',
+    adminPasswordLength: adminPassword.length,
+  });
+});
+
 const start = async () => {
   console.log('🚀 Starting server and initializing databases...');
   try {
