@@ -7,7 +7,7 @@ const getAdminBase = () => {
 };
 
 const adminApi = axios.create({
-  timeout: 15000, // 15 seconds timeout
+  timeout: 30000, // 30 seconds timeout
 });
 
 adminApi.interceptors.request.use((config) => {
