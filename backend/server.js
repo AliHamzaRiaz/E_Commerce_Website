@@ -44,6 +44,22 @@ app.get('/api/test', (req, res) => {
   res.json({ message: "API working" });
 });
 
+app.get('/api/debug/seed-products', async (req, res) => {
+  try {
+    const { seedIfEmpty, mergeSeedProducts, listProducts } = require('./utils/productRepository');
+    const { defaultProducts } = require('./data/defaultProducts');
+    console.log('🔧 Manually seeding products...');
+    await seedIfEmpty(defaultProducts);
+    await mergeSeedProducts(defaultProducts);
+    const products = await listProducts();
+    console.log('✅ Products seeded, total:', products.length);
+    res.json({ success: true, count: products.length, products });
+  } catch (err) {
+    console.error('❌ Failed to seed products:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const start = async () => {
   console.log('🚀 Starting server and initializing databases...');
   try {
