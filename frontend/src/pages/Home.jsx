@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiUrl } from '../utils/apiUrl';
-import { ArrowRight, Star, ShieldCheck, Truck, ChevronRight, ChevronLeft, Mail, Send, MapPin, Phone } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, Truck, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -12,7 +12,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
 
   // Sample reviews for the carousel
   const reviews = [
@@ -397,81 +396,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Newsletter & Footer Top - Like Reference */}
-      <section className="bg-[#f5f5f5] py-16">
-        <div className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-            <div className="lg:col-span-1">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Get in Touch</h3>
-              <div className="space-y-4 text-sm text-[#444]">
-                <p className="flex items-start gap-3">
-                  <MapPin size={16} className="text-[#c5a059] shrink-0 mt-0.5" />
-                  <span>Bahria Sky, 1st Floor, Block G2, Bahria Orchard, Lahore</span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <Mail size={16} className="text-[#c5a059] shrink-0" />
-                  <span>support@zarlay.com.pk</span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <Phone size={16} className="text-[#c5a059] shrink-0" />
-                  <span>+92 311 7778826</span>
-                </p>
-              </div>
-            </div>
 
-            <div className="lg:col-span-1">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Care & Support</h3>
-              <ul className="space-y-3 text-sm text-[#444]">
-                <li><Link to="#" className="hover:text-[#c5a059]">Exchange & Return Policy</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">B2B & Wholesale</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">Contact Us</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">Our Blogs</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">FAQs</Link></li>
-              </ul>
-            </div>
-
-            <div className="lg:col-span-1">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Information</h3>
-              <ul className="space-y-3 text-sm text-[#444]">
-                <li><Link to="#" className="hover:text-[#c5a059]">About Us</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">Shipping Policy</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">Privacy Policy</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">Terms & Conditions</Link></li>
-                <li><Link to="#" className="hover:text-[#c5a059]">Track Your Order</Link></li>
-              </ul>
-            </div>
-
-            <div className="lg:col-span-1">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Newsletter Signup</h3>
-              <p className="text-sm text-[#444] mb-4">Subscribe to our newsletter and get 10% off your first purchase</p>
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                <input
-                  type="email"
-                  required
-                  placeholder="Your email address"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-full border border-gray-300 text-sm focus:outline-none focus:border-[#c5a059]"
-                />
-                <button type="submit" className="bg-[#1a1a1a] text-white px-6 py-3 rounded-full text-sm font-bold uppercase hover:bg-[#c5a059] transition-all flex items-center gap-2">
-                  Subscribe <Send size={14} />
-                </button>
-              </form>
-              <div className="flex gap-4 mt-8">
-                {['facebook', 'instagram', 'twitter', 'snapchat', 'youtube', 'tiktok'].map((social) => (
-                  <a key={social} href="#" className="text-[#1a1a1a] hover:text-[#c5a059]">
-                    <div className="w-8 h-8 flex items-center justify-center text-lg">{social[0].toUpperCase()}</div>
-                  </a>
-                ))}
-              </div>
-              <div className="flex gap-3 mt-8">
-                <div className="w-12 h-8 bg-[#1a1a1a] rounded flex items-center justify-center text-white text-xs font-bold">VISA</div>
-                <div className="w-12 h-8 bg-[#1a1a1a] rounded flex items-center justify-center text-white text-xs font-bold">MC</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Bottom Bar */}
       <div className="bg-[#1a1a1a] text-white py-5 text-center">
