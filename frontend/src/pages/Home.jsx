@@ -100,77 +100,156 @@ const Home = () => {
 
   return (
     <div className="pb-0">
-      {/* Hero Section - Like Reference */}
-      <section className="relative bg-[#f8f5f2] overflow-hidden">
-        <div className="max-w-[1800px] mx-auto">
-          {/* Top Bar - SALE tag like reference */}
-          <div className="bg-[#e72e2e] text-white text-center py-2 text-xs font-bold uppercase tracking-wider">
-            SALE • UP TO 50% OFF
+      {/* Hero Section - Professional Luxury */}
+      <section className="relative overflow-hidden">
+        <div className="max-w-[1920px] mx-auto">
+          {/* Top Bar - Limited Offer */}
+          <div className="bg-gradient-to-r from-[#1a1a1a] via-[#c5a059] to-[#1a1a1a] text-white text-center py-3 text-xs font-bold uppercase tracking-[0.3em]">
+            ✨ NEW ARRIVALS • FREE SHIPPING ON ORDERS OVER RS 5,000 ✨
           </div>
           
           {/* Main Hero */}
-          <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+          <div className="relative min-h-[88vh] flex items-center overflow-hidden bg-[#0f172a]">
+            {/* Background Image */}
             <div className="absolute inset-0 z-0">
               <AnimatePresence mode="wait">
                 {categories.length > 0 && (
                   <motion.img
                     key={categories[currentHeroIndex].id}
-                    src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, '/imags/sports-bra.jpg')}
+                    src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=1920&h=1080&fit=crop')}
                     alt={categories[currentHeroIndex].displayName}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1, scale: 1.05 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.1 }}
+                    transition={{ duration: 2, ease: "easeInOut" }}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 )}
               </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#f8f5f2]/80 via-transparent to-transparent" />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a]/95 via-[#0f172a]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 via-transparent to-transparent" />
             </div>
 
-            <div className="relative z-10 max-w-[1800px] w-full px-6 sm:px-10 lg:px-14">
-              <div className="max-w-2xl">
+            {/* Hero Content */}
+            <div className="relative z-20 w-full px-6 sm:px-10 lg:px-20">
+              <div className="max-w-3xl">
                 <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 1 }}
-                  className="space-y-6"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="space-y-8"
                 >
-                  <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase mb-4 block">
-                    {categories.length > 0 ? categories[currentHeroIndex]?.displayName : 'EXCLUSIVE COLLECTION'}
-                  </span>
-                  <h1 className="text-6xl md:text-8xl lg:text-9xl font-[Playfair_Display] text-[#1a1a1a] leading-[0.85] tracking-tight mb-6">
-                    LIBBAAS
-                  </h1>
-                  <p className="text-xl text-[#666] italic font-light max-w-md leading-relaxed">
-                    "Discover elegance that turns every moment into a masterpiece. Crafted with love, designed for you."
-                  </p>
-                  <Link
-                    to="/shop"
-                    className="inline-flex items-center gap-3 bg-[#c5a059] text-white px-10 py-5 text-sm font-bold uppercase tracking-widest hover:bg-[#1a1a1a] transition-all duration-500 shadow-lg shadow-[#c5a059]/30 hover:shadow-xl"
+                  {/* Subheading */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="flex items-center gap-3"
                   >
-                    <span className="relative z-10">SHOP THE COLLECTION</span>
-                    <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                    <div className="h-px w-12 bg-gradient-to-r from-transparent via-[#c5a059] to-[#c5a059]" />
+                    <span className="text-[#c5a059] text-xs font-bold tracking-[0.5em] uppercase">
+                      PREMIUM COLLECTION 2024
+                    </span>
+                  </motion.div>
+                  
+                  {/* Main Heading */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  >
+                    <h1 className="text-7xl md:text-8xl lg:text-[9rem] font-[Playfair_Display] text-white leading-[0.8] tracking-tight">
+                      LIB<span className="text-[#c5a059]">BAAS</span>
+                    </h1>
+                  </motion.div>
+                  
+                  {/* Tagline */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.6 }}
+                  >
+                    <p className="text-xl md:text-2xl text-white/80 font-light max-w-lg leading-relaxed border-l-2 border-[#c5a059] pl-6">
+                      Elegance redefined. Timeless pieces crafted for the modern woman.
+                    </p>
+                  </motion.div>
+                  
+                  {/* CTA Buttons */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.8 }}
+                    className="flex flex-col sm:flex-row gap-4 pt-4"
+                  >
+                    <Link
+                      to="/shop"
+                      className="group inline-flex items-center justify-center gap-3 bg-[#c5a059] text-white px-12 py-5 text-xs font-bold uppercase tracking-[0.3em] hover:bg-white hover:text-[#1a1a1a] transition-all duration-500 shadow-2xl shadow-[#c5a059]/40 hover:shadow-white/20"
+                    >
+                      <span className="relative z-10">SHOP NOW</span>
+                      <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                    
+                    <Link
+                      to="/new-arrivals"
+                      className="inline-flex items-center justify-center gap-3 border-2 border-white/30 text-white px-12 py-5 text-xs font-bold uppercase tracking-[0.3em] hover:border-white hover:bg-white/10 transition-all duration-500"
+                    >
+                      VIEW COLLECTION
+                    </Link>
+                  </motion.div>
+                  
+                  {/* Stats */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1, delay: 1 }}
+                    className="flex gap-10 pt-8 border-t border-white/10 mt-8"
+                  >
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-[#c5a059]">500+</p>
+                      <p className="text-xs text-white/60 uppercase tracking-[0.2em] mt-1">DESIGNS</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-[#c5a059]">10K+</p>
+                      <p className="text-xs text-white/60 uppercase tracking-[0.2em] mt-1">HAPPY CUSTOMERS</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-[#c5a059]">Free</p>
+                      <p className="text-xs text-white/60 uppercase tracking-[0.2em] mt-1">DELIVERY</p>
+                    </div>
+                  </motion.div>
                 </motion.div>
               </div>
             </div>
 
             {/* Navigation Arrows */}
             {categories.length > 1 && (
-              <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 z-20">
+              <div className="absolute bottom-10 right-10 flex gap-3 z-30">
                 <button
                   onClick={() => setCurrentHeroIndex((prev) => (prev - 1 + categories.length) % categories.length)}
-                  className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all"
+                  className="w-14 h-14 bg-white/10 hover:bg-[#c5a059] backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center text-white hover:text-white transition-all duration-300"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={24} />
                 </button>
                 <button
                   onClick={() => setCurrentHeroIndex((prev) => (prev + 1) % categories.length)}
-                  className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all"
+                  className="w-14 h-14 bg-[#c5a059] hover:bg-white hover:text-[#1a1a1a] backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center text-white transition-all duration-300"
                 >
-                  <ChevronRight size={20} />
+                  <ChevronRight size={24} />
                 </button>
+              </div>
+            )}
+            
+            {/* Slide Indicators */}
+            {categories.length > 1 && (
+              <div className="absolute bottom-10 left-10 flex gap-2 z-30">
+                {categories.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentHeroIndex(idx)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentHeroIndex ? 'w-10 bg-[#c5a059]' : 'bg-white/30 hover:bg-white/60'}`}
+                  />
+                ))}
               </div>
             )}
           </div>
