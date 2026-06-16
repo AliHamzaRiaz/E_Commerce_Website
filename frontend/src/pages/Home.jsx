@@ -30,11 +30,13 @@ const Home = () => {
 
   // Auto-rotate reviews
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+    if (reviews.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
+      }, 4000); // 4 seconds per slide
+      return () => clearInterval(interval);
+    }
+  }, [reviews.length]);
 
   // Fetch data
   useEffect(() => {
