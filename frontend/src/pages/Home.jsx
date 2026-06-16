@@ -136,15 +136,21 @@ const Home = () => {
                   transition={{ duration: 1 }}
                   className="space-y-6"
                 >
-                  <span className="text-[#666] text-sm tracking-widest uppercase">EVENING EVENT EDIT</span>
+                  <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase">
+                    {categories.length > 0 ? categories[currentHeroIndex]?.displayName : 'EVENING EVENT EDIT'}
+                  </span>
                   <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-[#1a1a1a] leading-tight">
                     MIDNIGHT <br/> CHARM
                   </h1>
+                  <p className="text-lg text-[#555] italic font-light max-w-lg">
+                    "Discover elegance that turns every moment into a masterpiece. Crafted with love, designed for you."
+                  </p>
                   <Link
                     to="/shop"
-                    className="inline-flex items-center gap-3 bg-[#1a1a1a] text-white px-8 py-4 text-sm font-bold uppercase tracking-widest hover:bg-[#c5a059] transition-all duration-300"
+                    className="inline-flex items-center gap-3 bg-[#c5a059] text-white px-10 py-5 text-sm font-bold uppercase tracking-widest hover:bg-[#1a1a1a] transition-all duration-500 shadow-lg shadow-[#c5a059]/30 hover:shadow-xl"
                   >
-                    SHOP NOW <ArrowRight size={16} />
+                    <span className="relative z-10">SHOP THE COLLECTION</span>
+                    <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </motion.div>
               </div>
