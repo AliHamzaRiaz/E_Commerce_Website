@@ -1,7 +1,18 @@
 const express = require('express');
-const { listReviewsByProduct, addReview } = require('../utils/reviewRepository');
+const { listReviewsByProduct, listAllReviews, addReview } = require('../utils/reviewRepository');
 
 const router = express.Router();
+
+// Get all reviews
+router.get('/', async (req, res) => {
+  try {
+    const reviews = await listAllReviews();
+    res.json(reviews);
+  } catch (e) {
+    console.error('[GET /api/reviews]', e);
+    res.status(500).json({ message: 'Failed to load reviews' });
+  }
+});
 
 // Get all reviews for a specific product
 router.get('/:productId', async (req, res) => {

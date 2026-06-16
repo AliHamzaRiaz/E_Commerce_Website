@@ -1,5 +1,12 @@
 const { getPool } = require('./productRepository');
 
+const defaultReviews = [
+  { userName: "Esha", productId: 1, rating: 5, comment: "Fast delivery, impressive quality!" },
+  { userName: "Shaheen", productId: 2, rating: 5, comment: "Pleasant, really happy to get it!" },
+  { userName: "Awais", productId: 3, rating: 5, comment: "Loved this dress! The color and design are beautiful, and the fit is perfect." },
+  { userName: "Fatima", productId: 4, rating: 5, comment: "Excellent fabric and stitching. Will definitely order again!" }
+];
+
 const initReviewsTable = async () => {
   const p = getPool();
   
@@ -31,12 +38,47 @@ const initReviewsTable = async () => {
   await p.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS created_at TIMESTAMP`);
 };
 
+const seedReviewsIfEmpty = async () => {
+  const p = getPool();
+  
+  const { rows } = await p.query(`SELECT COUNT(*) FROM reviews`);
+  if (Number(rows[0].count) === 0) {
+    console.log('Seeding default reviews...');
+    for (const review of defaultReviews) {
+      await p.query(
+        `INSERT INTO reviews (product_id, user_name, rating, comment, created_at) VALUES ($1, $2, $3, $4, NOW())`,
+        [review.productId, review.userName, review.rating, review.comment]
+      );
+    }
+    console.log('✅ Default reviews seeded');
+  } else {
+    console.log('✅ Reviews already exist, skipping seed');
+  }
+};
+
 const listReviewsByProduct = async (productId) => {
   const p = getPool();
   
   const { rows } = await p.query(
     `SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC`,
     [productId]
+  );
+  
+  return rows.map(row => ({
+    id: row.id,
+    productId: row.product_id,
+    userName: row.user_name,
+    rating: row.rating,
+    comment: row.comment,
+    createdAt: row.created_at
+  }));
+};
+
+const listAllReviews = async () => {
+  const p = getPool();
+  
+  const { rows } = await p.query(
+    `SELECT * FROM reviews ORDER BY created_at DESC`
   );
   
   return rows.map(row => ({
@@ -70,5 +112,7 @@ const addReview = async ({ productId, userName, rating, comment }) => {
 module.exports = {
   initReviewsTable,
   listReviewsByProduct,
+  listAllReviews,
+  seedReviewsIfEmpty,
   addReview
 };

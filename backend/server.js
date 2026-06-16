@@ -18,7 +18,7 @@ const { initProductsDb, seedIfEmpty, mergeSeedProducts } = require('./utils/prod
 const { initOrdersDb } = require('./utils/orderRepository');
 const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable, seedCategoriesIfEmpty } = require('./utils/categoryRepository');
-const { initReviewsTable } = require('./utils/reviewRepository');
+const { initReviewsTable, seedReviewsIfEmpty } = require('./utils/reviewRepository');
 const { defaultProducts } = require('./data/defaultProducts');
 const { sendCustomEmail } = require('./utils/email');
 
@@ -170,6 +170,7 @@ const start = async () => {
   try {
     await initReviewsTable();
     console.log('✅ Reviews database ready');
+    await seedReviewsIfEmpty();
   } catch (err) {
     console.warn('[startup] Reviews DB init failed.');
     console.warn('[startup]', err?.message || err);

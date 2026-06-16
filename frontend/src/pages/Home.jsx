@@ -9,17 +9,10 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-
-  // Sample reviews for the carousel
-  const reviews = [
-    { name: "Esha", text: "Fast delivery, impressive quality!", rating: 5 },
-    { name: "Shaheen", text: "Pleasant, really happy to get it!", rating: 5 },
-    { name: "Awais", text: "Loved this dress! The color and design are beautiful, and the fit is perfect.", rating: 5 },
-    { name: "Fatima", text: "Excellent fabric and stitching. Will definitely order again!", rating: 5 },
-  ];
 
   // Auto-rotate hero images
   useEffect(() => {
@@ -47,12 +40,14 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, catRes] = await Promise.all([
+        const [prodRes, catRes, reviewRes] = await Promise.all([
           axios.get(apiUrl('/api/products'), { timeout: 5000 }),
-          axios.get(apiUrl('/api/categories'), { timeout: 5000 })
+          axios.get(apiUrl('/api/categories'), { timeout: 5000 }),
+          axios.get(apiUrl('/api/reviews'), { timeout: 5000 })
         ]);
         const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
         const allCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []);
+        const allReviews = Array.isArray(reviewRes.data) ? reviewRes.data : [];
         
         const validCategories = allCategories.filter(cat => 
           cat.displayName && cat.displayName.trim() !== ''
@@ -61,6 +56,7 @@ const Home = () => {
         setAllProducts(products);
         setFeaturedProducts(products.slice(0, 8));
         setCategories(validCategories);
+        setReviews(allReviews);
         setCurrentHeroIndex(0);
         setLoading(false);
       } catch (err) {
@@ -346,53 +342,65 @@ const Home = () => {
             <h2 className="text-2xl font-serif text-[#1a1a1a]">Let customers speak for us</h2>
             <div className="flex items-center gap-1 mt-2">
               {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="#14b8a6" stroke="#14b8a6" />)}
-              <span className="text-xs text-gray-500 ml-2">from {reviews.length * 3 + 2} reviews</span>
+              <span className="text-xs text-gray-500 ml-2">from {reviews.length} reviews</span>
             </div>
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setCurrentReviewIndex((prev) => (prev - 1 + reviews.length) % reviews.length)}
-              className="absolute -left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 z-10"
-            >
-              <ChevronLeft size={18} />
-            </button>
+          {reviews.length > 0 ? (
+            <div className="relative">
+              <button
+                onClick={() => setCurrentReviewIndex((prev) => (prev - 1 + reviews.length) % reviews.length)}
+                className="absolute -left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 z-10"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-            <div className="overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentReviewIndex}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.5 }}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-8"
-                >
-                  {reviews.map((review, i) => {
-                    const idx = (i + currentReviewIndex) % reviews.length;
-                    return (
-                      <div key={idx} className="p-8 border border-gray-100 rounded-lg bg-white">
-                        <div className="flex gap-1 mb-4">
-                          {[1,2,3,4,5].map(star => (
-                            <Star key={star} size={14} fill="#14b8a6" stroke="#14b8a6" />
-                          ))}
+              <div className="overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentReviewIndex}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.5 }}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-8"
+                  >
+                    {reviews.map((review, i) => {
+                      const idx = (i + currentReviewIndex) % reviews.length;
+                      const currentReview = reviews[idx];
+                      return (
+                        <div key={currentReview.id || idx} className="p-8 border border-gray-100 rounded-lg bg-white">
+                          <div className="flex gap-1 mb-4">
+                            {[...Array(5)].map((_, star) => (
+                              <Star 
+                                key={star} 
+                                size={14} 
+                                fill={star < currentReview.rating ? "#14b8a6" : "none"} 
+                                stroke={star < currentReview.rating ? "#14b8a6" : "#d1d5db"} 
+                              />
+                            ))}
+                          </div>
+                          <p className="text-[#333] mb-6">{currentReview.comment}</p>
+                          <p className="text-sm font-medium text-[#1a1a1a]">{currentReview.userName}</p>
                         </div>
-                        <p className="text-[#333] mb-6">{reviews[idx].text}</p>
-                        <p className="text-sm font-medium text-[#1a1a1a]">{reviews[idx].name}</p>
-                      </div>
-                    );
-                  })}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                      );
+                    })}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
-            <button
-              onClick={() => setCurrentReviewIndex((prev) => (prev + 1) % reviews.length)}
-              className="absolute -right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 z-10"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
+              <button
+                onClick={() => setCurrentReviewIndex((prev) => (prev + 1) % reviews.length)}
+                className="absolute -right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 z-10"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              No reviews yet. Be the first to review!
+            </div>
+          )}
         </div>
       </section>
     </div>
