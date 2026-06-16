@@ -365,26 +365,27 @@ const Home = () => {
                     transition={{ duration: 0.5 }}
                     className="grid grid-cols-1 md:grid-cols-3 gap-8"
                   >
-                    {reviews.map((review, i) => {
-                      const idx = (i + currentReviewIndex) % reviews.length;
-                      const currentReview = reviews[idx];
-                      return (
-                        <div key={currentReview.id || idx} className="p-8 border border-gray-100 rounded-lg bg-white">
-                          <div className="flex gap-1 mb-4">
-                            {[...Array(5)].map((_, star) => (
-                              <Star 
-                                key={star} 
-                                size={14} 
-                                fill={star < currentReview.rating ? "#14b8a6" : "none"} 
-                                stroke={star < currentReview.rating ? "#14b8a6" : "#d1d5db"} 
-                              />
-                            ))}
-                          </div>
-                          <p className="text-[#333] mb-6">{currentReview.comment}</p>
-                          <p className="text-sm font-medium text-[#1a1a1a]">{currentReview.userName}</p>
+                    {reviews.map((_, i) => {
+                    const idx = (i + currentReviewIndex) % reviews.length;
+                    const currentReview = reviews[idx];
+                    if (!currentReview) return null; // Safety check
+                    return (
+                      <div key={currentReview.id || idx} className="p-8 border border-gray-100 rounded-lg bg-white">
+                        <div className="flex gap-1 mb-4">
+                          {[...Array(5)].map((_, star) => (
+                            <Star 
+                              key={star} 
+                              size={14} 
+                              fill={star < (currentReview?.rating || 0) ? "#14b8a6" : "none"} 
+                              stroke={star < (currentReview?.rating || 0) ? "#14b8a6" : "#d1d5db"} 
+                            />
+                          ))}
                         </div>
-                      );
-                    })}
+                        <p className="text-[#333] mb-6">{currentReview?.comment || "Great product!"}</p>
+                        <p className="text-sm font-medium text-[#1a1a1a]">{currentReview?.userName || "Customer"}</p>
+                      </div>
+                    );
+                  })}
                   </motion.div>
                 </AnimatePresence>
               </div>
