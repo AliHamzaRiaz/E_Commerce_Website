@@ -148,7 +148,7 @@ const Home = () => {
                   >
                     <div className="h-px w-12 bg-gradient-to-r from-transparent via-[#c5a059] to-[#c5a059]" />
                     <span className="text-[#c5a059] text-xs font-bold tracking-[0.5em] uppercase">
-                      PREMIUM COLLECTION 2024
+                      PREMIUM COLLECTION 2026
                     </span>
                   </motion.div>
                   
