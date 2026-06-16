@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiUrl } from '../utils/apiUrl';
-import { ArrowRight, Star, ShieldCheck, Truck, ChevronRight } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, Truck, ChevronRight, ChevronLeft, Mail, Send, MapPin, Phone } from 'lucide-react';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -11,10 +11,19 @@ const Home = () => {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
 
-  // Auto-rotate hero images - now using categories!
+  // Sample reviews for the carousel
+  const reviews = [
+    { name: "Esha", text: "Fast delivery, impressive quality!", rating: 5 },
+    { name: "Shaheen", text: "Pleasant, really happy to get it!", rating: 5 },
+    { name: "Awais", text: "Loved this dress! The color and design are beautiful, and the fit is perfect.", rating: 5 },
+    { name: "Fatima", text: "Excellent fabric and stitching. Will definitely order again!", rating: 5 },
+  ];
+
+  // Auto-rotate hero images
   useEffect(() => {
-    // Reset index if it's out of bounds
     if (currentHeroIndex >= categories.length && categories.length > 0) {
       setCurrentHeroIndex(0);
     }
@@ -22,12 +31,20 @@ const Home = () => {
     if (categories.length > 0) {
       const interval = setInterval(() => {
         setCurrentHeroIndex((prev) => (prev + 1) % categories.length);
-      }, 5000); // Change every 5 seconds
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [categories, currentHeroIndex]);
 
-  // Optimized fetching for faster navigation
+  // Auto-rotate reviews
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -38,15 +55,14 @@ const Home = () => {
         const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
         const allCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []);
         
-        // Filter out categories with no displayName!
         const validCategories = allCategories.filter(cat => 
           cat.displayName && cat.displayName.trim() !== ''
         );
         
         setAllProducts(products);
-        setFeaturedProducts(products.slice(0, 4));
+        setFeaturedProducts(products.slice(0, 8));
         setCategories(validCategories);
-        setCurrentHeroIndex(0); // Reset index to first category
+        setCurrentHeroIndex(0);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -76,276 +92,283 @@ const Home = () => {
     }
   };
 
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    alert('Thank you for subscribing!');
+    setNewsletterEmail('');
+  };
+
   return (
-    <div className="pb-32">
-      {/* Hero Section - Professional, Fully Responsive Category Carousel */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a1620] mb-24">
-        <div className="absolute inset-0 z-0">
-          {/* Uniform Dark Background for Smooth Transitions */}
-          <div className="absolute inset-0 bg-[#0a1620] z-0" />
+    <div className="pb-0">
+      {/* Hero Section - Like Reference */}
+      <section className="relative bg-[#f8f5f2] overflow-hidden">
+        <div className="max-w-[1800px] mx-auto">
+          {/* Top Bar - SALE tag like reference */}
+          <div className="bg-[#e72e2e] text-white text-center py-2 text-xs font-bold uppercase tracking-wider">
+            SALE • UP TO 50% OFF
+          </div>
           
-          {/* Animated Category Carousel - Smooth Crossfade! */}
-          <AnimatePresence mode="wait">
-            {categories.length > 0 && (
-              <motion.img
-                key={categories[currentHeroIndex].id}
-                src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName)}
-                alt={categories[currentHeroIndex].displayName}
-                initial={{ opacity: 0 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 0.95, // Perfect balance - small but fills the hero!
-                  y: [0, -4, 0] // Gentle vertical float
-                }}
-                exit={{ opacity: 0 }}
-                transition={{ 
-                  duration: 1.2, 
-                  ease: "easeInOut",
-                  y: { duration: 8, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                loading="eager"
-              />
-            )}
-          </AnimatePresence>
-          
-          {/* Professional Overlay for Clarity & Readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1620]/85 via-[#0a1620]/40 to-[#0a1620]/85 z-20" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0)_0%,rgba(10,22,32,0.65)_100%)] z-20" />
-          
-          {/* Navigation Dots */}
-          {categories.length > 1 && (
-            <div className="absolute bottom-12 sm:bottom-16 left-0 right-0 z-30 flex justify-center gap-4">
-              {categories.map((cat, index) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setCurrentHeroIndex(index)}
-                  className={`h-1.5 sm:h-2 rounded-full transition-all duration-700 ${
-                    index === currentHeroIndex 
-                      ? 'w-10 sm:w-14 bg-gold shadow-lg shadow-gold/50' 
-                      : 'w-2 bg-white/25 hover:bg-white/50'
-                  }`}
-                />
-              ))}
+          {/* Main Hero */}
+          <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 z-0">
+              <AnimatePresence mode="wait">
+                {categories.length > 0 && (
+                  <motion.img
+                    key={categories[currentHeroIndex].id}
+                    src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, '/imags/sports-bra.jpg')}
+                    alt={categories[currentHeroIndex].displayName}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, scale: 1.05 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+              </AnimatePresence>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#f8f5f2]/80 via-transparent to-transparent" />
             </div>
-          )}
-        </div>
-        
-        <div className="relative z-10 text-center space-y-10 sm:space-y-14 px-4 sm:px-6 max-w-6xl">
-          {/* Luxury Brand Header */}
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.4, delay: 0.3 }}
-            className="space-y-6 sm:space-y-8"
-          >
-            <span className="text-gold tracking-[0.6em] sm:tracking-[0.8em] md:tracking-[1em] uppercase text-[7px] sm:text-[9px] md:text-[11px] font-semibold block">
-              Timeless Elegance
-            </span>
-            <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] xl:text-[12rem] font-serif tracking-[0.15em] sm:tracking-[0.18em] md:tracking-[0.25em] uppercase text-white leading-none">
-              LIBBAAS
-            </h1>
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: "6rem" }}
-              transition={{ duration: 1.4, delay: 1.2 }}
-              className="h-0.5 bg-gold mx-auto mt-6 sm:mt-8 md:mt-12"
-            />
-          </motion.div>
-          
-          {/* Current Category Display - Timed to sync with image! */}
-          {categories.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              key={categories[currentHeroIndex].id}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="space-y-2 sm:space-y-3"
-            >
-              <span className="text-white/70 tracking-[0.35em] sm:tracking-[0.4em] uppercase text-[9px] sm:text-[11px] md:text-[12px] font-medium block">
-                Discover Our
-              </span>
-              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-[0.1em] sm:tracking-[0.12em] uppercase text-gold">
-                {categories[currentHeroIndex].displayName}
-              </h2>
-            </motion.div>
-          )}
-          
-          {/* Shop Button - Fixed! */}
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 2.2 }}
-            className="pt-4"
-          >
-            <Link
-              to="/shop"
-              className="group inline-flex items-center justify-center gap-4 bg-white text-[#0a1620] px-12 sm:px-20 md:px-28 py-5 sm:py-6 md:py-8 text-[10px] sm:text-[12px] md:text-[13px] font-bold uppercase tracking-[0.4em] sm:tracking-[0.5em] md:tracking-[0.6em] transition-all duration-300 hover:bg-gold hover:text-white shadow-2xl hover:shadow-gold/30 relative overflow-hidden"
-            >
-              <span className="relative z-10">Explore The Collection</span>
-              <ArrowRight size={16} className="relative z-10 transition-transform duration-500 group-hover:translate-x-3" />
-              <div className="absolute inset-0 bg-gold translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
-            </Link>
-          </motion.div>
+
+            <div className="relative z-10 max-w-[1800px] w-full px-6 sm:px-10 lg:px-14">
+              <div className="max-w-2xl">
+                <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 1 }}
+                  className="space-y-6"
+                >
+                  <span className="text-[#666] text-sm tracking-widest uppercase">EVENING EVENT EDIT</span>
+                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-[#1a1a1a] leading-tight">
+                    MIDNIGHT <br/> CHARM
+                  </h1>
+                  <Link
+                    to="/shop"
+                    className="inline-flex items-center gap-3 bg-[#1a1a1a] text-white px-8 py-4 text-sm font-bold uppercase tracking-widest hover:bg-[#c5a059] transition-all duration-300"
+                  >
+                    SHOP NOW <ArrowRight size={16} />
+                  </Link>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            {categories.length > 1 && (
+              <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 z-20">
+                <button
+                  onClick={() => setCurrentHeroIndex((prev) => (prev - 1 + categories.length) % categories.length)}
+                  className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={() => setCurrentHeroIndex((prev) => (prev + 1) % categories.length)}
+                  className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Featured Categories */}
-      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 mb-40">
-        <div className="text-center mb-24 space-y-6">
-          <motion.div {...fadeInUp} className="flex items-center justify-center gap-6">
-            <div className="h-px w-12 bg-gold/30" />
-            <span className="text-gold text-[10px] font-bold tracking-[0.6em] uppercase">The Curation</span>
-            <div className="h-px w-12 bg-gold/30" />
-          </motion.div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif tracking-tight uppercase text-[#0b2a3d]">Top Categories</h2>
+      {/* Circular Categories - Like Reference */}
+      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-serif text-[#1a1a1a] uppercase tracking-widest">Find Your Fit</h2>
         </div>
-
-        <div className="flex lg:grid lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-10 overflow-x-auto lg:overflow-visible pb-10 sm:pb-12 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0">
-          {categories.map((cat) => (
-            <motion.div 
+        <div className="flex justify-center gap-6 md:gap-10 overflow-x-auto pb-8 scrollbar-hide">
+          {categories.slice(0, 6).map((cat) => (
+            <Link
               key={cat.id}
-              whileHover={{ y: -12 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="min-w-[80%] sm:min-w-[45%] lg:min-w-0 snap-center"
+              to={`/shop?category=${cat.displayName}`}
+              className="flex flex-col items-center gap-3 group min-w-fit"
             >
-              <Link
-                to={`/shop?category=${cat.displayName}`}
-                className="group relative block aspect-[3/4] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] luxury-shadow"
-              >
-                <img 
-                  src={cat.image || getCategoryImage(cat.displayName, '/imags/sports-bra.jpg')} 
-                  className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110"
+              <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#c5a059] transition-all duration-300">
+                <img
+                  src={cat.image || getCategoryImage(cat.displayName, '/imags/sports-bra.jpg')}
                   alt={cat.displayName}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0b2a3d]/90 via-[#0b2a3d]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                <div className="absolute inset-0 border border-white/0 group-hover:border-white/10 transition-all duration-700 m-3 sm:m-4 rounded-[1.5rem] sm:rounded-[2rem]" />
-                
-                <div className="absolute bottom-8 sm:bottom-10 left-0 right-0 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
-                  <span className="text-gold text-[7px] sm:text-[8px] font-bold tracking-[0.35em] sm:tracking-[0.4em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-700 mb-2 block">Discover</span>
-                  <h3 className="text-white text-lg sm:text-xl font-serif tracking-[0.1em] uppercase drop-shadow-2xl">{cat.displayName}</h3>
-                </div>
-              </Link>
-            </motion.div>
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider text-[#333]">{cat.displayName}</span>
+            </Link>
+          ))}
+        </div>
+        {/* Dots indicator */}
+        <div className="flex justify-center gap-2 mt-8">
+          {[0, 1].map((i) => (
+            <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-[#1a1a1a]' : 'bg-gray-300'}`} />
           ))}
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="bg-[#fcfcfc] pt-40 pb-20">
-        <div className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-24 gap-8">
-            <div className="space-y-6 text-center md:text-left">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="flex items-center justify-center md:justify-start gap-4"
-              >
-                <div className="w-12 h-px bg-gold" />
-                <span className="text-[10px] font-bold tracking-[0.5em] uppercase text-gold">The Edit</span>
-              </motion.div>
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif tracking-tight text-[#0b2a3d]">Trending Now</h2>
-            </div>
-            <Link to="/shop" className="group flex items-center gap-4 text-[#0b2a3d] text-[10px] font-bold tracking-[0.3em] uppercase border-b border-[#0b2a3d]/10 pb-3 hover:border-gold transition-all duration-500">
-              Explore All Masterpieces <ChevronRight size={14} className="group-hover:translate-x-2 transition-transform duration-500" />
-            </Link>
-          </div>
-          
-          <motion.div 
-            variants={stagger}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="flex lg:grid lg:grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-12 gap-y-12 sm:gap-y-16 overflow-x-auto lg:overflow-visible pb-10 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 -mx-4 sm:px-0 sm:mx-0"
-          >
-            {loading ? [1,2,3,4].map(i => (
-              <div key={i} className="min-w-[80%] sm:min-w-[45%] lg:min-w-0 aspect-[3/4] bg-neutral-50 animate-pulse rounded-xl sm:rounded-2xl"></div>
-            )) : featuredProducts.map(p => (
-              <motion.div key={p.id} variants={fadeInUp} className="min-w-[80%] sm:min-w-[45%] lg:min-w-0 snap-center">
-                <Link to={`/product/${p.id}`} className="group block space-y-6 sm:space-y-8">
-                  <div className="aspect-[3/4] overflow-hidden bg-white relative rounded-xl sm:rounded-2xl luxury-shadow transition-all duration-700 group-hover:-translate-y-2">
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-[#0b2a3d]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="absolute bottom-6 sm:bottom-8 left-6 sm:left-8 right-6 sm:right-8 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700 z-20">
-                      <button className="w-full bg-white text-[#0b2a3d] py-4 sm:py-5 text-[8px] sm:text-[9px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase hover:bg-gold hover:text-white transition-all duration-500 rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl">Quick View</button>
-                    </div>
-                  </div>
-                  <div className="text-center space-y-2 sm:space-y-3 px-3 sm:px-4">
-                    <h3 className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-[#0b2a3d]/80 group-hover:text-gold transition-colors duration-500">{p.name}</h3>
-                    <p className="text-gold font-serif text-lg sm:text-xl tracking-tight">Rs {p.price?.toLocaleString()}</p>
-                  </div>
-                </Link>
-              </motion.div>
+      {/* What's New Section */}
+      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-serif text-[#1a1a1a] uppercase tracking-widest">What's New</h2>
+        </div>
+
+        <div className="relative">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+            {featuredProducts.slice(0, 5).map((p) => (
+              <Link key={p.id} to={`/product/${p.id}`} className="group relative">
+                <div className="absolute top-3 left-3 bg-[#e72e2e] text-white text-xs font-bold px-3 py-1 uppercase z-10">
+                  -20%
+                </div>
+                <div className="aspect-[3/4] overflow-hidden bg-white">
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <h3 className="text-sm font-medium text-[#1a1a1a]">{p.name}</h3>
+                  <p className="text-[#c5a059] font-bold mt-1">Rs {p.price?.toLocaleString()}</p>
+                </div>
+              </Link>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Brand Values */}
-      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 pt-10 pb-32">
-        <div className="flex lg:grid lg:grid-cols-3 gap-6 sm:gap-16 overflow-x-auto lg:overflow-visible pb-12 lg:pb-0 scrollbar-hide snap-x snap-mandatory">
-          <motion.div {...fadeInUp} className="min-w-[85%] sm:min-w-[45%] lg:min-w-0 snap-center group space-y-8 p-10 sm:p-12 bg-neutral-50/50 rounded-[3rem] transition-all duration-700 hover:bg-white hover:shadow-2xl hover:shadow-[#0b2a3d]/5">
-            <div className="w-16 h-16 border border-gold/20 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-white transition-all duration-700 rounded-2xl shadow-xl shadow-gold/5">
-              <Star size={28} />
+      {/* Customer Reviews - Like Reference */}
+      <section className="bg-white py-20 border-t border-b border-gray-100">
+        <div className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="mb-12">
+            <h2 className="text-2xl font-serif text-[#1a1a1a]">Let customers speak for us</h2>
+            <div className="flex items-center gap-1 mt-2">
+              {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="#14b8a6" stroke="#14b8a6" />)}
+              <span className="text-xs text-gray-500 ml-2">from {reviews.length * 3 + 2} reviews</span>
             </div>
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold tracking-[0.4em] uppercase text-[#0b2a3d]">Exquisite Quality</h3>
-              <p className="text-[#0b2a3d]/40 text-[13px] leading-relaxed font-medium">Hand-selected premium fabrics and meticulous craftsmanship in every delicate stitch.</p>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setCurrentReviewIndex((prev) => (prev - 1 + reviews.length) % reviews.length)}
+              className="absolute -left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 z-10"
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            <div className="overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentReviewIndex}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-8"
+                >
+                  {reviews.map((review, i) => {
+                    const idx = (i + currentReviewIndex) % reviews.length;
+                    return (
+                      <div key={idx} className="p-8 border border-gray-100 rounded-lg bg-white">
+                        <div className="flex gap-1 mb-4">
+                          {[1,2,3,4,5].map(star => (
+                            <Star key={star} size={14} fill="#14b8a6" stroke="#14b8a6" />
+                          ))}
+                        </div>
+                        <p className="text-[#333] mb-6">{reviews[idx].text}</p>
+                        <p className="text-sm font-medium text-[#1a1a1a]">{reviews[idx].name}</p>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </motion.div>
-          <motion.div {...fadeInUp} className="min-w-[85%] sm:min-w-[45%] lg:min-w-0 snap-center group space-y-8 p-10 sm:p-12 bg-neutral-50/50 rounded-[3rem] transition-all duration-700 hover:bg-white hover:shadow-2xl hover:shadow-[#0b2a3d]/5">
-            <div className="w-16 h-16 border border-gold/20 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-white transition-all duration-700 rounded-2xl shadow-xl shadow-gold/5">
-              <Truck size={28} />
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold tracking-[0.4em] uppercase text-[#0b2a3d]">Swift Concierge</h3>
-              <p className="text-[#0b2a3d]/40 text-[13px] leading-relaxed font-medium">Priority shipping across Pakistan, ensuring your luxury pieces arrive in pristine condition.</p>
-            </div>
-          </motion.div>
-          <motion.div {...fadeInUp} className="min-w-[85%] sm:min-w-[45%] lg:min-w-0 snap-center group space-y-8 p-10 sm:p-12 bg-neutral-50/50 rounded-[3rem] transition-all duration-700 hover:bg-white hover:shadow-2xl hover:shadow-[#0b2a3d]/5">
-            <div className="w-16 h-16 border border-gold/20 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-white transition-all duration-700 rounded-2xl shadow-xl shadow-gold/5">
-              <ShieldCheck size={28} />
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold tracking-[0.4em] uppercase text-[#0b2a3d]">Discreet Privacy</h3>
-              <p className="text-[#0b2a3d]/40 text-[13px] leading-relaxed font-medium">Your experience is personal. We provide secure shopping and elegant, discreet packaging.</p>
-            </div>
-          </motion.div>
+
+            <button
+              onClick={() => setCurrentReviewIndex((prev) => (prev + 1) % reviews.length)}
+              className="absolute -right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 z-10"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="relative py-64 overflow-hidden bg-[#0b2a3d] text-white">
-        <div className="absolute top-0 right-0 w-full h-full opacity-[0.02] font-serif text-[30vw] pointer-events-none select-none flex items-center justify-end translate-x-1/4">LIBBAAS</div>
-        <div className="max-w-5xl mx-auto px-6 text-center space-y-16 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.2 }}
-            className="space-y-10"
-          >
-            <span className="text-gold tracking-[0.6em] uppercase text-[10px] font-bold block">Our Philosophy</span>
-            <h2 className="text-5xl md:text-8xl font-serif tracking-tight uppercase leading-[1.1]">Sophistication <br/><span className="text-gold italic">Redefined</span></h2>
-            <div className="h-px w-24 bg-gold/30 mx-auto"></div>
-            <p className="text-white/60 leading-relaxed text-xl sm:text-3xl font-light italic max-w-4xl mx-auto">
-              "LIBBAAS is more than a brand; it is a celebration of the feminine spirit. We believe that what you wear closest to your skin should be as beautiful as your own story."
-            </p>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5 }}
-          >
-            <Link to="/about" className="inline-block border border-gold/50 text-gold px-20 py-6 text-[11px] font-bold tracking-[0.5em] uppercase hover:bg-gold hover:text-[#0b2a3d] transition-all duration-700 rounded-full">
-              Explore Our Story
-            </Link>
-          </motion.div>
+      {/* Newsletter & Footer Top - Like Reference */}
+      <section className="bg-[#f5f5f5] py-16">
+        <div className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+            <div className="lg:col-span-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Get in Touch</h3>
+              <div className="space-y-4 text-sm text-[#444]">
+                <p className="flex items-start gap-3">
+                  <MapPin size={16} className="text-[#c5a059] shrink-0 mt-0.5" />
+                  <span>Bahria Sky, 1st Floor, Block G2, Bahria Orchard, Lahore</span>
+                </p>
+                <p className="flex items-center gap-3">
+                  <Mail size={16} className="text-[#c5a059] shrink-0" />
+                  <span>support@zarlay.com.pk</span>
+                </p>
+                <p className="flex items-center gap-3">
+                  <Phone size={16} className="text-[#c5a059] shrink-0" />
+                  <span>+92 311 7778826</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Care & Support</h3>
+              <ul className="space-y-3 text-sm text-[#444]">
+                <li><Link to="#" className="hover:text-[#c5a059]">Exchange & Return Policy</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">B2B & Wholesale</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">Contact Us</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">Our Blogs</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">FAQs</Link></li>
+              </ul>
+            </div>
+
+            <div className="lg:col-span-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Information</h3>
+              <ul className="space-y-3 text-sm text-[#444]">
+                <li><Link to="#" className="hover:text-[#c5a059]">About Us</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">Shipping Policy</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">Privacy Policy</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">Terms & Conditions</Link></li>
+                <li><Link to="#" className="hover:text-[#c5a059]">Track Your Order</Link></li>
+              </ul>
+            </div>
+
+            <div className="lg:col-span-1">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] mb-6">Newsletter Signup</h3>
+              <p className="text-sm text-[#444] mb-4">Subscribe to our newsletter and get 10% off your first purchase</p>
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="Your email address"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-full border border-gray-300 text-sm focus:outline-none focus:border-[#c5a059]"
+                />
+                <button type="submit" className="bg-[#1a1a1a] text-white px-6 py-3 rounded-full text-sm font-bold uppercase hover:bg-[#c5a059] transition-all flex items-center gap-2">
+                  Subscribe <Send size={14} />
+                </button>
+              </form>
+              <div className="flex gap-4 mt-8">
+                {['facebook', 'instagram', 'twitter', 'snapchat', 'youtube', 'tiktok'].map((social) => (
+                  <a key={social} href="#" className="text-[#1a1a1a] hover:text-[#c5a059]">
+                    <div className="w-8 h-8 flex items-center justify-center text-lg">{social[0].toUpperCase()}</div>
+                  </a>
+                ))}
+              </div>
+              <div className="flex gap-3 mt-8">
+                <div className="w-12 h-8 bg-[#1a1a1a] rounded flex items-center justify-center text-white text-xs font-bold">VISA</div>
+                <div className="w-12 h-8 bg-[#1a1a1a] rounded flex items-center justify-center text-white text-xs font-bold">MC</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Bottom Bar */}
+      <div className="bg-[#1a1a1a] text-white py-4 text-center">
+        <p className="text-sm font-bold uppercase tracking-widest">© ZARLAY - ALL RIGHTS RESERVED.</p>
+      </div>
     </div>
   );
 };
