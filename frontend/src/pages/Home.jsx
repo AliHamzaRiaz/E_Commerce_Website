@@ -395,13 +395,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-
-
-      {/* Bottom Bar */}
-      <div className="bg-[#1a1a1a] text-white py-5 text-center">
-        <p className="text-sm font-serif tracking-[0.3em] uppercase">© LIBBAAS - ALL RIGHTS RESERVED.</p>
-      </div>
     </div>
   );
 };
