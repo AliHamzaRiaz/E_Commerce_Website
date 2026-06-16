@@ -136,13 +136,13 @@ const Home = () => {
                   transition={{ duration: 1 }}
                   className="space-y-6"
                 >
-                  <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase">
-                    {categories.length > 0 ? categories[currentHeroIndex]?.displayName : 'EVENING EVENT EDIT'}
+                  <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase mb-4 block">
+                    {categories.length > 0 ? categories[currentHeroIndex]?.displayName : 'EXCLUSIVE COLLECTION'}
                   </span>
-                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-[#1a1a1a] leading-tight">
-                    MIDNIGHT <br/> CHARM
+                  <h1 className="text-6xl md:text-8xl lg:text-9xl font-[Playfair_Display] text-[#1a1a1a] leading-[0.85] tracking-tight mb-6">
+                    LIBBAAS
                   </h1>
-                  <p className="text-lg text-[#555] italic font-light max-w-lg">
+                  <p className="text-xl text-[#666] italic font-light max-w-md leading-relaxed">
                     "Discover elegance that turns every moment into a masterpiece. Crafted with love, designed for you."
                   </p>
                   <Link
@@ -395,8 +395,8 @@ const Home = () => {
       </section>
 
       {/* Bottom Bar */}
-      <div className="bg-[#1a1a1a] text-white py-4 text-center">
-        <p className="text-sm font-bold uppercase tracking-widest">© ZARLAY - ALL RIGHTS RESERVED.</p>
+      <div className="bg-[#1a1a1a] text-white py-5 text-center">
+        <p className="text-sm font-serif tracking-[0.3em] uppercase">© LIBBAAS - ALL RIGHTS RESERVED.</p>
       </div>
     </div>
   );
