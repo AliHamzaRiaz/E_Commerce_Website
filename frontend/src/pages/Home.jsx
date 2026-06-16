@@ -178,32 +178,55 @@ const Home = () => {
       </section>
 
       {/* Circular Categories - Like Reference */}
-      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl font-serif text-[#1a1a1a] uppercase tracking-widest">Find Your Fit</h2>
+      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-20 bg-[#fafaf8]">
+        <div className="text-center mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase mb-4 block">Our Collection</span>
+            <h2 className="text-3xl md:text-4xl font-serif text-[#1a1a1a] uppercase tracking-widest">Find Your Perfect Fit</h2>
+          </motion.div>
         </div>
-        <div className="flex justify-center gap-6 md:gap-10 overflow-x-auto pb-8 scrollbar-hide">
-          {categories.slice(0, 6).map((cat) => (
-            <Link
+        <div className="flex justify-center gap-8 md:gap-12 overflow-x-auto pb-10 scrollbar-hide">
+          {categories.slice(0, 6).map((cat, idx) => (
+            <motion.div
               key={cat.id}
-              to={`/shop?category=${cat.displayName}`}
-              className="flex flex-col items-center gap-3 group min-w-fit"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: idx * 0.1 }}
             >
-              <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#c5a059] transition-all duration-300">
-                <img
-                  src={cat.image || getCategoryImage(cat.displayName, '/imags/sports-bra.jpg')}
-                  alt={cat.displayName}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              </div>
-              <span className="text-xs font-medium uppercase tracking-wider text-[#333]">{cat.displayName}</span>
-            </Link>
+              <Link
+                to={`/shop?category=${cat.displayName}`}
+                className="flex flex-col items-center gap-4 group min-w-fit"
+              >
+                <div className="relative">
+                  <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white shadow-xl group-hover:shadow-2xl group-hover:border-[#c5a059] transition-all duration-500">
+                    <img
+                      src={cat.image || getCategoryImage(cat.displayName, '/imags/sports-bra.jpg')}
+                      alt={cat.displayName}
+                      className="w-full h-full object-cover group-hover:scale-115 transition-transform duration-700"
+                      onError={(e) => {e.target.src = 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400&h=400&fit=crop'}}
+                    />
+                  </div>
+                  <div className="absolute inset-0 rounded-full bg-[#c5a059]/0 group-hover:bg-[#c5a059]/10 transition-all duration-500 flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-white text-xs font-bold uppercase tracking-widest bg-[#1a1a1a] px-4 py-2 rounded-full">
+                      Shop Now
+                    </span>
+                  </div>
+                </div>
+                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1a1a1a] group-hover:text-[#c5a059] transition-colors duration-300">
+                  {cat.displayName}
+                </span>
+              </Link>
+            </motion.div>
           ))}
         </div>
         {/* Dots indicator */}
-        <div className="flex justify-center gap-2 mt-8">
+        <div className="flex justify-center gap-3 mt-12">
           {[0, 1].map((i) => (
-            <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-[#1a1a1a]' : 'bg-gray-300'}`} />
+            <div key={i} className={`w-3 h-3 rounded-full transition-all duration-300 ${i === 0 ? 'bg-[#c5a059] w-8' : 'bg-gray-300'}`} />
           ))}
         </div>
       </section>
