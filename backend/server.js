@@ -14,7 +14,7 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
 const reviewRoutes = require('./routes/reviews');
-const { initProductsDb, seedIfEmpty, mergeSeedProducts } = require('./utils/productRepository');
+const { initProductsDb, seedIfEmpty } = require('./utils/productRepository');
 const { initOrdersDb } = require('./utils/orderRepository');
 const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable, seedCategoriesIfEmpty } = require('./utils/categoryRepository');
@@ -129,8 +129,6 @@ const start = async () => {
     } else {
       console.log('✅ Products already exist, skipping seed');
     }
-    await mergeSeedProducts(defaultProducts);
-    console.log('✅ Products merged if missing');
     
     // Check again after seeding
     const productsAfter = await list();

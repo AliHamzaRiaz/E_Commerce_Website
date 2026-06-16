@@ -106,7 +106,12 @@ const AdminOrders = () => {
   const updateStatus = async (id, status) => {
     setError('');
     try {
-      await adminApi.put(`/orders/${id}/status`, { status });
+      const res = await adminApi.put(`/orders/${id}/status`, { status });
+      
+      // Show email preview if sent
+      if (res.data?.previewUrl) {
+        setPreviewUrl(res.data.previewUrl);
+      }
       
       // Auto-populate message section
       const template = statusMessages[status];
