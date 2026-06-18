@@ -53,21 +53,21 @@ const Navbar = ({ onCartClick }) => {
                   <span className="text-gold/40 text-[12px]">|</span>
                   <span className="px-10">Pakistan's Premier Lingerie Destination</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">Complimentary Shipping Over Rs. 5000</span>
+                  <span className="px-10">FREE DELIVERY</span>
                 </p>
                 <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
                   <span className="px-10">Welcome to our shop</span>
                   <span className="text-gold/40 text-[12px]">|</span>
                   <span className="px-10">Pakistan's Premier Lingerie Destination</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">Complimentary Shipping Over Rs. 5000</span>
+                  <span className="px-10">FREE DELIVERY</span>
                 </p>
                 <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
                   <span className="px-10">Welcome to our shop</span>
                   <span className="text-gold/40 text-[12px]">|</span>
                   <span className="px-10">Pakistan's Premier Lingerie Destination</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">Complimentary Shipping Over Rs. 5000</span>
+                  <span className="px-10">FREE DELIVERY</span>
                 </p>
               </div>
               <button 

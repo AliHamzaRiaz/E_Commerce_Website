@@ -102,7 +102,7 @@ const Home = () => {
         <div className="max-w-[1920px] mx-auto">
           {/* Top Bar - Limited Offer */}
           <div className="bg-gradient-to-r from-[#1a1a1a] via-[#c5a059] to-[#1a1a1a] text-white text-center py-3 text-xs font-bold uppercase tracking-[0.3em]">
-            ✨ NEW ARRIVALS • FREE SHIPPING ON ORDERS OVER RS 5,000 ✨
+            ✨ NEW ARRIVALS • FREE DELIVERY ✨
           </div>
           
           {/* Main Hero */}
