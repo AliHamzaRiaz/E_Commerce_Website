@@ -315,11 +315,18 @@ const Home = () => {
 
         <div className="relative">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {featuredProducts.slice(0, 5).map((p) => (
+            {featuredProducts.slice(0, 5).map((p) => {
+              const discountPercent = p.originalPrice > p.price 
+                ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) 
+                : null;
+              
+              return (
               <Link key={p.id} to={`/product/${p.id}`} className="group relative">
-                <div className="absolute top-3 left-3 bg-[#e72e2e] text-white text-xs font-bold px-3 py-1 uppercase z-10">
-                  -20%
-                </div>
+                {discountPercent && (
+                  <div className="absolute top-3 left-3 bg-[#e72e2e] text-white text-xs font-bold px-3 py-1 uppercase z-10">
+                    -{discountPercent}%
+                  </div>
+                )}
                 <div className="aspect-[3/4] overflow-hidden bg-white">
                   <img
                     src={p.image}
@@ -332,7 +339,8 @@ const Home = () => {
                   <p className="text-[#c5a059] font-bold mt-1">Rs {p.price?.toLocaleString()}</p>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
