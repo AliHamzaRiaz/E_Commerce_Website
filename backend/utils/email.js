@@ -1,16 +1,26 @@
 const nodemailer = require('nodemailer');
 
 const createSmtpTransport = () => {
-  const service = process.env.SMTP_SERVICE;
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
-  const user = process.env.SMTP_USER ? String(process.env.SMTP_USER).trim() : undefined;
+  // Support both naming conventions (SMTP_* and EMAIL_*)
+  const service = process.env.SMTP_SERVICE || process.env.EMAIL_SERVICE;
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const port = (process.env.SMTP_PORT || process.env.EMAIL_PORT) ? Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) : undefined;
+  const user = (process.env.SMTP_USER || process.env.EMAIL_USER) ? String(process.env.SMTP_USER || process.env.EMAIL_USER).trim() : undefined;
   // Gmail app passwords are often copied with spaces; nodemailer expects the 16 chars without spaces.
-  const pass = process.env.SMTP_PASS ? String(process.env.SMTP_PASS).replace(/\s+/g, '') : undefined;
+  const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS) ? String(process.env.SMTP_PASS || process.env.EMAIL_PASS).replace(/\s+/g, '') : undefined;
 
-  console.log('[createSmtpTransport] Config:', { service, host, port, user, pass: pass ? '***' : 'MISSING' });
+  console.log('[createSmtpTransport] Config:', { 
+    service, 
+    host, 
+    port, 
+    user: user ? user.substring(0, 3) + '...' : 'MISSING', 
+    pass: pass ? '***' : 'MISSING' 
+  });
 
-  if (!user || !pass) return null;
+  if (!user || !pass) {
+    console.warn('[createSmtpTransport] Missing user or password');
+    return null;
+  }
 
   // Explicit Gmail configuration for reliability
   if (service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) {
@@ -33,7 +43,10 @@ const createSmtpTransport = () => {
     });
   }
 
-  if (!host || !port) return null;
+  if (!host || !port) {
+    console.warn('[createSmtpTransport] Missing host or port');
+    return null;
+  }
 
   return nodemailer.createTransport({
     host,
@@ -79,11 +92,20 @@ let cachedTransporter = null;
 const getTransporter = async () => {
   if (cachedTransporter) return cachedTransporter;
 
+  console.log('[getTransporter] Attempting to create transporter...');
   const smtpTransport = createSmtpTransport();
   if (smtpTransport) {
-    console.log('[getTransporter] Initializing SMTP transport (no verification)');
-    cachedTransporter = smtpTransport;
-    return cachedTransporter;
+    console.log('[getTransporter] SMTP transport created, verifying connection...');
+    try {
+      await smtpTransport.verify();
+      console.log('[getTransporter] SMTP connection VERIFIED successfully');
+      cachedTransporter = smtpTransport;
+      return cachedTransporter;
+    } catch (verifyErr) {
+      console.error('[getTransporter] SMTP verification FAILED:', verifyErr.message);
+      console.error('[getTransporter] Full verification error:', verifyErr);
+      // Fall through to try Ethereal if SMTP verification fails
+    }
   }
 
   console.log('[getTransporter] SMTP failed/missing, trying Ethereal');

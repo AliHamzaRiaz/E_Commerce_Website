@@ -99,10 +99,11 @@ app.get('/api/debug/test-email', async (req, res) => {
       previewUrl: result.previewUrl,
       reason: result.reason,
       smtpConfig: {
-        service: process.env.SMTP_SERVICE,
-        host: process.env.SMTP_HOST,
-        user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set',
-        hasPass: !!process.env.SMTP_PASS,
+        service: process.env.SMTP_SERVICE || process.env.EMAIL_SERVICE,
+        host: process.env.SMTP_HOST || process.env.EMAIL_HOST,
+        port: process.env.SMTP_PORT || process.env.EMAIL_PORT,
+        user: (process.env.SMTP_USER || process.env.EMAIL_USER) ? (process.env.SMTP_USER || process.env.EMAIL_USER).substring(0, 3) + '...' : 'not set',
+        hasPass: !!(process.env.SMTP_PASS || process.env.EMAIL_PASS),
         mailFrom: process.env.MAIL_FROM
       }
     });
@@ -114,6 +115,21 @@ app.get('/api/debug/test-email', async (req, res) => {
 
 const start = async () => {
   console.log('🚀 Starting server and initializing databases...');
+  console.log('============================================');
+  console.log('📋 Environment Variables Check:');
+  console.log('SMTP_SERVICE:', process.env.SMTP_SERVICE || 'not set');
+  console.log('SMTP_HOST:', process.env.SMTP_HOST || 'not set');
+  console.log('SMTP_PORT:', process.env.SMTP_PORT || 'not set');
+  console.log('SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,3)+'...' : 'not set');
+  console.log('SMTP_PASS:', process.env.SMTP_PASS ? '***' : 'not set');
+  console.log('EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'not set');
+  console.log('EMAIL_HOST:', process.env.EMAIL_HOST || 'not set');
+  console.log('EMAIL_PORT:', process.env.EMAIL_PORT || 'not set');
+  console.log('EMAIL_USER:', process.env.EMAIL_USER ? process.env.EMAIL_USER.substring(0,3)+'...' : 'not set');
+  console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***' : 'not set');
+  console.log('ETHEREAL:', process.env.ETHEREAL || 'not set (enabled by default)');
+  console.log('============================================');
+  
   try {
     await initProductsDb();
     console.log('✅ Products database ready');
