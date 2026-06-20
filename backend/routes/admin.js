@@ -194,15 +194,18 @@ router.put('/orders/:id/status', async (req, res) => {
   if (!status) return res.status(400).json({ message: 'Missing status' });
 
   try {
+    console.log(`[PUT /admin/orders/${req.params.id}/status] Updating status to: ${status}`);
     const ok = await updateOrderStatus(req.params.id, status);
     if (!ok) return res.status(404).json({ message: 'Order not found' });
     
     // Get the updated order
     const order = await getOrderById(req.params.id);
+    console.log('Updated order:', order);
     
     // Auto-send status update email if customer email exists
     let emailResult = null;
     if (order && order.customer?.email) {
+      console.log('Sending status update email to:', order.customer.email);
       const statusMessages = {
         CONFIRMED: {
           subject: 'Order Confirmed - LIBBAAS',
@@ -251,8 +254,11 @@ router.put('/orders/:id/status', async (req, res) => {
               <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
               <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
             </div>
-          </div>`
+          </div>`,
+          text: template.message
         });
+        
+        console.log('Email send result:', emailResult);
         
         // Update order email json
         const emailMeta = {
@@ -262,12 +268,14 @@ router.put('/orders/:id/status', async (req, res) => {
         };
         await updateOrderEmailJson(order.id, { ...order.email, ...emailMeta });
       }
+    } else {
+      console.log('No customer email found, skipping status update email');
     }
     
-    res.json({ ok: true, emailSent: !!emailResult?.sent, previewUrl: emailResult?.previewUrl });
+    res.json({ ok: true, emailSent: !!emailResult?.sent, previewUrl: emailResult?.previewUrl, order });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: 'Failed to update order' });
+    console.error('[PUT /admin/orders/:id/status] Error:', e);
+    res.status(500).json({ message: 'Failed to update order', error: e.message });
   }
 });
 

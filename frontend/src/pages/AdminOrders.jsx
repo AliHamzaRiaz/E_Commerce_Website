@@ -113,6 +113,20 @@ const AdminOrders = () => {
         setPreviewUrl(res.data.previewUrl);
       }
       
+      // Update order locally first
+      setOrders(prevOrders => {
+        return prevOrders.map(order => {
+          if (order.id === id) {
+            // If the server returned the updated order, use that; otherwise update status manually
+            if (res.data?.order) {
+              return res.data.order;
+            }
+            return { ...order, status };
+          }
+          return order;
+        });
+      });
+      
       // Auto-populate message section
       const template = statusMessages[status];
       if (template) {
@@ -124,8 +138,6 @@ const AdminOrders = () => {
           setMessage(`${template.message} Reason: ${cancellationReasons[0]}`);
         }
       }
-
-      await fetchOrders();
     } catch (err) {
       if (err?.response?.status === 401) {
         logoutToLogin();
