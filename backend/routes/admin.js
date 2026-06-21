@@ -202,7 +202,7 @@ router.put('/orders/:id/status', async (req, res) => {
     const order = await getOrderById(req.params.id);
     console.log('Updated order:', order);
     
-    // Auto-send status update email if customer email exists
+    // Auto-send status update email if customer email exists, but don't fail the request if email fails
     let emailResult = null;
     if (order && order.customer?.email) {
       console.log('Sending status update email to:', order.customer.email);
@@ -227,46 +227,52 @@ router.put('/orders/:id/status', async (req, res) => {
       
       const template = statusMessages[status];
       if (template) {
-        emailResult = await sendCustomEmail({
-          to: order.customer.email,
-          subject: template.subject,
-          html: `
-          <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
-            <div style="text-align:center; margin-bottom:30px;">
-              <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
-              <p style="color:#777; font-size:14px; margin-top:5px;">Order Update Notification</p>
-            </div>
+        try {
+          emailResult = await sendCustomEmail({
+            to: order.customer.email,
+            subject: template.subject,
+            html: `
+            <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+              <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+                <p style="color:#777; font-size:14px; margin-top:5px;">Order Update Notification</p>
+              </div>
 
-            <div style="background-color:#f9f9f9; padding:20px; border-radius:4px; margin-bottom:30px;">
-              <p style="margin:0; font-size:16px; color:#111;">${template.message}</p>
-            </div>
+              <div style="background-color:#f9f9f9; padding:20px; border-radius:4px; margin-bottom:30px;">
+                <p style="margin:0; font-size:16px; color:#111;">${template.message}</p>
+              </div>
 
-            <div style="margin-bottom:30px; border-top:1px solid #eee; padding-top:20px;">
-              <p style="margin:5px 0; font-size:13px;"><strong>Order ID:</strong> ${order.id}</p>
-              <p style="margin:5px 0; font-size:13px;"><strong>Current Status:</strong> <span style="text-transform:uppercase; color:#d4af37; font-weight:bold;">${status}</span></p>
-            </div>
+              <div style="margin-bottom:30px; border-top:1px solid #eee; padding-top:20px;">
+                <p style="margin:5px 0; font-size:13px;"><strong>Order ID:</strong> ${order.id}</p>
+                <p style="margin:5px 0; font-size:13px;"><strong>Current Status:</strong> <span style="text-transform:uppercase; color:#d4af37; font-weight:bold;">${status}</span></p>
+              </div>
 
-            <div style="text-align:center; margin:40px 0;">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/account" style="background-color:#111; color:#fff; padding:12px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; letter-spacing:1px; display:inline-block; font-size:12px;">View Order Details</a>
-            </div>
+              <div style="text-align:center; margin:40px 0;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/account" style="background-color:#111; color:#fff; padding:12px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; letter-spacing:1px; display:inline-block; font-size:12px;">View Order Details</a>
+              </div>
 
-            <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
-              <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
-              <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
-            </div>
-          </div>`,
-          text: template.message
-        });
-        
-        console.log('Email send result:', emailResult);
-        
-        // Update order email json
-        const emailMeta = {
-          sent: !!emailResult?.sent,
-          previewUrl: emailResult?.previewUrl,
-          lastSentAt: new Date().toISOString(),
-        };
-        await updateOrderEmailJson(order.id, { ...order.email, ...emailMeta });
+              <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+                <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
+                <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+              </div>
+            </div>`,
+            text: template.message
+          });
+          
+          console.log('Email send result:', emailResult);
+          
+          // Update order email json
+          const emailMeta = {
+            sent: !!emailResult?.sent,
+            previewUrl: emailResult?.previewUrl,
+            lastSentAt: new Date().toISOString(),
+          };
+          await updateOrderEmailJson(order.id, { ...order.email, ...emailMeta });
+        } catch (emailError) {
+          console.error('[PUT /admin/orders/:id/status] Email send failed:', emailError);
+          // Don't fail the entire request because of email failure
+          emailResult = { sent: false, error: emailError.message };
+        }
       }
     } else {
       console.log('No customer email found, skipping status update email');
