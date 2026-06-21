@@ -57,8 +57,8 @@ const createSmtpTransport = () => {
 };
 
 const createEtherealTransport = async () => {
-  // Use Ethereal by default, unless explicitly disabled with ETHEREAL=false
-  const enabled = String(process.env.ETHEREAL || '').toLowerCase() !== 'false';
+  // Disable Ethereal by default, only enable if explicitly set to true
+  const enabled = String(process.env.ETHEREAL || '').toLowerCase() === 'true';
 
   console.log('[createEtherealTransport] Enabled:', enabled);
 
@@ -100,14 +100,20 @@ const getTransporter = async () => {
   if (smtpTransport) {
     console.log('[getTransporter] SMTP transport created, verifying connection...');
     try {
-      await smtpTransport.verify();
+      // Add 10 second timeout to verification
+      const verifyPromise = smtpTransport.verify();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('SMTP verification timed out after 10 seconds')), 10000)
+      );
+      await Promise.race([verifyPromise, timeoutPromise]);
+      
       console.log('[getTransporter] SMTP connection VERIFIED successfully');
       cachedTransporter = smtpTransport;
       return cachedTransporter;
     } catch (verifyErr) {
       console.error('[getTransporter] SMTP verification FAILED:', verifyErr.message);
       console.error('[getTransporter] Full verification error:', verifyErr);
-      // Fall through to try Ethereal if SMTP verification fails
+      // Don't fall through to Ethereal since we disabled it by default
     }
   }
 
