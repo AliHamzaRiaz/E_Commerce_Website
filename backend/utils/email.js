@@ -24,15 +24,12 @@ const createSmtpTransport = () => {
 
   // Explicit Gmail configuration for reliability
   if (service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) {
-    console.log('[createSmtpTransport] Using Gmail explicit configuration');
+    console.log('[createSmtpTransport] Using Gmail explicit configuration (port 465 SSL)');
     return nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // Use STARTTLS
+      port: 465,
+      secure: true, // true for 465
       auth: { user, pass },
-      tls: {
-        rejectUnauthorized: false,
-      },
     });
   }
 
@@ -243,7 +240,7 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
       text,
     });
     const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
+      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 60000); // 60 second timeout
     });
     
     console.log('[sendCustomEmail] Waiting for sendPromise or timeoutPromise...');
