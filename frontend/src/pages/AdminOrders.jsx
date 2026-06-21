@@ -164,11 +164,22 @@ const AdminOrders = () => {
       // Make sure we still wait the minimum loading time even if there's an error
       await minLoadingTime;
       
+      console.error('[updateStatus] Full error:', err);
+      
       if (err?.response?.status === 401) {
         logoutToLogin();
         return;
       }
-      setError(err?.response?.data?.message || 'Failed to update status');
+      
+      // Build a more detailed error message
+      let errorMsg = 'Failed to update status';
+      if (err?.response?.data?.message) {
+        errorMsg += `: ${err.response.data.message}`;
+      }
+      if (err?.response?.data?.error) {
+        errorMsg += ` (${err.response.data.error})`;
+      }
+      setError(errorMsg);
     } finally {
       setUpdatingStatusId(null);
     }
