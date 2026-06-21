@@ -197,9 +197,11 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
     if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
     const sendPromise = transporter.sendMail({
       from,
       to,
+      bcc, // BCC admin
       subject: `Order Confirmation - ${order.id}`,
       html: buildOrderHtml(order),
     });
@@ -228,11 +230,13 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
     console.log('[sendCustomEmail] Got transporter');
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    console.log('[sendCustomEmail] Sending from:', from, 'to:', to);
+    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
+    console.log('[sendCustomEmail] Sending from:', from, 'to:', to, 'bcc:', bcc);
     
     const sendPromise = transporter.sendMail({
       from,
       to,
+      bcc, // BCC admin
       subject,
       html,
       text,
@@ -266,12 +270,31 @@ const sendOtpEmail = async ({ to, otp }) => {
       <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
     </div>`;
 
-    return sendCustomEmail({
+    // Manually send with BCC since sendCustomEmail now has BCC, but let's confirm
+    const transporter = await getTransporter();
+    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    const bcc = process.env.ADMIN_EMAIL;
+
+    const sendPromise = transporter.sendMail({
+      from,
       to,
+      bcc,
       subject: 'Your OTP Login Code',
       html,
       text: `Your OTP code is: ${otp}. It expires in 10 minutes.`,
     });
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
+    });
+    
+    const info = await Promise.race([sendPromise, timeoutPromise]);
+    if (info?.sent === false) {
+      return info;
+    }
+
+    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+    return { sent: true, previewUrl };
   } catch (err) {
     console.error('[sendOtpEmail] FAILED:', err.message);
     return { sent: false, reason: err.message };
@@ -296,10 +319,12 @@ const sendPasswordResetEmail = async ({ to, resetUrl }) => {
 
   try {
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    console.log('[sendPasswordResetEmail] Sending from:', from);
+    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
+    console.log('[sendPasswordResetEmail] Sending from:', from, 'bcc:', bcc);
     const info = await transporter.sendMail({
       from,
       to,
+      bcc, // BCC admin
       subject: 'Reset Your Password',
       html,
       text: `You requested a password reset. Use this link: ${resetUrl}`,
