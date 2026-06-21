@@ -90,7 +90,10 @@ const createEtherealTransport = async () => {
 let cachedTransporter = null;
 
 const getTransporter = async () => {
-  if (cachedTransporter) return cachedTransporter;
+  if (cachedTransporter) {
+    console.log('[getTransporter] Using cached transporter');
+    return cachedTransporter;
+  }
 
   console.log('[getTransporter] Attempting to create transporter...');
   const smtpTransport = createSmtpTransport();
@@ -225,14 +228,19 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
 const sendCustomEmail = async ({ to, subject, html, text }) => {
   try {
     console.log('[sendCustomEmail] Starting to send email...');
+    console.log('[sendCustomEmail] Getting transporter...');
     const transporter = await getTransporter();
-    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+    if (!transporter) {
+      console.error('[sendCustomEmail] No transporter available');
+      return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+    }
     console.log('[sendCustomEmail] Got transporter');
 
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
     const bcc = process.env.ADMIN_EMAIL; // BCC the admin
     console.log('[sendCustomEmail] Sending from:', from, 'to:', to, 'bcc:', bcc);
     
+    console.log('[sendCustomEmail] Calling transporter.sendMail...');
     const sendPromise = transporter.sendMail({
       from,
       to,
@@ -245,7 +253,9 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
       setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
     });
     
+    console.log('[sendCustomEmail] Waiting for sendPromise or timeoutPromise...');
     const info = await Promise.race([sendPromise, timeoutPromise]);
+    console.log('[sendCustomEmail] Promise resolved with:', info);
     if (info?.sent === false) {
       console.warn('[sendCustomEmail] Email send timed out or failed');
       return info;
@@ -253,6 +263,7 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
 
     console.log('[sendCustomEmail] Email sent successfully');
     const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+    console.log('[sendCustomEmail] Preview URL:', previewUrl);
     return { sent: true, previewUrl };
   } catch (err) {
     console.error('[sendCustomEmail] FAILED:', err.message);
