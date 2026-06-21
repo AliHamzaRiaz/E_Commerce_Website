@@ -99,23 +99,9 @@ const getTransporter = async () => {
   const smtpTransport = createSmtpTransport();
   console.log('[getTransporter] createSmtpTransport returned:', !!smtpTransport);
   if (smtpTransport) {
-    console.log('[getTransporter] SMTP transport created, verifying connection...');
-    try {
-      // Add 10 second timeout to verification
-      const verifyPromise = smtpTransport.verify();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('SMTP verification timed out after 10 seconds')), 10000)
-      );
-      await Promise.race([verifyPromise, timeoutPromise]);
-      
-      console.log('[getTransporter] SMTP connection VERIFIED successfully');
-      cachedTransporter = smtpTransport;
-      return cachedTransporter;
-    } catch (verifyErr) {
-      console.error('[getTransporter] SMTP verification FAILED:', verifyErr.message);
-      console.error('[getTransporter] Full verification error:', verifyErr);
-      // Don't fall through to Ethereal since we disabled it by default
-    }
+    console.log('[getTransporter] SMTP transport created, skipping verification for reliability');
+    cachedTransporter = smtpTransport;
+    return cachedTransporter;
   }
 
   console.log('[getTransporter] SMTP failed/missing, trying Ethereal');
