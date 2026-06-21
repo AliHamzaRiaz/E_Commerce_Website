@@ -97,6 +97,7 @@ const getTransporter = async () => {
 
   console.log('[getTransporter] Attempting to create transporter...');
   const smtpTransport = createSmtpTransport();
+  console.log('[getTransporter] createSmtpTransport returned:', !!smtpTransport);
   if (smtpTransport) {
     console.log('[getTransporter] SMTP transport created, verifying connection...');
     try {
