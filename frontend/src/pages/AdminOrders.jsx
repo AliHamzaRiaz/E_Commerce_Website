@@ -45,6 +45,8 @@ const AdminOrders = () => {
   const [message, setMessage] = useState('');
   const [selectedReason, setSelectedReason] = useState('');
   const [sendingId, setSendingId] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [success, setSuccess] = useState('');
 
   const statusMessages = {
     CONFIRMED: {
@@ -105,27 +107,37 @@ const AdminOrders = () => {
 
   const updateStatus = async (id, status) => {
     setError('');
+    setSuccess('');
+    setUpdatingStatusId(id);
     try {
+      // Optimistic update: update locally first for instant feedback
+      setOrders(prevOrders => {
+        return prevOrders.map(order => {
+          if (order.id === id) {
+            return { ...order, status };
+          }
+          return order;
+        });
+      });
+
       const res = await adminApi.put(`/orders/${id}/status`, { status });
       
       // Show email preview if sent
       if (res.data?.previewUrl) {
         setPreviewUrl(res.data.previewUrl);
       }
-      
-      // Update order locally first
-      setOrders(prevOrders => {
-        return prevOrders.map(order => {
-          if (order.id === id) {
-            // If the server returned the updated order, use that; otherwise update status manually
-            if (res.data?.order) {
+
+      // If server returned updated order, use that to make sure we have the latest
+      if (res.data?.order) {
+        setOrders(prevOrders => {
+          return prevOrders.map(order => {
+            if (order.id === id) {
               return res.data.order;
             }
-            return { ...order, status };
-          }
-          return order;
+            return order;
+          });
         });
-      });
+      }
       
       // Auto-populate message section
       const template = statusMessages[status];
@@ -138,23 +150,31 @@ const AdminOrders = () => {
           setMessage(`${template.message} Reason: ${cancellationReasons[0]}`);
         }
       }
+
+      setSuccess(`Order status updated to ${status} successfully!`);
+      setTimeout(() => setSuccess(''), 5000); // Hide after 5 seconds
     } catch (err) {
       if (err?.response?.status === 401) {
         logoutToLogin();
         return;
       }
       setError(err?.response?.data?.message || 'Failed to update status');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
   const resendEmail = async (id) => {
     setError('');
+    setSuccess('');
     setPreviewUrl('');
     setSendingId(id);
     try {
       const res = await adminApi.post(`/orders/${id}/resend-email`);
       if (res.data?.previewUrl) setPreviewUrl(res.data.previewUrl);
-      await fetchOrders();
+      
+      setSuccess('Order confirmation email resent successfully!');
+      setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       if (err?.response?.status === 401) {
         logoutToLogin();
@@ -168,12 +188,15 @@ const AdminOrders = () => {
 
   const sendEmail = async (id) => {
     setError('');
+    setSuccess('');
     setPreviewUrl('');
     setSendingId(id);
     try {
       const res = await adminApi.post(`/orders/${id}/message/email`, { subject, message });
       if (res.data?.previewUrl) setPreviewUrl(res.data.previewUrl);
-      await fetchOrders();
+      
+      setSuccess('Notification email sent successfully!');
+      setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       if (err?.response?.status === 401) {
         logoutToLogin();
@@ -249,6 +272,13 @@ const AdminOrders = () => {
           <div className="flex items-center gap-3 border border-red-200 bg-red-50 px-6 py-4 rounded-xl text-sm text-red-800 animate-in fade-in slide-in-from-top-2">
             <XCircle size={20} />
             {error}
+          </div>
+        ) : null}
+
+        {success ? (
+          <div className="flex items-center gap-3 border border-emerald-200 bg-emerald-50 px-6 py-4 rounded-xl text-sm text-emerald-800 animate-in fade-in slide-in-from-top-2">
+            <CheckCircle2 size={20} />
+            {success}
           </div>
         ) : null}
 
@@ -517,12 +547,16 @@ const AdminOrders = () => {
                                       <button
                                         key={s}
                                         onClick={() => updateStatus(o.id, s)}
-                                        className={`px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${
+                                        disabled={updatingStatusId === o.id}
+                                        className={`px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border flex items-center justify-center gap-2 ${
                                           o.status === s 
                                             ? 'bg-gold border-gold text-white shadow-md' 
                                             : 'border-slate-200 text-slate-600 hover:border-gold/50'
-                                        }`}
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
                                       >
+                                        {updatingStatusId === o.id ? (
+                                          <RefreshCcw size={14} className="animate-spin" />
+                                        ) : null}
                                         {s}
                                       </button>
                                     ))}
