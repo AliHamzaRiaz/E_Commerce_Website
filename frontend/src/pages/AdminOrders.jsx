@@ -109,6 +109,10 @@ const AdminOrders = () => {
     setError('');
     setSuccess('');
     setUpdatingStatusId(id);
+    
+    // Create a promise that resolves after 2 seconds
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2000));
+    
     try {
       // Optimistic update: update locally first for instant feedback
       setOrders(prevOrders => {
@@ -121,6 +125,9 @@ const AdminOrders = () => {
       });
 
       const res = await adminApi.put(`/orders/${id}/status`, { status });
+      
+      // Wait for the minimum loading time to complete (so spinner shows for at least 2 seconds)
+      await minLoadingTime;
       
       // Show email preview if sent
       if (res.data?.previewUrl) {
@@ -154,6 +161,9 @@ const AdminOrders = () => {
       setSuccess(`Order status updated to ${status} successfully!`);
       setTimeout(() => setSuccess(''), 5000); // Hide after 5 seconds
     } catch (err) {
+      // Make sure we still wait the minimum loading time even if there's an error
+      await minLoadingTime;
+      
       if (err?.response?.status === 401) {
         logoutToLogin();
         return;
