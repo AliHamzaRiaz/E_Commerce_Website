@@ -131,7 +131,8 @@ const sendViaResend = async ({ from, to, bcc, subject, html, text }) => {
         html: html,
         text: text
       });
-      console.log('[Resend] Success!', data);
+      console.log('[Resend] Success!');
+      console.log('[Resend] Data:', JSON.stringify(data, null, 2));
       return { sent: true, previewUrl: undefined };
     } catch (err) {
       console.error('[Resend] Failed:', err.message);
