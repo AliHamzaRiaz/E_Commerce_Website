@@ -115,9 +115,13 @@ const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
 
 const sendViaResend = async ({ from, to, bcc, subject, html, text }) => {
   const resendApiKey = process.env.RESEND_API_KEY;
+  console.log('[Resend] Checking if available...');
+  console.log('[Resend] API Key present:', !!resendApiKey);
   if (resendApiKey) {
     try {
       console.log('[Resend] Sending via Resend...');
+      console.log('[Resend] Sending from:', from);
+      console.log('[Resend] Sending to:', to);
       const resend = new Resend(resendApiKey);
       const data = await resend.emails.send({
         from: from,
@@ -131,9 +135,11 @@ const sendViaResend = async ({ from, to, bcc, subject, html, text }) => {
       return { sent: true, previewUrl: undefined };
     } catch (err) {
       console.error('[Resend] Failed:', err.message);
+      console.error('[Resend] Full error:', JSON.stringify(err, null, 2));
       // Fall through to SMTP
     }
   }
+  console.log('[Resend] Not using Resend');
   return null;
 };
 
