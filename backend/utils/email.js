@@ -22,8 +22,8 @@ const createSmtpTransport = () => {
     return null;
   }
 
-  // Explicit Gmail configuration for reliability
-  if (service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) {
+  // Explicit Gmail configuration for reliability (only if no custom host is set)
+  if ((service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host) {
     console.log('[createSmtpTransport] Using Gmail explicit configuration (port 465 SSL)');
     return nodemailer.createTransport({
       host: 'smtp.gmail.com',
