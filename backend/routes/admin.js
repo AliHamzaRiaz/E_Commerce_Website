@@ -20,6 +20,27 @@ const {
 
 const router = express.Router();
 
+// Test email endpoint
+router.get('/test-email', async (req, res) => {
+  try {
+    const testEmail = req.query.to || process.env.ADMIN_EMAIL;
+    if (!testEmail) {
+      return res.status(400).json({ ok: false, message: 'Please provide a "to" query parameter' });
+    }
+    console.log('[Test Email] Sending test email to:', testEmail);
+    const result = await sendCustomEmail({
+      to: testEmail,
+      subject: 'Test Email from LIBBAAS',
+      html: '<p>This is a test email from your LIBBAAS store! If you got this, your email setup is working!</p>',
+    });
+    console.log('[Test Email] Result:', result);
+    res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[Test Email] Error:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 const {
   listProducts,
   insertProduct,
