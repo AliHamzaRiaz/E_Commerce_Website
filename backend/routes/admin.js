@@ -202,10 +202,12 @@ router.put('/orders/:id/status', async (req, res) => {
     const order = await getOrderById(req.params.id);
     console.log('Updated order:', order);
     
-    // Auto-send status update email if customer email exists, but don't fail the request if email fails
-    let emailResult = null;
+    // Send response FIRST, then handle email in background (so we don't timeout!)
+    res.json({ ok: true, emailSent: false, previewUrl: null, order });
+    
+    // Auto-send status update email if customer email exists (background task)
     if (order && order.customer?.email) {
-      console.log('Sending status update email to:', order.customer.email);
+      console.log('[BG] Sending status update email to:', order.customer.email);
       const statusMessages = {
         CONFIRMED: {
           subject: 'Order Confirmed - LIBBAAS',
@@ -228,7 +230,7 @@ router.put('/orders/:id/status', async (req, res) => {
       const template = statusMessages[status];
       if (template) {
         try {
-          emailResult = await sendCustomEmail({
+          const emailResult = await sendCustomEmail({
             to: order.customer.email,
             subject: template.subject,
             html: `
@@ -259,9 +261,9 @@ router.put('/orders/:id/status', async (req, res) => {
             text: template.message
           });
           
-          console.log('Email send result:', emailResult);
+          console.log('[BG] Email send result:', emailResult);
           
-          // Update order email json
+          // Update order email json (still in background)
           const emailMeta = {
             sent: !!emailResult?.sent,
             previewUrl: emailResult?.previewUrl,
@@ -269,16 +271,12 @@ router.put('/orders/:id/status', async (req, res) => {
           };
           await updateOrderEmailJson(order.id, { ...order.email, ...emailMeta });
         } catch (emailError) {
-          console.error('[PUT /admin/orders/:id/status] Email send failed:', emailError);
-          // Don't fail the entire request because of email failure
-          emailResult = { sent: false, error: emailError.message };
+          console.error('[BG] Email send failed:', emailError);
         }
       }
     } else {
-      console.log('No customer email found, skipping status update email');
+      console.log('[BG] No customer email found, skipping status update email');
     }
-    
-    res.json({ ok: true, emailSent: !!emailResult?.sent, previewUrl: emailResult?.previewUrl, order });
   } catch (e) {
     console.error('[PUT /admin/orders/:id/status] Error:', e);
     res.status(500).json({ message: 'Failed to update order', error: e.message });
