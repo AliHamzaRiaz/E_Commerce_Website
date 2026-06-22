@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const createSmtpTransport = () => {
   // Support both naming conventions (SMTP_* and EMAIL_*)
@@ -112,6 +113,30 @@ const getTransporter = async () => {
 
 const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
 
+const sendViaResend = async ({ from, to, bcc, subject, html, text }) => {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      console.log('[Resend] Sending via Resend...');
+      const resend = new Resend(resendApiKey);
+      const data = await resend.emails.send({
+        from: from,
+        to: to,
+        bcc: bcc,
+        subject: subject,
+        html: html,
+        text: text
+      });
+      console.log('[Resend] Success!', data);
+      return { sent: true, previewUrl: undefined };
+    } catch (err) {
+      console.error('[Resend] Failed:', err.message);
+      // Fall through to SMTP
+    }
+  }
+  return null;
+};
+
 const buildOrderHtml = (order) => {
   const storeUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const itemsHtml = (order.items || [])
@@ -184,17 +209,26 @@ const buildOrderHtml = (order) => {
 const sendOrderConfirmationEmail = async ({ to, order }) => {
   try {
     console.log('[sendOrderConfirmationEmail] Starting to send order confirmation...');
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
+    const html = buildOrderHtml(order);
+
+    // Try Resend first
+    const resendResult = await sendViaResend({ from, to, bcc, subject: `Order Confirmation - ${order.id}`, html });
+    if (resendResult?.sent) {
+      return resendResult;
+    }
+
+    // Fall back to SMTP
     const transporter = await getTransporter();
     if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
     const sendPromise = transporter.sendMail({
       from,
       to,
       bcc, // BCC admin
       subject: `Order Confirmation - ${order.id}`,
-      html: buildOrderHtml(order),
+      html,
     });
     const timeoutPromise = new Promise((resolve) => {
       setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
@@ -216,6 +250,16 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
 const sendCustomEmail = async ({ to, subject, html, text }) => {
   try {
     console.log('[sendCustomEmail] Starting to send email...');
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
+
+    // Try Resend first
+    const resendResult = await sendViaResend({ from, to, bcc, subject, html, text });
+    if (resendResult?.sent) {
+      return resendResult;
+    }
+
+    // Fall back to SMTP
     console.log('[sendCustomEmail] Getting transporter...');
     const transporter = await getTransporter();
     if (!transporter) {
@@ -224,8 +268,6 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
     }
     console.log('[sendCustomEmail] Got transporter');
 
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
     console.log('[sendCustomEmail] Sending from:', from, 'to:', to, 'bcc:', bcc);
     
     console.log('[sendCustomEmail] Calling transporter.sendMail...');
@@ -268,12 +310,19 @@ const sendOtpEmail = async ({ to, otp }) => {
       <div style="font-size:28px; letter-spacing:6px; font-weight:700; padding:14px 16px; border:1px solid #eee; display:inline-block;">${otp}</div>
       <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
     </div>`;
-
-    // Manually send with BCC since sendCustomEmail now has BCC, but let's confirm
-    const transporter = await getTransporter();
-    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+    const text = `Your OTP code is: ${otp}. It expires in 10 minutes.`;
     const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
     const bcc = process.env.ADMIN_EMAIL;
+
+    // Try Resend first
+    const resendResult = await sendViaResend({ from, to, bcc, subject: 'Your OTP Login Code', html, text });
+    if (resendResult?.sent) {
+      return resendResult;
+    }
+
+    // Fall back to SMTP
+    const transporter = await getTransporter();
+    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
     const sendPromise = transporter.sendMail({
       from,
@@ -281,7 +330,7 @@ const sendOtpEmail = async ({ to, otp }) => {
       bcc,
       subject: 'Your OTP Login Code',
       html,
-      text: `Your OTP code is: ${otp}. It expires in 10 minutes.`,
+      text,
     });
     const timeoutPromise = new Promise((resolve) => {
       setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
@@ -302,12 +351,6 @@ const sendOtpEmail = async ({ to, otp }) => {
 
 const sendPasswordResetEmail = async ({ to, resetUrl }) => {
   console.log('[sendPasswordResetEmail] Attempting to send to:', to);
-  const transporter = await getTransporter();
-  if (!transporter) {
-    console.error('[sendPasswordResetEmail] No transporter available');
-    return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
-  }
-
   const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
     <h2 style="margin:0 0 8px;">Password Reset Request</h2>
     <p style="margin:0 0 14px; color:#555;">You requested to reset your password. Click the button below to set a new password. This link expires in 1 hour.</p>
@@ -315,10 +358,25 @@ const sendPasswordResetEmail = async ({ to, resetUrl }) => {
     <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request a password reset, you can ignore this email.</p>
     <p style="margin:8px 0 0; color:#777; font-size:10px;">Link: ${resetUrl}</p>
   </div>`;
+  const text = `You requested a password reset. Use this link: ${resetUrl}`;
+  const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
+  const bcc = process.env.ADMIN_EMAIL; // BCC the admin
+
+  // Try Resend first
+  const resendResult = await sendViaResend({ from, to, bcc, subject: 'Reset Your Password', html, text });
+  if (resendResult?.sent) {
+    console.log('[sendPasswordResetEmail] SUCCESS via Resend');
+    return resendResult;
+  }
+
+  // Fall back to SMTP
+  const transporter = await getTransporter();
+  if (!transporter) {
+    console.error('[sendPasswordResetEmail] No transporter available');
+    return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+  }
 
   try {
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
     console.log('[sendPasswordResetEmail] Sending from:', from, 'bcc:', bcc);
     const info = await transporter.sendMail({
       from,
@@ -326,7 +384,7 @@ const sendPasswordResetEmail = async ({ to, resetUrl }) => {
       bcc, // BCC admin
       subject: 'Reset Your Password',
       html,
-      text: `You requested a password reset. Use this link: ${resetUrl}`,
+      text,
     });
 
     const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
