@@ -9,13 +9,11 @@ const createSmtpTransport = () => {
   // Gmail app passwords are often copied with spaces; nodemailer expects the 16 chars without spaces.
   const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS) ? String(process.env.SMTP_PASS || process.env.EMAIL_PASS).replace(/\s+/g, '') : undefined;
 
-  console.log('[createSmtpTransport] Config:', JSON.stringify({ 
-    service, 
-    host, 
-    port, 
-    user: user ? user.substring(0, 3) + '...' : 'MISSING', 
-    pass: pass ? '***' : 'MISSING' 
-  }, null, 2));
+  console.log('[createSmtpTransport] Config - service:', service);
+  console.log('[createSmtpTransport] Config - host:', host);
+  console.log('[createSmtpTransport] Config - port:', port);
+  console.log('[createSmtpTransport] Config - user:', user ? user.substring(0, 3) + '...' : 'MISSING');
+  console.log('[createSmtpTransport] Config - pass:', pass ? '***' : 'MISSING');
 
   if (!user || !pass) {
     console.warn('[createSmtpTransport] Missing user or password');
