@@ -182,10 +182,9 @@ const AdminOrders = () => {
     setPreviewUrl('');
     setSendingId(id);
     try {
-      const res = await adminApi.post(`/orders/${id}/resend-email`);
-      if (res.data?.previewUrl) setPreviewUrl(res.data.previewUrl);
+      await adminApi.post(`/orders/${id}/resend-email`);
       
-      setSuccess('Order confirmation email resent successfully!');
+      setSuccess('Order confirmation email is being sent!');
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       if (err?.response?.status === 401) {
@@ -204,10 +203,9 @@ const AdminOrders = () => {
     setPreviewUrl('');
     setSendingId(id);
     try {
-      const res = await adminApi.post(`/orders/${id}/message/email`, { subject, message });
-      if (res.data?.previewUrl) setPreviewUrl(res.data.previewUrl);
+      await adminApi.post(`/orders/${id}/message/email`, { subject, message });
       
-      setSuccess('Notification email sent successfully!');
+      setSuccess('Notification email is being sent!');
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       if (err?.response?.status === 401) {

@@ -288,6 +288,10 @@ router.post('/orders/:id/resend-email', async (req, res) => {
     const order = await getOrderById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
+    // Send response first
+    res.json({ sent: false, previewUrl: null });
+
+    // Send email in background
     const result = await sendOrderConfirmationEmail({ to: order.customer?.email, order });
     const email = {
       sent: !!result.sent,
@@ -295,10 +299,9 @@ router.post('/orders/:id/resend-email', async (req, res) => {
       lastSentAt: new Date().toISOString(),
     };
     await updateOrderEmailJson(order.id, { ...order.email, ...email });
-    return res.json({ sent: !!result.sent, previewUrl: result.previewUrl });
+    console.log('[BG] Resend email result:', result);
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ message: 'Failed to send email' });
+    console.error('[BG] Resend email failed:', e);
   }
 });
 
@@ -307,21 +310,20 @@ router.post('/orders/:id/message/email', async (req, res) => {
   if (!subject || !message) return res.status(400).json({ message: 'Missing subject or message' });
 
   try {
-    console.log(`\n📧 Attempting to send custom email for order ${req.params.id}`);
     const order = await getOrderById(req.params.id);
     if (!order) {
-      console.error('❌ Order not found:', req.params.id);
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    console.log('📦 Order details:', JSON.stringify(order, null, 2));
     const to = order.customer?.email;
-    console.log('📧 Recipient email:', to);
     if (!to) {
-      console.error('❌ Customer email missing!');
       return res.status(400).json({ message: 'Customer email missing from order' });
     }
 
+    // Send response first
+    res.json({ sent: false, previewUrl: null });
+
+    // Send email in background
     const result = await sendCustomEmail({
       to,
       subject,
@@ -351,7 +353,6 @@ router.post('/orders/:id/message/email', async (req, res) => {
         </div>
       </div>`,
     });
-    console.log('📧 Email send result:', result);
     
     const email = {
       sent: !!result.sent,
@@ -359,10 +360,9 @@ router.post('/orders/:id/message/email', async (req, res) => {
       lastSentAt: new Date().toISOString(),
     };
     await updateOrderEmailJson(order.id, { ...order.email, ...email });
-    return res.json({ sent: !!result.sent, previewUrl: result.previewUrl, reason: result.reason });
+    console.log('[BG] Custom email send result:', result);
   } catch (e) {
-    console.error('❌ Failed to send custom email:', e);
-    return res.status(500).json({ message: 'Failed to send email', error: e.message });
+    console.error('[BG] Custom email failed:', e);
   }
 });
 
