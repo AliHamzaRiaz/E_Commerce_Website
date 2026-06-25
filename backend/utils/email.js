@@ -1,80 +1,73 @@
-const nodemailer = require('nodemailer');
 const axios = require('axios');
 
 console.log('========================================');
-console.log('📧 EMAIL SERVICE: MODULE LOADED');
+console.log('📧 EMAIL SERVICE (BREVO REST API): MODULE LOADED');
 console.log('========================================');
 
-// Global transporter variable for SMTP fallback
-let transporter = null;
-
 /**
- * PRIMARY METHOD: Send email via Brevo REST API (most reliable for Render!)
+ * Sends an email using Brevo's official REST API (100% Render-compatible!)
  * @param {object} options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.html - HTML content
- * @param {string} [options.text] - Plain text content
- * @param {string} [options.bcc] - Bcc recipient
- * @returns {Promise<object>} Send result
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Email subject line
+ * @param {string} options.html - HTML email content
+ * @param {string} [options.text] - Plain text fallback (optional, auto-generated if not provided)
+ * @param {string} [options.bcc] - BCC recipient email (optional)
+ * @returns {Promise<object>} Send result with success status, messageId, and debug info
  */
-const sendEmailViaBrevoAPI = async (options) => {
+const sendEmail = async (options) => {
   console.log('\n========================================');
-  console.log('📤 SEND EMAIL VIA BREVO REST API');
+  console.log('� SEND EMAIL VIA BREVO REST API: STARTED');
   console.log('========================================');
 
+  const { to, subject, html, text, bcc } = options;
   const apiKey = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
   const senderEmail = process.env.EMAIL_FROM;
   const senderName = 'LIBBAAS';
 
+  // Step 1: Log everything (for debugging)
+  console.log('\n📋 INPUT PARAMETERS:');
+  console.log('  To:', to);
+  console.log('  Subject:', subject);
+  console.log('  BCC:', bcc || 'none');
+  console.log('  API Key set:', !!apiKey);
+  console.log('  Sender email set:', !!senderEmail);
+
+  // Step 2: Validate required fields
+  console.log('\n🔍 VALIDATING REQUIRED FIELDS:');
+  const errors = [];
+  if (!apiKey) errors.push('Missing BREVO_API_KEY or SMTP_PASS in Render environment variables');
+  if (!senderEmail) errors.push('Missing EMAIL_FROM in Render environment variables');
+  if (!to) errors.push('Missing recipient email (to parameter)');
+  if (!subject) errors.push('Missing email subject');
+  
+  if (errors.length > 0) {
+    console.log('❌ VALIDATION FAILED:');
+    errors.forEach(e => console.log('  -', e));
+    console.log('========================================');
+    return { sent: false, reason: errors.join('; ') };
+  }
+
+  // Step 3: Prepare API payload
+  console.log('\n📦 PREPARING API PAYLOAD:');
+  const payload = {
+    sender: { name: senderName, email: senderEmail },
+    to: [{ email: to }],
+    subject: subject,
+    htmlContent: html,
+    textContent: text || html.replace(/<[^>]*>/g, '')
+  };
+  if (bcc) payload.bcc = [{ email: bcc }];
+  console.log('  Payload (truncated):', {
+    sender: payload.sender,
+    to: payload.to,
+    bcc: payload.bcc,
+    subject: payload.subject,
+    htmlContent: payload.htmlContent.substring(0, 50) + '...'
+  });
+
+  // Step 4: Send request to Brevo API
+  console.log('\n� SENDING REQUEST TO BREVO API...');
   try {
-    console.log('\n📋 API options:');
-    console.log('To:', options.to);
-    console.log('Subject:', options.subject);
-    console.log('Bcc:', options.bcc || 'none');
-    console.log('API Key set:', !!apiKey);
-    console.log('Sender email:', senderEmail);
-
-    // Validate required params
-    if (!apiKey) {
-      throw new Error('Missing BREVO_API_KEY or SMTP_PASS in environment variables');
-    }
-    if (!senderEmail) {
-      throw new Error('Missing EMAIL_FROM in environment variables');
-    }
-    if (!options.to) {
-      throw new Error('Missing recipient email (to)');
-    }
-    if (!options.subject) {
-      throw new Error('Missing email subject');
-    }
-
-    // Prepare payload for Brevo API
-    const payload = {
-      sender: {
-        name: senderName,
-        email: senderEmail
-      },
-      to: [
-        { email: options.to }
-      ],
-      subject: options.subject,
-      htmlContent: options.html,
-      textContent: options.text || options.html.replace(/<[^>]*>/g, '') // Fallback to stripped HTML
-    };
-
-    if (options.bcc) {
-      payload.bcc = [{ email: options.bcc }];
-    }
-
-    console.log('\n📧 Sending via Brevo API with payload:');
-    console.log(JSON.stringify({
-      ...payload,
-      htmlContent: payload.htmlContent.substring(0, 100) + '...'
-    }, null, 2));
-
-    // Make API call
-    console.log('\n🔌 Calling Brevo API...');
     const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
       headers: {
         'accept': 'application/json',
@@ -84,414 +77,173 @@ const sendEmailViaBrevoAPI = async (options) => {
       timeout: 30000
     });
 
-    console.log('\n✅ EMAIL SENT SUCCESSFULLY VIA BREVO API!');
-    console.log('Response status:', response.status);
-    console.log('Response data:', JSON.stringify(response.data, null, 2));
-
+    // Step 5: Log success
+    console.log('\n✅ EMAIL SENT SUCCESSFULLY!');
+    console.log('  Brevo Status Code:', response.status);
+    console.log('  Brevo Message ID:', response.data.messageId);
+    console.log('  Full Response:', JSON.stringify(response.data, null, 2));
+    
     const result = {
       sent: true,
-      method: 'brevo-api',
+      method: 'brevo-rest-api',
       messageId: response.data.messageId,
-      response: response.data
+      brevoResponse: response.data
     };
-    console.log('\n✅ Final send result:', JSON.stringify(result, null, 2));
+    console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
     console.log('========================================');
     return result;
 
   } catch (error) {
-    console.log('\n❌ SEND EMAIL VIA BREVO API FAILED');
-    console.log('Error name:', error.name);
-    console.log('Error message:', error.message);
-    console.log('Error code:', error.code);
+    // Step 6: Log detailed error
+    console.log('\n❌ FAILED TO SEND EMAIL!');
+    console.log('  Error Name:', error.name);
+    console.log('  Error Message:', error.message);
+    console.log('  Error Code:', error.code);
     if (error.response) {
-      console.log('Error response status:', error.response.status);
-      console.log('Error response data:', JSON.stringify(error.response.data, null, 2));
+      console.log('  Brevo Status Code:', error.response.status);
+      console.log('  Brevo Error Data:', JSON.stringify(error.response.data, null, 2));
     }
-    console.log('Error stack:', error.stack);
+    console.log('  Error Stack:', error.stack);
 
     const result = {
       sent: false,
-      method: 'brevo-api',
+      method: 'brevo-rest-api',
       reason: error.message,
-      error: error
+      errorCode: error.code,
+      brevoStatusCode: error.response?.status,
+      brevoError: error.response?.data
     };
-    console.log('\n❌ API send result:', JSON.stringify(result, null, 2));
+    console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
     console.log('========================================');
     return result;
   }
-};
-
-/**
- * FALLBACK METHOD: Send email via Brevo SMTP
- * @param {object} options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.html - HTML content
- * @param {string} [options.text] - Plain text content
- * @param {string} [options.bcc] - Bcc recipient
- * @returns {Promise<object>} Send result
- */
-const sendEmailViaSmtp = async (options) => {
-  console.log('\n========================================');
-  console.log('📤 SEND EMAIL VIA BREVO SMTP (FALLBACK)');
-  console.log('========================================');
-
-  try {
-    console.log('\n📋 SMTP options:');
-    console.log('To:', options.to);
-    console.log('Subject:', options.subject);
-    console.log('Bcc:', options.bcc || 'none');
-
-    // Initialize transporter
-    const t = await initTransporter();
-    if (!t) {
-      const result = { sent: false, method: 'smtp', reason: 'Transporter not initialized' };
-      console.log('\n❌', result.reason);
-      console.log('========================================');
-      return result;
-    }
-
-    // Prepare mail options
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text || options.html.replace(/<[^>]*>/g, '')
-    };
-    if (options.bcc) {
-      mailOptions.bcc = options.bcc;
-    }
-    console.log('\n📧 Mail options:');
-    console.log(JSON.stringify({
-      ...mailOptions,
-      html: mailOptions.html.substring(0, 100) + '...'
-    }, null, 2));
-
-    console.log('\n📤 Calling transporter.sendMail()...');
-    const info = await t.sendMail(mailOptions);
-
-    console.log('\n✅ EMAIL SENT SUCCESSFULLY VIA SMTP!');
-    console.log('Message ID:', info.messageId);
-    console.log('Accepted:', JSON.stringify(info.accepted));
-    console.log('Rejected:', JSON.stringify(info.rejected));
-    console.log('Response:', info.response);
-
-    const result = {
-      sent: true,
-      method: 'smtp',
-      previewUrl: nodemailer.getTestMessageUrl(info),
-      info: info
-    };
-    console.log('\n✅ Final send result:', JSON.stringify(result, null, 2));
-    console.log('========================================');
-    return result;
-
-  } catch (error) {
-    console.log('\n❌ SEND EMAIL VIA SMTP FAILED');
-    console.log('Error name:', error.name);
-    console.log('Error message:', error.message);
-    console.log('Error code:', error.code);
-    console.log('Error command:', error.command);
-    console.log('Error response:', error.response);
-    console.log('Error stack:', error.stack);
-
-    const result = {
-      sent: false,
-      method: 'smtp',
-      reason: error.message,
-      error: error
-    };
-    console.log('\n❌ SMTP send result:', JSON.stringify(result, null, 2));
-    console.log('========================================');
-    return result;
-  }
-};
-
-/**
- * PRIMARY SEND EMAIL FUNCTION: Uses Brevo API first, falls back to SMTP
- */
-const sendEmail = async (options) => {
-  console.log('\n========================================');
-  console.log('📤 SEND EMAIL: STARTING (PRIMARY = BREVO API)');
-  console.log('========================================');
-
-  // Try Brevo API first (most reliable on Render)
-  let result = await sendEmailViaBrevoAPI(options);
-
-  if (result.sent) {
-    return result;
-  }
-
-  // If API fails, try SMTP as fallback
-  console.log('\n⚠️ Brevo API failed, trying SMTP fallback...');
-  result = await sendEmailViaSmtp(options);
-
-  return result;
-};
-
-/**
- * Creates a nodemailer transporter for Brevo SMTP
- * @returns {object|null} Transporter object or null if creation fails
- */
-const createTransporter = () => {
-  console.log('\n========================================');
-  console.log('📧 CREATE TRANSPORTER: STARTING');
-  console.log('========================================');
-
-  const envVars = {
-    SMTP_HOST: process.env.SMTP_HOST,
-    SMTP_PORT: process.env.SMTP_PORT,
-    SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 5) + '...' : 'NOT SET',
-    SMTP_PASS: process.env.SMTP_PASS ? '*** SET ***' : 'NOT SET',
-    EMAIL_FROM: process.env.EMAIL_FROM
-  };
-  console.log('📋 ENVIRONMENT VARIABLES:');
-  console.log(JSON.stringify(envVars, null, 2));
-
-  const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
-  const missing = required.filter(key => !process.env[key]);
-  console.log('\n✅ Required variables present:', required.filter(key => process.env[key]));
-  console.log('❌ Missing variables:', missing);
-
-  if (missing.length > 0) {
-    console.log('\n❌ CREATE TRANSPORTER FAILED: Missing required variables');
-    return null;
-  }
-
-  const port = parseInt(process.env.SMTP_PORT, 10);
-  const config = {
-    host: process.env.SMTP_HOST,
-    port: port,
-    secure: port === 465,
-    requireTLS: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    logger: true,
-    debug: true
-  };
-
-  console.log('\n⚙️ TRANSPORTER CONFIG:');
-  console.log(JSON.stringify({
-    ...config,
-    auth: { user: config.auth.user.substring(0,5) + '...', pass: '***' }
-  }, null, 2));
-
-  try {
-    console.log('\n🔧 Creating nodemailer transporter...');
-    const newTransporter = nodemailer.createTransport(config);
-    console.log('✅ Nodemailer transporter created successfully!');
-    console.log('========================================');
-    return newTransporter;
-  } catch (error) {
-    console.log('\n❌ CREATE TRANSPORTER FAILED');
-    console.log('Error:', error);
-    console.log('========================================');
-    return null;
-  }
-};
-
-/**
- * Verifies transporter connection to Brevo SMTP
- * @param {object} t - Transporter object
- * @returns {Promise<boolean>} True if verification succeeds
- */
-const verifyTransporter = async (t) => {
-  console.log('\n========================================');
-  console.log('🔍 VERIFY TRANSPORTER CONNECTION: STARTING');
-  console.log('========================================');
-
-  try {
-    console.log('\n📞 Calling transporter.verify()...');
-    await t.verify();
-    console.log('✅ TRANSPORTER VERIFIED SUCCESSFULLY!');
-    console.log('========================================');
-    return true;
-  } catch (error) {
-    console.log('\n❌ TRANSPORTER VERIFICATION FAILED');
-    console.log('Error:', error);
-    console.log('========================================');
-    return false;
-  }
-};
-
-/**
- * Initializes and verifies the transporter (cached after first call)
- * @returns {Promise<object|null>} Transporter object or null
- */
-const initTransporter = async () => {
-  if (transporter) {
-    console.log('✅ Using cached transporter');
-    return transporter;
-  }
-
-  console.log('📦 No cached transporter, creating new one...');
-  const t = createTransporter();
-  if (!t) {
-    return null;
-  }
-
-  console.log('🔍 Verifying new transporter...');
-  const verified = await verifyTransporter(t);
-  if (verified) {
-    transporter = t;
-    console.log('✅ Transporter initialized and cached!');
-  } else {
-    transporter = t;
-  }
-
-  return transporter;
 };
 
 const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
 
 const sendOrderConfirmationEmail = async ({ to, order }) => {
-  const html = `
-    <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
-      <div style="text-align:center; margin-bottom:30px;">
-        <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
-        <p style="color:#777; font-size:14px; margin-top:5px;">Thank you for your purchase!</p>
-      </div>
-
-      <div style="margin-bottom:30px;">
-        <h2 style="font-size:18px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:15px; text-transform:uppercase;">Order Summary</h2>
-        <p style="margin:5px 0;"><strong>Order ID:</strong> ${order.id}</p>
-        <p style="margin:5px 0;"><strong>Customer:</strong> ${order.customer?.fullName || ''}</p>
-        <p style="margin:5px 0;"><strong>Delivery to:</strong> ${order.customer?.address || ''}</p>
-        <p style="margin:5px 0;"><strong>Payment:</strong> ${order.paymentMethod === 'cash' ? 'Cash On Delivery' : 'Card Payment'}</p>
-      </div>
-
-      <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
-        <thead>
-          <tr style="text-align:left; font-size:12px; text-transform:uppercase; color:#999; letter-spacing:1px;">
-            <th style="padding-bottom:10px; border-bottom:1px solid #111;">Product</th>
-            <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Qty</th>
-            <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(order.items || []).map(i => `
-            <tr>
-              <td style="padding:10px 0; border-bottom:1px solid #eee;">
-                <div style="font-weight:bold; color:#111;">${i.name}</div>
-                <div style="color:#777; font-size:12px;">${i.selectedColor || ''} ${i.selectedSize ? `/ ${i.selectedSize}` : ''}</div>
-              </td>
-              <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111;">x${i.quantity}</td>
-              <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111; font-weight:bold;">${formatMoney(i.price * i.quantity)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2" style="padding:20px 0 5px; color:#777;">Subtotal</td>
-            <td style="padding:20px 0 5px; text-align:right; color:#111;">${formatMoney(order.subtotal)}</td>
-          </tr>
-          ${order.discount > 0 ? `
-            <tr>
-              <td colspan="2" style="padding:10px 0; color:#777;">Card Discount (7%)</td>
-              <td style="padding:10px 0; text-align:right; color:#d4af37;">- ${formatMoney(order.discount)}</td>
-            </tr>
-          ` : ''}
-          <tr>
-            <td colspan="2" style="padding:10px 0; border-top:1px solid #111; font-weight:bold; font-size:18px;">Total Amount</td>
-            <td style="padding:10px 0; border-top:1px solid #111; text-align:right; font-weight:bold; font-size:18px; color:#111;">${formatMoney(order.total)}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <div style="text-align:center; margin:40px 0;">
-        <p style="margin-bottom:20px; color:#555;">We hope you love your new items!</p>
-        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color:#111; color:#fff; padding:15px 35px; text-decoration:none; font-weight:bold; border-radius:0; text-transform:uppercase; letter-spacing:1px; display:inline-block;">Thanks for Shopping - Visit Store</a>
-      </div>
-
-      <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
-        <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
-        <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
-      </div>
-    </div>`;
-
+  console.log('\n� SEND ORDER CONFIRMATION EMAIL');
   return sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
     subject: `Order Confirmation - ${order.id}`,
-    html
+    html: `
+      <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+        <div style="text-align:center; margin-bottom:30px;">
+          <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+          <p style="color:#777; font-size:14px; margin-top:5px;">Thank you for your purchase!</p>
+        </div>
+        <div style="margin-bottom:30px;">
+          <h2 style="font-size:18px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:15px; text-transform:uppercase;">Order Summary</h2>
+          <p style="margin:5px 0;"><strong>Order ID:</strong> ${order.id}</p>
+          <p style="margin:5px 0;"><strong>Customer:</strong> ${order.customer?.fullName || ''}</p>
+          <p style="margin:5px 0;"><strong>Delivery to:</strong> ${order.customer?.address || ''}</p>
+          <p style="margin:5px 0;"><strong>Payment:</strong> ${order.paymentMethod === 'cash' ? 'Cash On Delivery' : 'Card Payment'}</p>
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+          <thead>
+            <tr style="text-align:left; font-size:12px; text-transform:uppercase; color:#999; letter-spacing:1px;">
+              <th style="padding-bottom:10px; border-bottom:1px solid #111;">Product</th>
+              <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Qty</th>
+              <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(order.items || []).map(i => `
+              <tr>
+                <td style="padding:10px 0; border-bottom:1px solid #eee;">
+                  <div style="font-weight:bold; color:#111;">${i.name}</div>
+                  <div style="color:#777; font-size:12px;">${i.selectedColor || ''} ${i.selectedSize ? `/ ${i.selectedSize}` : ''}</div>
+                </td>
+                <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111;">x${i.quantity}</td>
+                <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111; font-weight:bold;">${formatMoney(i.price * i.quantity)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" style="padding:20px 0 5px; color:#777;">Subtotal</td>
+              <td style="padding:20px 0 5px; text-align:right; color:#111;">${formatMoney(order.subtotal)}</td>
+            </tr>
+            ${order.discount > 0 ? `
+              <tr>
+                <td colspan="2" style="padding:10px 0; color:#777;">Card Discount (7%)</td>
+                <td style="padding:10px 0; text-align:right; color:#d4af37;">- ${formatMoney(order.discount)}</td>
+              </tr>
+            ` : ''}
+            <tr>
+              <td colspan="2" style="padding:10px 0; border-top:1px solid #111; font-weight:bold; font-size:18px;">Total Amount</td>
+              <td style="padding:10px 0; border-top:1px solid #111; text-align:right; font-weight:bold; font-size:18px; color:#111;">${formatMoney(order.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div style="text-align:center; margin:40px 0;">
+          <p style="margin-bottom:20px; color:#555;">We hope you love your new items!</p>
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color:#111; color:#fff; padding:15px 35px; text-decoration:none; font-weight:bold; border-radius:0; text-transform:uppercase; letter-spacing:1px; display:inline-block;">Thanks for Shopping - Visit Store</a>
+        </div>
+        <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+          <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
+          <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+        </div>
+      </div>`
   });
 };
 
 const sendOtpEmail = async ({ to, otp }) => {
-  const html = `
-    <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
-      <div style="text-align:center; margin-bottom:30px;">
-        <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
-        <p style="color:#777; font-size:14px; margin-top:5px;">Admin Login Verification</p>
-      </div>
-
-      <div style="margin-bottom:30px;">
-        <h2 style="font-size:18px; color:#111; margin:0 0 8px;">Your Login Code</h2>
-        <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
-        <div style="font-size:36px; letter-spacing:8px; font-weight:700; padding:20px; border:1px solid #eee; text-align:center; display:inline-block; width:100%; box-sizing:border-box;">${otp}</div>
-        <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
-      </div>
-
-      <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
-        <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
-      </div>
-    </div>`;
-
-  const text = `Your OTP code is: ${otp}. It expires in 10 minutes.`;
-
+  console.log('\n🔐 SEND OTP EMAIL');
   return sendEmail({
     to,
     subject: 'Your OTP Login Code - LIBBAAS',
-    html,
-    text
+    html: `
+      <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+        <div style="text-align:center; margin-bottom:30px;">
+          <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+          <p style="color:#777; font-size:14px; margin-top:5px;">Admin Login Verification</p>
+        </div>
+        <div style="margin-bottom:30px;">
+          <h2 style="font-size:18px; color:#111; margin:0 0 8px;">Your Login Code</h2>
+          <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
+          <div style="font-size:36px; letter-spacing:8px; font-weight:700; padding:20px; border:1px solid #eee; text-align:center; display:inline-block; width:100%; box-sizing:border-box;">${otp}</div>
+          <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
+        </div>
+        <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+          <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+        </div>
+      </div>`,
+    text: `Your OTP code is: ${otp}. It expires in 10 minutes.`
   });
 };
 
 const sendPasswordResetEmail = async ({ to, resetUrl }) => {
-  const html = `
-    <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
-      <div style="text-align:center; margin-bottom:30px;">
-        <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
-        <p style="color:#777; font-size:14px; margin-top:5px;">Password Reset Request</p>
-      </div>
-
-      <div style="margin-bottom:30px;">
-        <h2 style="font-size:18px; color:#111; margin:0 0 8px;">Password Reset Request</h2>
-        <p style="margin:0 0 14px; color:#555;">You requested to reset your password. Click the button below to set a new password. This link expires in 1 hour.</p>
-        
-        <div style="text-align:center; margin:30px 0;">
-          <a href="${resetUrl}" style="background-color:#111; color:#fff; padding:12px 30px; text-decoration:none; display:inline-block; font-weight:bold; letter-spacing:1px; text-transform:uppercase; font-size:14px;">Reset Password</a>
-        </div>
-        
-        <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request a password reset, you can ignore this email.</p>
-        <p style="margin:8px 0 0; color:#777; font-size:10px;">Link: ${resetUrl}</p>
-      </div>
-
-      <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
-        <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
-      </div>
-    </div>`;
-
-  const text = `You requested a password reset. Use this link: ${resetUrl}`;
-
+  console.log('\n🔑 SEND PASSWORD RESET EMAIL');
   return sendEmail({
     to,
     subject: 'Reset Your Password - LIBBAAS',
-    html,
-    text
+    html: `
+      <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+        <div style="text-align:center; margin-bottom:30px;">
+          <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+          <p style="color:#777; font-size:14px; margin-top:5px;">Password Reset Request</p>
+        </div>
+        <div style="margin-bottom:30px;">
+          <h2 style="font-size:18px; color:#111; margin:0 0 8px;">Password Reset Request</h2>
+          <p style="margin:0 0 14px; color:#555;">You requested to reset your password. Click the button below to set a new password. This link expires in 1 hour.</p>
+          <div style="text-align:center; margin:30px 0;">
+            <a href="${resetUrl}" style="background-color:#111; color:#fff; padding:12px 30px; text-decoration:none; display:inline-block; font-weight:bold; letter-spacing:1px; text-transform:uppercase; font-size:14px;">Reset Password</a>
+          </div>
+          <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request a password reset, you can ignore this email.</p>
+          <p style="margin:8px 0 0; color:#777; font-size:10px;">Link: ${resetUrl}</p>
+        </div>
+        <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+          <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+        </div>
+      </div>`,
+    text: `You requested a password reset. Use this link: ${resetUrl}`
   });
 };
 
 const sendCustomEmail = async ({ to, subject, html, text }) => {
+  console.log('\n✉️ SEND CUSTOM EMAIL');
   return sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
@@ -499,6 +251,14 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
     html,
     text
   });
+};
+
+const initTransporter = async () => {
+  console.log('\n========================================');
+  console.log('📧 INITIALIZE EMAIL SERVICE (REST API ONLY)');
+  console.log('========================================');
+  console.log('✅ Email service initialized');
+  return true;
 };
 
 module.exports = {

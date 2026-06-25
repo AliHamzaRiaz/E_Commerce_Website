@@ -131,10 +131,8 @@ app.get('/api/debug/test-email', async (req, res) => {
       sent: result.sent,
       previewUrl: result.previewUrl,
       reason: result.reason,
-      smtpConfig: {
-        SMTP_HOST: process.env.SMTP_HOST,
-        SMTP_PORT: process.env.SMTP_PORT,
-        SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,5) + '...' : 'not set',
+      brevoConfig: {
+        BREVO_API_KEY: process.env.BREVO_API_KEY ? '*** SET ***' : (process.env.SMTP_PASS ? '*** SET (using SMTP_PASS) ***' : 'NOT SET'),
         EMAIL_FROM: process.env.EMAIL_FROM
       },
       result: result
@@ -163,8 +161,8 @@ const start = async () => {
   console.log('\n📋 ALL ENVIRONMENT VARIABLES (filtered):');
   const envToLog = {};
   Object.keys(process.env).forEach(key => {
-    if (['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'EMAIL_FROM', 'ADMIN_EMAIL', 'PORT', 'NODE_ENV'].includes(key)) {
-      envToLog[key] = key.includes('PASS') || key.includes('SECRET') ? '***' : process.env[key];
+    if (['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'EMAIL_FROM', 'ADMIN_EMAIL', 'PORT', 'NODE_ENV', 'BREVO_API_KEY'].includes(key)) {
+      envToLog[key] = (key.includes('PASS') || key.includes('SECRET') || key.includes('API_KEY')) ? (process.env[key] ? '*** SET ***' : 'NOT SET') : process.env[key];
     } else if (key.includes('SMTP') || key.includes('EMAIL')) {
       envToLog[key] = '***';
     }
