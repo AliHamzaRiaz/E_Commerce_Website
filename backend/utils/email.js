@@ -15,6 +15,12 @@ const createSmtpTransport = () => {
   console.log('[createSmtpTransport] Config - port:', port);
   console.log('[createSmtpTransport] Config - user:', user ? user.substring(0, 3) + '...' : 'MISSING');
   console.log('[createSmtpTransport] Config - pass:', pass ? '***' : 'MISSING');
+  console.log('[createSmtpTransport] Check Gmail config conditions:', {
+    hasServiceGmail: service?.toLowerCase() === 'gmail',
+    hasGmailUser: user?.includes('@gmail.com'),
+    hasNoHost: !host,
+    shouldUseGmail: (service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host
+  });
 
   if (!user || !pass) {
     console.warn('[createSmtpTransport] Missing user or password');
@@ -24,12 +30,14 @@ const createSmtpTransport = () => {
   // Explicit Gmail configuration for reliability (only if no custom host is set)
   if ((service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host) {
     console.log('[createSmtpTransport] Using Gmail explicit configuration (port 465 SSL)');
-    return nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
       secure: true, // true for 465
       auth: { user, pass },
     });
+    console.log('[createSmtpTransport] Created Gmail transporter!');
+    return transporter;
   }
 
   if (service) {
