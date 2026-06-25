@@ -1,184 +1,261 @@
 const nodemailer = require('nodemailer');
 
-// Create a transporter for Brevo SMTP
+console.log('========================================');
+console.log('📧 EMAIL SERVICE: MODULE LOADED');
+console.log('========================================');
+
+// Global transporter variable
 let transporter = null;
 
+/**
+ * Creates a nodemailer transporter for Brevo SMTP
+ * @returns {object|null} Transporter object or null if creation fails
+ */
 const createTransporter = () => {
-  // Validate required environment variables
-  const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
-  const missing = requiredEnvVars.filter(key => !process.env[key]);
-  
-  console.log('[Email Service] Creating transporter...');
-  console.log('[Email Service] Checking required env vars:');
-  requiredEnvVars.forEach(key => {
-    console.log(`  - ${key}:`, process.env[key] ? (key.includes('PASS') ? '***' : process.env[key]) : 'NOT SET ❌');
-  });
+  console.log('\n========================================');
+console.log('📧 CREATE TRANSPORTER: STARTING');
+console.log('========================================');
 
-  if (missing.length > 0) {
-    console.warn('[Email Service] ❌ Missing required environment variables:', missing);
-    return null;
-  }
+// Step 1: Read and log ALL environment variables (no passwords shown)
+const envVars = {
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT,
+  SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 5) + '...' : 'NOT SET',
+  SMTP_PASS: process.env.SMTP_PASS ? '*** SET ***' : 'NOT SET',
+  EMAIL_FROM: process.env.EMAIL_FROM,
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL
+};
+console.log('📋 ENVIRONMENT VARIABLES:');
+console.log(JSON.stringify(envVars, null, 2));
 
-  console.log('[Email Service] ✅ All required env vars present');
-  console.log('[Email Service] Creating Brevo SMTP transporter with config:');
-  console.log('  - Host:', process.env.SMTP_HOST);
-  console.log('  - Port:', process.env.SMTP_PORT);
-  console.log('  - Secure:', process.env.SMTP_PORT === '465');
-  console.log('  - User:', process.env.SMTP_USER.substring(0, 3) + '...');
-  console.log('  - From:', process.env.EMAIL_FROM);
-  
-  const t = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT, 10),
-    secure: process.env.SMTP_PORT === '465',
-    requireTLS: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 60000,
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    logger: true,
-    debug: true
-  });
+// Step 2: Check required variables
+const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
+const missing = required.filter(key => !process.env[key]);
+console.log('\n✅ Required variables present:', required.filter(key => process.env[key]));
+console.log('❌ Missing variables:', missing);
 
-  return t;
+if (missing.length > 0) {
+  console.log('\n❌ CREATE TRANSPORTER FAILED: Missing required variables');
+  console.log('Missing:', missing);
+  return null;
+}
+
+// Step 3: Prepare transporter config
+const port = parseInt(process.env.SMTP_PORT, 10);
+const config = {
+  host: process.env.SMTP_HOST,
+  port: port,
+  secure: port === 465, // true for 465, false for 587
+  requireTLS: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 60000,
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+  logger: true,
+  debug: true
 };
 
-// Verify transporter connection
+console.log('\n⚙️ TRANSPORTER CONFIG:');
+console.log(JSON.stringify({
+  ...config,
+  auth: { user: config.auth.user.substring(0,5) + '...', pass: '***' }
+}, null, 2));
+
+try {
+  console.log('\n🔧 Creating nodemailer transporter...');
+  const newTransporter = nodemailer.createTransport(config);
+  console.log('✅ Nodemailer transporter created successfully!');
+  console.log('========================================');
+  return newTransporter;
+} catch (error) {
+  console.log('\n❌ CREATE TRANSPORTER FAILED CATASTROPHICALLY');
+  console.log('Error name:', error.name);
+  console.log('Error message:', error.message);
+  console.log('Error code:', error.code);
+  console.log('Error stack:', error.stack);
+  console.log('Full error object:', JSON.stringify(error, null, 2));
+  console.log('========================================');
+  return null;
+}
+};
+
+/**
+ * Verifies transporter connection to Brevo SMTP
+ * @param {object} t - Transporter object
+ * @returns {Promise<boolean>} True if verification succeeds
+ */
 const verifyTransporter = async (t) => {
+  console.log('\n========================================');
+  console.log('🔍 VERIFY TRANSPORTER CONNECTION: STARTING');
+  console.log('========================================');
+
   try {
-    console.log('[Email Service] Verifying SMTP connection...');
+    console.log('\n📞 Calling transporter.verify()...');
     await t.verify();
-    console.log('[Email Service] ✅ SMTP connection verified successfully!');
+    console.log('✅ TRANSPORTER VERIFIED SUCCESSFULLY!');
+    console.log('========================================');
     return true;
   } catch (error) {
-    console.error('[Email Service] ❌ SMTP connection verification FAILED:');
-    console.error('[Email Service] Error message:', error.message);
-    console.error('[Email Service] Error code:', error.code);
-    console.error('[Email Service] Error stack:', error.stack);
+    console.log('\n❌ TRANSPORTER VERIFICATION FAILED');
+    console.log('Error name:', error.name);
+    console.log('Error message:', error.message);
+    console.log('Error code:', error.code);
+    console.log('Error command:', error.command);
+    console.log('Error response:', error.response);
+    console.log('Error stack:', error.stack);
+    console.log('Full error object:', JSON.stringify(error, null, 2));
+    console.log('========================================');
     return false;
   }
 };
 
-// Initialize transporter
+/**
+ * Initializes and verifies the transporter (cached after first call)
+ * @returns {Promise<object|null>} Transporter object or null
+ */
 const initTransporter = async () => {
+  console.log('\n========================================');
+  console.log('🚀 INIT TRANSPORTER: STARTING');
+  console.log('========================================');
+
   if (transporter) {
-    console.log('[Email Service] Using cached transporter');
+    console.log('✅ Using cached transporter');
+    console.log('========================================');
     return transporter;
   }
 
-  console.log('[Email Service] Initializing new transporter...');
+  console.log('📦 No cached transporter, creating new one...');
   const t = createTransporter();
   if (!t) {
-    console.error('[Email Service] ❌ Failed to create transporter');
+    console.log('❌ Failed to create transporter');
+    console.log('========================================');
     return null;
   }
 
+  console.log('🔍 Verifying new transporter...');
   const verified = await verifyTransporter(t);
   if (verified) {
     transporter = t;
-    console.log('[Email Service] ✅ Transporter initialized and verified');
+    console.log('✅ Transporter initialized, verified, and cached!');
   } else {
-    console.warn('[Email Service] Transporter created but verification failed');
+    console.log('⚠️ Transporter created but verification failed - keeping for testing');
     transporter = t;
   }
 
+  console.log('========================================');
   return transporter;
 };
 
 /**
- * Send an email
- * @param {object} params
- * @param {string} params.to - Recipient email address
- * @param {string} params.subject - Email subject
- * @param {string} params.html - HTML content
- * @param {string} [params.text] - Plain text content (optional)
- * @param {string} [params.bcc] - BCC recipient (optional)
- * @returns {Promise<{sent: boolean, previewUrl?: string, reason?: string, info?: any}>}
+ * Sends an email
+ * @param {object} options
+ * @param {string} options.to - Recipient email
+ * @param {string} options.subject - Email subject
+ * @param {string} options.html - HTML content
+ * @param {string} [options.text] - Plain text content (optional)
+ * @param {string} [options.bcc] - Bcc recipient (optional)
+ * @returns {Promise<object>} Send result
  */
-const sendEmail = async ({ to, subject, html, text, bcc }) => {
+const sendEmail = async (options) => {
+  console.log('\n========================================');
+  console.log('📤 SEND EMAIL: STARTING');
+  console.log('========================================');
+
   try {
-    console.log('[Email Service] ========================================');
-    console.log('[Email Service] 📧 Starting email send process');
-    console.log('[Email Service] To:', to);
-    console.log('[Email Service] Subject:', subject);
-    console.log('[Email Service] BCC:', bcc || 'none');
-    
-    const mailTransporter = await initTransporter();
-    if (!mailTransporter) {
-      const errorMsg = 'Transporter not initialized (check SMTP env vars)';
-      console.error('[Email Service] ❌', errorMsg);
-      return { sent: false, reason: errorMsg };
+    console.log('\n📋 Email options:');
+    console.log('To:', options.to);
+    console.log('Subject:', options.subject);
+    console.log('Bcc:', options.bcc || 'none');
+
+    // Initialize transporter
+    const t = await initTransporter();
+    if (!t) {
+      const result = { sent: false, reason: 'Transporter not initialized' };
+      console.log('\n❌', result.reason);
+      console.log('========================================');
+      return result;
     }
 
+    // Prepare mail options
     const mailOptions = {
       from: process.env.EMAIL_FROM,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ''),
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text || options.html.replace(/<[^>]*>/g, '') // Fallback to stripped HTML
     };
-
-    if (bcc) {
-      mailOptions.bcc = bcc;
+    if (options.bcc) {
+      mailOptions.bcc = options.bcc;
     }
+    console.log('\n📧 Mail options:');
+    console.log(JSON.stringify({
+      ...mailOptions,
+      html: mailOptions.html.substring(0, 100) + '...' // Truncate long HTML for logs
+    }, null, 2));
 
-    console.log('[Email Service] Mail options prepared:');
-    console.log('  - From:', mailOptions.from);
-    console.log('  - To:', mailOptions.to);
-    console.log('  - Subject:', mailOptions.subject);
-    console.log('[Email Service] Calling transporter.sendMail()...');
+    // Send email
+    console.log('\n📤 Calling transporter.sendMail()...');
+    const info = await t.sendMail(mailOptions);
 
-    const info = await mailTransporter.sendMail(mailOptions);
-    
-    console.log('[Email Service] ✅ sendMail() completed successfully!');
-    console.log('[Email Service] Full response info:');
-    console.log('  - messageId:', info.messageId);
-    console.log('  - accepted:', JSON.stringify(info.accepted));
-    console.log('  - rejected:', JSON.stringify(info.rejected));
-    console.log('  - pending:', JSON.stringify(info.pending));
-    console.log('  - response:', info.response);
-    console.log('  - envelope:', JSON.stringify(info.envelope));
-    console.log('[Email Service] ========================================');
-    
-    return {
+    // Log complete result
+    console.log('\n✅ EMAIL SENT SUCCESSFULLY!');
+    console.log('📄 Complete sendMail response:');
+    console.log('Message ID:', info.messageId);
+    console.log('Accepted:', JSON.stringify(info.accepted));
+    console.log('Rejected:', JSON.stringify(info.rejected));
+    console.log('Pending:', JSON.stringify(info.pending));
+    console.log('Response:', info.response);
+    console.log('Envelope:', JSON.stringify(info.envelope));
+    console.log('Full info object:', JSON.stringify(info, null, 2));
+
+    const result = {
       sent: true,
       previewUrl: nodemailer.getTestMessageUrl(info),
-      info
+      info: info
     };
+    console.log('\n✅ Final send result:', JSON.stringify(result, null, 2));
+    console.log('========================================');
+    return result;
 
   } catch (error) {
-    console.error('[Email Service] ========================================');
-    console.error('[Email Service] ❌ FAILED to send email:');
-    console.error('[Email Service] Error name:', error.name);
-    console.error('[Email Service] Error message:', error.message);
-    console.error('[Email Service] Error code:', error.code);
-    console.error('[Email Service] Error command:', error.command);
-    console.error('[Email Service] Error response:', error.response);
-    console.error('[Email Service] Error stack:', error.stack);
-    console.error('[Email Service] ========================================');
-    
-    return {
+    console.log('\n❌ SEND EMAIL FAILED');
+    console.log('Error name:', error.name);
+    console.log('Error message:', error.message);
+    console.log('Error code:', error.code);
+    console.log('Error command:', error.command);
+    console.log('Error response:', error.response);
+    console.log('Error stack:', error.stack);
+    console.log('Full error object:', JSON.stringify(error, null, 2));
+
+    const result = {
       sent: false,
       reason: error.message,
-      error
+      error: error
     };
+    console.log('\n❌ Final send result:', JSON.stringify(result, null, 2));
+    console.log('========================================');
+    return result;
   }
 };
 
 const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
 
 /**
- * Send order confirmation email
+ * Sends order confirmation email
  */
 const sendOrderConfirmationEmail = async ({ to, order }) => {
-  console.log('[Email Service] 📦 sendOrderConfirmationEmail called for order:', order.id);
-  
+  console.log('\n========================================');
+  console.log('📦 SEND ORDER CONFIRMATION EMAIL');
+  console.log('Order ID:', order.id);
+  console.log('Recipient:', to);
+  console.log('========================================');
+
   const html = `
     <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
       <div style="text-align:center; margin-bottom:30px;">
@@ -243,23 +320,26 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
       </div>
     </div>`;
 
-  console.log('[Email Service] Calling sendEmail() for order confirmation...');
   const result = await sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
     subject: `Order Confirmation - ${order.id}`,
     html
   });
-  console.log('[Email Service] Order confirmation email result:', result);
+
+  console.log('📦 Order confirmation email result:', JSON.stringify(result, null, 2));
   return result;
 };
 
 /**
- * Send OTP email
+ * Sends OTP email
  */
 const sendOtpEmail = async ({ to, otp }) => {
-  console.log('[Email Service] 🔐 sendOtpEmail called for:', to);
-  
+  console.log('\n========================================');
+  console.log('🔐 SEND OTP EMAIL');
+  console.log('Recipient:', to);
+  console.log('========================================');
+
   const html = `
     <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
       <div style="text-align:center; margin-bottom:30px;">
@@ -281,23 +361,27 @@ const sendOtpEmail = async ({ to, otp }) => {
 
   const text = `Your OTP code is: ${otp}. It expires in 10 minutes.`;
 
-  console.log('[Email Service] Calling sendEmail() for OTP...');
   const result = await sendEmail({
     to,
     subject: 'Your OTP Login Code - LIBBAAS',
     html,
     text
   });
-  console.log('[Email Service] OTP email result:', result);
+
+  console.log('🔐 OTP email result:', JSON.stringify(result, null, 2));
   return result;
 };
 
 /**
- * Send password reset email
+ * Sends password reset email
  */
 const sendPasswordResetEmail = async ({ to, resetUrl }) => {
-  console.log('[Email Service] 🔑 sendPasswordResetEmail called for:', to);
-  
+  console.log('\n========================================');
+  console.log('🔑 SEND PASSWORD RESET EMAIL');
+  console.log('Recipient:', to);
+  console.log('Reset URL:', resetUrl);
+  console.log('========================================');
+
   const html = `
     <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
       <div style="text-align:center; margin-bottom:30px;">
@@ -324,24 +408,27 @@ const sendPasswordResetEmail = async ({ to, resetUrl }) => {
 
   const text = `You requested a password reset. Use this link: ${resetUrl}`;
 
-  console.log('[Email Service] Calling sendEmail() for password reset...');
   const result = await sendEmail({
     to,
     subject: 'Reset Your Password - LIBBAAS',
     html,
     text
   });
-  console.log('[Email Service] Password reset email result:', result);
+
+  console.log('🔑 Password reset email result:', JSON.stringify(result, null, 2));
   return result;
 };
 
 /**
- * Send custom email
+ * Sends custom email
  */
 const sendCustomEmail = async ({ to, subject, html, text }) => {
-  console.log('[Email Service] ✉️ sendCustomEmail called for:', to);
-  
-  console.log('[Email Service] Calling sendEmail() for custom email...');
+  console.log('\n========================================');
+  console.log('✉️ SEND CUSTOM EMAIL');
+  console.log('Recipient:', to);
+  console.log('Subject:', subject);
+  console.log('========================================');
+
   const result = await sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
@@ -349,7 +436,8 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
     html,
     text
   });
-  console.log('[Email Service] Custom email result:', result);
+
+  console.log('✉️ Custom email result:', JSON.stringify(result, null, 2));
   return result;
 };
 

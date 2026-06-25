@@ -1,8 +1,15 @@
 const path = require('path');
 const dotenv = require('dotenv');
-// Try root .env first, then backend .env
+
+console.log('========================================');
+console.log('🚀 SERVER: STARTING BOOTSTRAP');
+console.log('========================================');
+
+// Load environment variables
 const rootEnvPath = path.join(__dirname, '..', '.env');
 const backendEnvPath = path.join(__dirname, '.env');
+console.log('📂 Loading env vars from root:', rootEnvPath);
+console.log('📂 Loading env vars from backend:', backendEnvPath);
 dotenv.config({ path: rootEnvPath });
 dotenv.config({ path: backendEnvPath });
 
@@ -42,7 +49,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/test', (req, res) => {
-  res.json({ message: "API working" });
+  res.json({ message: 'API working' });
 });
 
 app.get('/api/debug/seed-products', async (req, res) => {
@@ -75,90 +82,125 @@ app.get('/api/debug/admin-creds', (req, res) => {
   });
 });
 
+// ============================================
+// 📧 TEST EMAIL ENDPOINT - FOR DEBUGGING
+// ============================================
 app.get('/api/debug/test-email', async (req, res) => {
-  const to = req.query.to || process.env.ADMIN_EMAIL;
-  if (!to) {
-    return res.status(400).json({ error: 'Please provide a "to" query parameter' });
-  }
+  console.log('\n========================================');
+  console.log('📧 TEST EMAIL ENDPOINT: RECEIVED REQUEST');
+  console.log('========================================');
+
   try {
-    console.log('📧 Testing email send to:', to);
+    const to = req.query.to || process.env.ADMIN_EMAIL;
+    console.log('📋 Test email params:');
+    console.log('To:', to);
+
+    if (!to) {
+      console.log('❌ Missing "to" parameter');
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a "to" query parameter (e.g., ?to=you@example.com)'
+      });
+    }
+
+    console.log('\n� Sending test email...');
     const result = await sendCustomEmail({
       to,
-      subject: 'Test Email from LIBBAAS',
-      html: `<div style="font-family: Arial, sans-serif; line-height:1.6;">
-        <h1>Test Email from LIBBAAS</h1>
-        <p>This is a test email to verify your SMTP configuration is working!</p>
-        <p>If you received this, your email setup is correct!</p>
-      </div>`,
-      text: 'This is a test email from LIBBAAS'
+      subject: '✅ TEST EMAIL - LIBBAAS',
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height:1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #111; text-align: center;">✅ TEST EMAIL SUCCESS!</h1>
+          <p style="font-size: 16px;">Hi there!</p>
+          <p style="font-size: 16px;">If you're reading this, your Brevo SMTP setup is <strong>WORKING PERFECTLY!</strong> 🎉</p>
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 14px;"><strong>Debug Info:</strong></p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Sent from: ${process.env.EMAIL_FROM}</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Sent to: ${to}</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Time: ${new Date().toLocaleString()}</p>
+          </div>
+          <p style="font-size: 14px; color: #777; text-align: center;">This email was sent from your LIBBAAS backend.</p>
+        </div>
+      `,
+      text: `TEST EMAIL SUCCESS!\nIf you're reading this, your Brevo SMTP setup is WORKING PERFECTLY!`
     });
-    console.log('📧 Test email result:', result);
-    res.json({ 
-      success: true, 
-      sent: !!result.sent, 
+
+    console.log('\n📧 Test email result:', JSON.stringify(result, null, 2));
+
+    res.json({
+      success: true,
+      sent: result.sent,
       previewUrl: result.previewUrl,
       reason: result.reason,
       smtpConfig: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set',
-        hasPass: !!process.env.SMTP_PASS,
-        mailFrom: process.env.EMAIL_FROM
+        SMTP_HOST: process.env.SMTP_HOST,
+        SMTP_PORT: process.env.SMTP_PORT,
+        SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,5) + '...' : 'not set',
+        EMAIL_FROM: process.env.EMAIL_FROM
       },
-      result
+      result: result
     });
+
   } catch (err) {
-    console.error('❌ Test email failed:', err);
-    res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    console.error('\n❌ TEST EMAIL FAILED CATASTROPHICALLY');
+    console.error('Error name:', err.name);
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
+    console.error('Full error object:', JSON.stringify(err, null, 2));
+
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      stack: err.stack
+    });
   }
 });
 
 const start = async () => {
-  console.log('🚀 Starting server and initializing databases...');
-  console.log('============================================');
-  console.log('📋 Environment Variables Check:');
-  console.log('SMTP_HOST:', process.env.SMTP_HOST || 'not set');
-  console.log('SMTP_PORT:', process.env.SMTP_PORT || 'not set');
-  console.log('SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set');
-  console.log('SMTP_PASS:', process.env.SMTP_PASS ? '***' : 'not set');
-  console.log('EMAIL_FROM:', process.env.EMAIL_FROM || 'not set');
-  console.log('ADMIN_EMAIL:', process.env.ADMIN_EMAIL || 'not set');
-  console.log('FRONTEND_URL:', process.env.FRONTEND_URL || 'not set');
-  console.log('============================================');
+  console.log('\n========================================');
+  console.log('🚀 SERVER: INITIALIZING EVERYTHING');
+  console.log('========================================');
 
-  // Initialize email transporter first
-  console.log('📧 Initializing email service...');
-  await initTransporter();
-  console.log('============================================');
-  
+  console.log('\n📋 ALL ENVIRONMENT VARIABLES (filtered):');
+  const envToLog = {};
+  Object.keys(process.env).forEach(key => {
+    if (['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'EMAIL_FROM', 'ADMIN_EMAIL', 'PORT', 'NODE_ENV'].includes(key)) {
+      envToLog[key] = key.includes('PASS') || key.includes('SECRET') ? '***' : process.env[key];
+    } else if (key.includes('SMTP') || key.includes('EMAIL')) {
+      envToLog[key] = '***';
+    }
+  });
+  console.log(JSON.stringify(envToLog, null, 2));
+
+  // Initialize email service FIRST
+  console.log('\n📧 STEP 1: INITIALIZE EMAIL SERVICE');
+  try {
+    await initTransporter();
+  } catch (err) {
+    console.error('❌ Email service initialization failed:', err);
+  }
+
+  // Initialize databases
   try {
     await initProductsDb();
     console.log('✅ Products database ready');
-    // First check what's in products
     const { listProducts: list } = require('./utils/productRepository');
     const currentProducts = await list();
-    console.log(`📊 Current products in DB: ${currentProducts.length}`);
-    console.log('📦 Products:', JSON.stringify(currentProducts.map(p => ({id: p.id, name: p.name})), null, 2));
-    
+    console.log('📊 Current products in DB:', currentProducts.length);
+
     if (currentProducts.length === 0) {
       console.log('⚠️ No products found, seeding defaults...');
       await seedIfEmpty(defaultProducts);
     } else {
       console.log('✅ Products already exist, skipping seed');
     }
-    
-    // Check again after seeding
+
     const productsAfter = await list();
-    console.log(`📊 Products after seeding: ${productsAfter.length}`);
-    console.log('📦 Final products:', JSON.stringify(productsAfter.map(p => ({id: p.id, name: p.name})), null, 2));
+    console.log('📊 Products after seeding:', productsAfter.length);
   } catch (err) {
     console.error('[startup] ❌ Products DB init failed!');
     console.error('[startup] Full error:', err);
-    console.error('[startup] Error name:', err?.name);
-    console.error('[startup] Error message:', err?.message);
-    console.error('[startup] Error code:', err?.code);
-    console.error('[startup] Stack trace:', err?.stack);
   }
+
   try {
     await initOrdersDb();
     console.log('✅ Orders database ready');
@@ -166,6 +208,7 @@ const start = async () => {
     console.warn('[startup] Orders DB init failed — checkout needs DATABASE_URL.');
     console.warn('[startup]', err?.message || err);
   }
+
   try {
     await initUsersTable();
     console.log('✅ Users database ready');
@@ -173,6 +216,7 @@ const start = async () => {
     console.warn('[startup] Users DB init failed — auth/account needs DATABASE_URL.');
     console.warn('[startup]', err?.message || err);
   }
+
   try {
     await initCategoriesTable();
     console.log('✅ Categories database ready');
@@ -182,6 +226,7 @@ const start = async () => {
     console.warn('[startup] Categories DB init failed.');
     console.warn('[startup]', err?.message || err);
   }
+
   try {
     await initReviewsTable();
     console.log('✅ Reviews database ready');
@@ -190,18 +235,23 @@ const start = async () => {
     console.warn('[startup] Reviews DB init failed.');
     console.warn('[startup]', err?.message || err);
   }
-  
+
   const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server is running on port ${PORT} (LAN: use this machine's Wi‑Fi IP + :${PORT})`);
+    console.log('\n========================================');
+    console.log('✅ SERVER IS RUNNING!');
+    console.log(`   📡 Port: ${PORT}`);
+    console.log(`   🌐 Local: http://localhost:${PORT}`);
+    console.log(`   📧 Test email: http://localhost:${PORT}/api/debug/test-email?to=you@example.com`);
+    console.log('========================================');
   });
 
-  // Catch server errors
   server.on('error', (err) => {
     console.error('❌ Server error:', err);
   });
 };
 
 start().catch((err) => {
-  console.error(err);
+  console.error('\n❌ SERVER CRASHED ON STARTUP!');
+  console.error('Error:', err);
   process.exit(1);
 });
