@@ -8,18 +8,30 @@ const createTransporter = () => {
   const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
   const missing = requiredEnvVars.filter(key => !process.env[key]);
   
+  console.log('[Email Service] Creating transporter...');
+  console.log('[Email Service] Checking required env vars:');
+  requiredEnvVars.forEach(key => {
+    console.log(`  - ${key}:`, process.env[key] ? (key.includes('PASS') ? '***' : process.env[key]) : 'NOT SET ❌');
+  });
+
   if (missing.length > 0) {
-    console.warn('[Email Service] Missing required environment variables:', missing);
+    console.warn('[Email Service] ❌ Missing required environment variables:', missing);
     return null;
   }
 
-  console.log('[Email Service] Creating Brevo SMTP transporter...');
+  console.log('[Email Service] ✅ All required env vars present');
+  console.log('[Email Service] Creating Brevo SMTP transporter with config:');
+  console.log('  - Host:', process.env.SMTP_HOST);
+  console.log('  - Port:', process.env.SMTP_PORT);
+  console.log('  - Secure:', process.env.SMTP_PORT === '465');
+  console.log('  - User:', process.env.SMTP_USER.substring(0, 3) + '...');
+  console.log('  - From:', process.env.EMAIL_FROM);
   
-  return nodemailer.createTransport({
+  const t = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT, 10),
-    secure: process.env.SMTP_PORT === '465', // True for port 465, false for 587
-    requireTLS: true, // Enforce TLS
+    secure: process.env.SMTP_PORT === '465',
+    requireTLS: true,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
@@ -29,15 +41,53 @@ const createTransporter = () => {
     socketTimeout: 60000,
     pool: true,
     maxConnections: 5,
-    maxMessages: 100
+    maxMessages: 100,
+    logger: true,
+    debug: true
   });
+
+  return t;
+};
+
+// Verify transporter connection
+const verifyTransporter = async (t) => {
+  try {
+    console.log('[Email Service] Verifying SMTP connection...');
+    await t.verify();
+    console.log('[Email Service] ✅ SMTP connection verified successfully!');
+    return true;
+  } catch (error) {
+    console.error('[Email Service] ❌ SMTP connection verification FAILED:');
+    console.error('[Email Service] Error message:', error.message);
+    console.error('[Email Service] Error code:', error.code);
+    console.error('[Email Service] Error stack:', error.stack);
+    return false;
+  }
 };
 
 // Initialize transporter
-const initTransporter = () => {
-  if (!transporter) {
-    transporter = createTransporter();
+const initTransporter = async () => {
+  if (transporter) {
+    console.log('[Email Service] Using cached transporter');
+    return transporter;
   }
+
+  console.log('[Email Service] Initializing new transporter...');
+  const t = createTransporter();
+  if (!t) {
+    console.error('[Email Service] ❌ Failed to create transporter');
+    return null;
+  }
+
+  const verified = await verifyTransporter(t);
+  if (verified) {
+    transporter = t;
+    console.log('[Email Service] ✅ Transporter initialized and verified');
+  } else {
+    console.warn('[Email Service] Transporter created but verification failed');
+    transporter = t;
+  }
+
   return transporter;
 };
 
@@ -49,16 +99,21 @@ const initTransporter = () => {
  * @param {string} params.html - HTML content
  * @param {string} [params.text] - Plain text content (optional)
  * @param {string} [params.bcc] - BCC recipient (optional)
- * @returns {Promise<{sent: boolean, previewUrl?: string, reason?: string}>}
+ * @returns {Promise<{sent: boolean, previewUrl?: string, reason?: string, info?: any}>}
  */
 const sendEmail = async ({ to, subject, html, text, bcc }) => {
   try {
-    console.log('[Email Service] Sending email to:', to);
+    console.log('[Email Service] ========================================');
+    console.log('[Email Service] 📧 Starting email send process');
+    console.log('[Email Service] To:', to);
+    console.log('[Email Service] Subject:', subject);
+    console.log('[Email Service] BCC:', bcc || 'none');
     
-    const mailTransporter = initTransporter();
+    const mailTransporter = await initTransporter();
     if (!mailTransporter) {
-      console.error('[Email Service] No transporter available');
-      return { sent: false, reason: 'Transporter not initialized (check SMTP env vars)' };
+      const errorMsg = 'Transporter not initialized (check SMTP env vars)';
+      console.error('[Email Service] ❌', errorMsg);
+      return { sent: false, reason: errorMsg };
     }
 
     const mailOptions = {
@@ -66,27 +121,52 @@ const sendEmail = async ({ to, subject, html, text, bcc }) => {
       to,
       subject,
       html,
-      text: text || html.replace(/<[^>]*>/g, ''), // Fallback to stripped HTML if no text provided
+      text: text || html.replace(/<[^>]*>/g, ''),
     };
 
     if (bcc) {
       mailOptions.bcc = bcc;
     }
 
+    console.log('[Email Service] Mail options prepared:');
+    console.log('  - From:', mailOptions.from);
+    console.log('  - To:', mailOptions.to);
+    console.log('  - Subject:', mailOptions.subject);
+    console.log('[Email Service] Calling transporter.sendMail()...');
+
     const info = await mailTransporter.sendMail(mailOptions);
-    console.log('[Email Service] Email sent successfully! Message ID:', info.messageId);
+    
+    console.log('[Email Service] ✅ sendMail() completed successfully!');
+    console.log('[Email Service] Full response info:');
+    console.log('  - messageId:', info.messageId);
+    console.log('  - accepted:', JSON.stringify(info.accepted));
+    console.log('  - rejected:', JSON.stringify(info.rejected));
+    console.log('  - pending:', JSON.stringify(info.pending));
+    console.log('  - response:', info.response);
+    console.log('  - envelope:', JSON.stringify(info.envelope));
+    console.log('[Email Service] ========================================');
     
     return {
       sent: true,
-      previewUrl: nodemailer.getTestMessageUrl(info)
+      previewUrl: nodemailer.getTestMessageUrl(info),
+      info
     };
 
   } catch (error) {
-    console.error('[Email Service] Failed to send email:', error.message);
-    console.error('[Email Service] Full error:', error);
+    console.error('[Email Service] ========================================');
+    console.error('[Email Service] ❌ FAILED to send email:');
+    console.error('[Email Service] Error name:', error.name);
+    console.error('[Email Service] Error message:', error.message);
+    console.error('[Email Service] Error code:', error.code);
+    console.error('[Email Service] Error command:', error.command);
+    console.error('[Email Service] Error response:', error.response);
+    console.error('[Email Service] Error stack:', error.stack);
+    console.error('[Email Service] ========================================');
+    
     return {
       sent: false,
-      reason: error.message
+      reason: error.message,
+      error
     };
   }
 };
@@ -97,6 +177,8 @@ const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
  * Send order confirmation email
  */
 const sendOrderConfirmationEmail = async ({ to, order }) => {
+  console.log('[Email Service] 📦 sendOrderConfirmationEmail called for order:', order.id);
+  
   const html = `
     <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
       <div style="text-align:center; margin-bottom:30px;">
@@ -161,18 +243,23 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
       </div>
     </div>`;
 
-  return sendEmail({
+  console.log('[Email Service] Calling sendEmail() for order confirmation...');
+  const result = await sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
     subject: `Order Confirmation - ${order.id}`,
     html
   });
+  console.log('[Email Service] Order confirmation email result:', result);
+  return result;
 };
 
 /**
  * Send OTP email
  */
 const sendOtpEmail = async ({ to, otp }) => {
+  console.log('[Email Service] 🔐 sendOtpEmail called for:', to);
+  
   const html = `
     <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
       <div style="text-align:center; margin-bottom:30px;">
@@ -194,20 +281,23 @@ const sendOtpEmail = async ({ to, otp }) => {
 
   const text = `Your OTP code is: ${otp}. It expires in 10 minutes.`;
 
-  return sendEmail({
+  console.log('[Email Service] Calling sendEmail() for OTP...');
+  const result = await sendEmail({
     to,
     subject: 'Your OTP Login Code - LIBBAAS',
     html,
     text
   });
+  console.log('[Email Service] OTP email result:', result);
+  return result;
 };
 
 /**
  * Send password reset email
  */
 const sendPasswordResetEmail = async ({ to, resetUrl }) => {
-  console.log('[Email Service] Sending password reset email to:', to);
-
+  console.log('[Email Service] 🔑 sendPasswordResetEmail called for:', to);
+  
   const html = `
     <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
       <div style="text-align:center; margin-bottom:30px;">
@@ -234,25 +324,33 @@ const sendPasswordResetEmail = async ({ to, resetUrl }) => {
 
   const text = `You requested a password reset. Use this link: ${resetUrl}`;
 
-  return sendEmail({
+  console.log('[Email Service] Calling sendEmail() for password reset...');
+  const result = await sendEmail({
     to,
     subject: 'Reset Your Password - LIBBAAS',
     html,
     text
   });
+  console.log('[Email Service] Password reset email result:', result);
+  return result;
 };
 
 /**
  * Send custom email
  */
 const sendCustomEmail = async ({ to, subject, html, text }) => {
-  return sendEmail({
+  console.log('[Email Service] ✉️ sendCustomEmail called for:', to);
+  
+  console.log('[Email Service] Calling sendEmail() for custom email...');
+  const result = await sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
     subject,
     html,
     text
   });
+  console.log('[Email Service] Custom email result:', result);
+  return result;
 };
 
 module.exports = {
@@ -260,5 +358,6 @@ module.exports = {
   sendOrderConfirmationEmail,
   sendCustomEmail,
   sendOtpEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  initTransporter
 };

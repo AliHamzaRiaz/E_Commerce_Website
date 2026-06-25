@@ -20,7 +20,7 @@ const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable, seedCategoriesIfEmpty } = require('./utils/categoryRepository');
 const { initReviewsTable, seedReviewsIfEmpty } = require('./utils/reviewRepository');
 const { defaultProducts } = require('./data/defaultProducts');
-const { sendCustomEmail } = require('./utils/email');
+const { sendCustomEmail, initTransporter } = require('./utils/email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -99,13 +99,13 @@ app.get('/api/debug/test-email', async (req, res) => {
       previewUrl: result.previewUrl,
       reason: result.reason,
       smtpConfig: {
-        service: process.env.SMTP_SERVICE || process.env.EMAIL_SERVICE,
-        host: process.env.SMTP_HOST || process.env.EMAIL_HOST,
-        port: process.env.SMTP_PORT || process.env.EMAIL_PORT,
-        user: (process.env.SMTP_USER || process.env.EMAIL_USER) ? (process.env.SMTP_USER || process.env.EMAIL_USER).substring(0, 3) + '...' : 'not set',
-        hasPass: !!(process.env.SMTP_PASS || process.env.EMAIL_PASS),
-        mailFrom: process.env.MAIL_FROM
-      }
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set',
+        hasPass: !!process.env.SMTP_PASS,
+        mailFrom: process.env.EMAIL_FROM
+      },
+      result
     });
   } catch (err) {
     console.error('❌ Test email failed:', err);
@@ -117,17 +117,18 @@ const start = async () => {
   console.log('🚀 Starting server and initializing databases...');
   console.log('============================================');
   console.log('📋 Environment Variables Check:');
-  console.log('SMTP_SERVICE:', process.env.SMTP_SERVICE || 'not set');
   console.log('SMTP_HOST:', process.env.SMTP_HOST || 'not set');
   console.log('SMTP_PORT:', process.env.SMTP_PORT || 'not set');
-  console.log('SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,3)+'...' : 'not set');
+  console.log('SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set');
   console.log('SMTP_PASS:', process.env.SMTP_PASS ? '***' : 'not set');
-  console.log('EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'not set');
-  console.log('EMAIL_HOST:', process.env.EMAIL_HOST || 'not set');
-  console.log('EMAIL_PORT:', process.env.EMAIL_PORT || 'not set');
-  console.log('EMAIL_USER:', process.env.EMAIL_USER ? process.env.EMAIL_USER.substring(0,3)+'...' : 'not set');
-  console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***' : 'not set');
-  console.log('ETHEREAL:', process.env.ETHEREAL || 'not set (enabled by default)');
+  console.log('EMAIL_FROM:', process.env.EMAIL_FROM || 'not set');
+  console.log('ADMIN_EMAIL:', process.env.ADMIN_EMAIL || 'not set');
+  console.log('FRONTEND_URL:', process.env.FRONTEND_URL || 'not set');
+  console.log('============================================');
+
+  // Initialize email transporter first
+  console.log('📧 Initializing email service...');
+  await initTransporter();
   console.log('============================================');
   
   try {
