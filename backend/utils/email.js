@@ -27,14 +27,25 @@ const createSmtpTransport = () => {
     return null;
   }
 
+  // Common transporter options for all configurations
+  const commonOptions = {
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+  };
+
   // Explicit Gmail configuration for reliability (only if no custom host is set)
   if ((service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host) {
     console.log('[createSmtpTransport] Using Gmail explicit configuration (port 465 SSL)');
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
-      secure: true, // true for 465
+      secure: true,
       auth: { user, pass },
+      ...commonOptions,
     });
     console.log('[createSmtpTransport] Created Gmail transporter!');
     return transporter;
@@ -44,6 +55,7 @@ const createSmtpTransport = () => {
     return nodemailer.createTransport({
       service,
       auth: { user, pass },
+      ...commonOptions,
     });
   }
 
@@ -57,6 +69,7 @@ const createSmtpTransport = () => {
     port,
     secure: port === 465,
     auth: { user, pass },
+    ...commonOptions,
   });
 };
 
@@ -238,24 +251,21 @@ const sendOrderConfirmationEmail = async ({ to, order }) => {
     const transporter = await getTransporter();
     if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
-    const sendPromise = transporter.sendMail({
-      from,
-      to,
-      bcc, // BCC admin
-      subject: `Order Confirmation - ${order.id}`,
-      html,
-    });
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
-    });
-    
-    const info = await Promise.race([sendPromise, timeoutPromise]);
-    if (info?.sent === false) {
-      return info;
-    }
+    try {
+      const info = await transporter.sendMail({
+        from,
+        to,
+        bcc, // BCC admin
+        subject: `Order Confirmation - ${order.id}`,
+        html,
+      });
 
-    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-    return { sent: true, previewUrl };
+      const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+      return { sent: true, previewUrl };
+    } catch (err) {
+      console.error('[sendOrderConfirmationEmail] SMTP send failed:', err.message);
+      return { sent: false, reason: err.message };
+    }
   } catch (err) {
     console.error('[sendOrderConfirmationEmail] FAILED:', err.message);
     return { sent: false, reason: err.message };
@@ -285,31 +295,26 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
 
     console.log('[sendCustomEmail] Sending from:', from, 'to:', to, 'bcc:', bcc);
     
-    console.log('[sendCustomEmail] Calling transporter.sendMail...');
-    const sendPromise = transporter.sendMail({
-      from,
-      to,
-      bcc, // BCC admin
-      subject,
-      html,
-      text,
-    });
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 60000); // 60 second timeout
-    });
-    
-    console.log('[sendCustomEmail] Waiting for sendPromise or timeoutPromise...');
-    const info = await Promise.race([sendPromise, timeoutPromise]);
-    console.log('[sendCustomEmail] Promise resolved with:', info);
-    if (info?.sent === false) {
-      console.warn('[sendCustomEmail] Email send timed out or failed');
-      return info;
+    try {
+      console.log('[sendCustomEmail] Calling transporter.sendMail...');
+      const info = await transporter.sendMail({
+        from,
+        to,
+        bcc, // BCC admin
+        subject,
+        html,
+        text,
+      });
+      
+      console.log('[sendCustomEmail] Email sent successfully');
+      const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+      console.log('[sendCustomEmail] Preview URL:', previewUrl);
+      return { sent: true, previewUrl };
+    } catch (err) {
+      console.error('[sendCustomEmail] SMTP send failed:', err.message);
+      console.error('[sendCustomEmail] Full error:', err);
+      return { sent: false, reason: err.message };
     }
-
-    console.log('[sendCustomEmail] Email sent successfully');
-    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-    console.log('[sendCustomEmail] Preview URL:', previewUrl);
-    return { sent: true, previewUrl };
   } catch (err) {
     console.error('[sendCustomEmail] FAILED:', err.message);
     console.error('[sendCustomEmail] Full error:', err);
@@ -339,25 +344,22 @@ const sendOtpEmail = async ({ to, otp }) => {
     const transporter = await getTransporter();
     if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
 
-    const sendPromise = transporter.sendMail({
-      from,
-      to,
-      bcc,
-      subject: 'Your OTP Login Code',
-      html,
-      text,
-    });
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve({ sent: false, reason: 'TIMEOUT' }), 20000);
-    });
-    
-    const info = await Promise.race([sendPromise, timeoutPromise]);
-    if (info?.sent === false) {
-      return info;
-    }
+    try {
+      const info = await transporter.sendMail({
+        from,
+        to,
+        bcc,
+        subject: 'Your OTP Login Code',
+        html,
+        text,
+      });
 
-    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-    return { sent: true, previewUrl };
+      const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
+      return { sent: true, previewUrl };
+    } catch (err) {
+      console.error('[sendOtpEmail] SMTP send failed:', err.message);
+      return { sent: false, reason: err.message };
+    }
   } catch (err) {
     console.error('[sendOtpEmail] FAILED:', err.message);
     return { sent: false, reason: err.message };
