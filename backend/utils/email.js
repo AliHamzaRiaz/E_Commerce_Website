@@ -1,420 +1,264 @@
 const nodemailer = require('nodemailer');
-const { Resend } = require('resend');
 
-const createSmtpTransport = () => {
-  // Support both naming conventions (SMTP_* and EMAIL_*)
-  const service = process.env.SMTP_SERVICE || process.env.EMAIL_SERVICE;
-  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
-  const port = (process.env.SMTP_PORT || process.env.EMAIL_PORT) ? Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) : undefined;
-  const user = (process.env.SMTP_USER || process.env.EMAIL_USER) ? String(process.env.SMTP_USER || process.env.EMAIL_USER).trim() : undefined;
-  // Gmail app passwords are often copied with spaces; nodemailer expects the 16 chars without spaces.
-  const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS) ? String(process.env.SMTP_PASS || process.env.EMAIL_PASS).replace(/\s+/g, '') : undefined;
+// Create a transporter for Brevo SMTP
+let transporter = null;
 
-  console.log('[createSmtpTransport] Config - service:', service);
-  console.log('[createSmtpTransport] Config - host:', host);
-  console.log('[createSmtpTransport] Config - port:', port);
-  console.log('[createSmtpTransport] Config - user:', user ? user.substring(0, 3) + '...' : 'MISSING');
-  console.log('[createSmtpTransport] Config - pass:', pass ? '***' : 'MISSING');
-  console.log('[createSmtpTransport] Check Gmail config conditions:', {
-    hasServiceGmail: service?.toLowerCase() === 'gmail',
-    hasGmailUser: user?.includes('@gmail.com'),
-    hasNoHost: !host,
-    shouldUseGmail: (service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host
-  });
-
-  if (!user || !pass) {
-    console.warn('[createSmtpTransport] Missing user or password');
+const createTransporter = () => {
+  // Validate required environment variables
+  const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
+  const missing = requiredEnvVars.filter(key => !process.env[key]);
+  
+  if (missing.length > 0) {
+    console.warn('[Email Service] Missing required environment variables:', missing);
     return null;
   }
 
-  // Common transporter options for all configurations
-  const commonOptions = {
+  console.log('[Email Service] Creating Brevo SMTP transporter...');
+  
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT, 10),
+    secure: process.env.SMTP_PORT === '465', // True for port 465, false for 587
+    requireTLS: true, // Enforce TLS
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 60000,
     pool: true,
     maxConnections: 5,
-    maxMessages: 100,
-  };
-
-  // Explicit Gmail configuration for reliability (only if no custom host is set)
-  if ((service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host) {
-    console.log('[createSmtpTransport] Using Gmail explicit configuration - trying port 587 (STARTTLS) first, then 465 (SSL)');
-    
-    // Try port 587 (STARTTLS) first - more widely allowed on hosting platforms
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // STARTTLS will upgrade to secure
-      requireTLS: true,
-      auth: { user, pass },
-      ...commonOptions,
-    });
-    console.log('[createSmtpTransport] Created Gmail transporter!');
-    return transporter;
-  }
-
-  if (service) {
-    return nodemailer.createTransport({
-      service,
-      auth: { user, pass },
-      ...commonOptions,
-    });
-  }
-
-  if (!host || !port) {
-    console.warn('[createSmtpTransport] Missing host or port');
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    requireTLS: port === 587 || port === 25, // Require STARTTLS for common non-SSL ports
-    auth: { user, pass },
-    ...commonOptions,
+    maxMessages: 100
   });
 };
 
-const createEtherealTransport = async () => {
-  // Disable Ethereal by default, only enable if explicitly set to true
-  const enabled = String(process.env.ETHEREAL || '').toLowerCase() === 'true';
-
-  console.log('[createEtherealTransport] Enabled:', enabled);
-
-  if (!enabled) return null;
-
-  try {
-    // Add timeout for creating test account
-    const createAccountPromise = nodemailer.createTestAccount();
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Timeout creating Ethereal account')), 5000);
-    });
-    const testAccount = await Promise.race([createAccountPromise, timeoutPromise]);
-    console.log('[createEtherealTransport] Created test account:', testAccount.user);
-    return nodemailer.createTransport({
-      host: testAccount.smtp.host,
-      port: testAccount.smtp.port,
-      secure: testAccount.smtp.secure,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-  } catch (err) {
-    console.error('[createEtherealTransport] FAILED:', err.message);
-    return null;
+// Initialize transporter
+const initTransporter = () => {
+  if (!transporter) {
+    transporter = createTransporter();
   }
+  return transporter;
 };
 
-let cachedTransporter = null;
+/**
+ * Send an email
+ * @param {object} params
+ * @param {string} params.to - Recipient email address
+ * @param {string} params.subject - Email subject
+ * @param {string} params.html - HTML content
+ * @param {string} [params.text] - Plain text content (optional)
+ * @param {string} [params.bcc] - BCC recipient (optional)
+ * @returns {Promise<{sent: boolean, previewUrl?: string, reason?: string}>}
+ */
+const sendEmail = async ({ to, subject, html, text, bcc }) => {
+  try {
+    console.log('[Email Service] Sending email to:', to);
+    
+    const mailTransporter = initTransporter();
+    if (!mailTransporter) {
+      console.error('[Email Service] No transporter available');
+      return { sent: false, reason: 'Transporter not initialized (check SMTP env vars)' };
+    }
 
-const getTransporter = async () => {
-  if (cachedTransporter) {
-    console.log('[getTransporter] Using cached transporter');
-    return cachedTransporter;
-  }
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, ''), // Fallback to stripped HTML if no text provided
+    };
 
-  console.log('[getTransporter] Attempting to create transporter...');
-  const smtpTransport = createSmtpTransport();
-  console.log('[getTransporter] createSmtpTransport returned:', !!smtpTransport);
-  if (smtpTransport) {
-    console.log('[getTransporter] SMTP transport created, skipping verification for reliability');
-    cachedTransporter = smtpTransport;
-    return cachedTransporter;
-  }
+    if (bcc) {
+      mailOptions.bcc = bcc;
+    }
 
-  console.log('[getTransporter] SMTP failed/missing, trying Ethereal');
-  const ethereal = await createEtherealTransport();
-  if (ethereal) {
-    console.log('[getTransporter] Using Ethereal transport');
-    cachedTransporter = ethereal;
-  } else {
-    console.error('[getTransporter] NO TRANSPORTER AVAILABLE');
+    const info = await mailTransporter.sendMail(mailOptions);
+    console.log('[Email Service] Email sent successfully! Message ID:', info.messageId);
+    
+    return {
+      sent: true,
+      previewUrl: nodemailer.getTestMessageUrl(info)
+    };
+
+  } catch (error) {
+    console.error('[Email Service] Failed to send email:', error.message);
+    console.error('[Email Service] Full error:', error);
+    return {
+      sent: false,
+      reason: error.message
+    };
   }
-  return cachedTransporter;
 };
 
 const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
 
-const sendViaResend = async ({ from, to, bcc, subject, html, text }) => {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  console.log('[Resend] Checking if available...');
-  console.log('[Resend] API Key present:', !!resendApiKey);
-  if (resendApiKey) {
-    try {
-      console.log('[Resend] Sending via Resend...');
-      console.log('[Resend] Sending from:', from);
-      console.log('[Resend] Sending to:', to);
-      const resend = new Resend(resendApiKey);
-      const data = await resend.emails.send({
-        from: from,
-        to: to,
-        bcc: bcc,
-        subject: subject,
-        html: html,
-        text: text
-      });
-      console.log('[Resend] Success!');
-      console.log('[Resend] Data:', JSON.stringify(data, null, 2));
-      return { sent: true, previewUrl: undefined };
-    } catch (err) {
-      console.error('[Resend] Failed:', err.message);
-      console.error('[Resend] Full error:', JSON.stringify(err, null, 2));
-      // Fall through to SMTP
-    }
-  }
-  console.log('[Resend] Not using Resend');
-  return null;
-};
-
-const buildOrderHtml = (order) => {
-  const storeUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const itemsHtml = (order.items || [])
-    .map(
-      (i) =>
-        `<tr>
-          <td style="padding:10px 0; border-bottom:1px solid #eee;">
-            <div style="font-weight:bold; color:#111;">${i.name}</div>
-            <div style="color:#777; font-size:12px;">${i.selectedColor} / ${i.selectedSize}</div>
-          </td>
-          <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111;">x${i.quantity}</td>
-          <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111; font-weight:bold;">${formatMoney(i.price * i.quantity)}</td>
-        </tr>`
-    )
-    .join('');
-
-  const discountLine =
-    order.discount > 0
-      ? `<tr><td colspan="2" style="padding:10px 0; color:#777;">Card Discount (7%)</td><td style="padding:10px 0; text-align:right; color:#d4af37;">- ${formatMoney(order.discount)}</td></tr>`
-      : '';
-
-  return `
-  <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
-    <div style="text-align:center; margin-bottom:30px;">
-      <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
-      <p style="color:#777; font-size:14px; margin-top:5px;">Thank you for your purchase!</p>
-    </div>
-
-    <div style="margin-bottom:30px;">
-      <h2 style="font-size:18px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:15px; text-transform:uppercase;">Order Summary</h2>
-      <p style="margin:5px 0;"><strong>Order ID:</strong> ${order.id}</p>
-      <p style="margin:5px 0;"><strong>Customer:</strong> ${order.customer?.fullName || ''}</p>
-      <p style="margin:5px 0;"><strong>Delivery to:</strong> ${order.customer?.address || ''}</p>
-      <p style="margin:5px 0;"><strong>Payment:</strong> ${order.paymentMethod === 'cash' ? 'Cash On Delivery' : 'Card Payment'}</p>
-    </div>
-
-    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
-      <thead>
-        <tr style="text-align:left; font-size:12px; text-transform:uppercase; color:#999; letter-spacing:1px;">
-          <th style="padding-bottom:10px; border-bottom:1px solid #111;">Product</th>
-          <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Qty</th>
-          <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${itemsHtml}
-      </tbody>
-      <tfoot>
-        <tr><td colspan="2" style="padding:20px 0 5px; color:#777;">Subtotal</td><td style="padding:20px 0 5px; text-align:right; color:#111;">${formatMoney(order.subtotal)}</td></tr>
-        ${discountLine}
-        <tr>
-          <td colspan="2" style="padding:10px 0; border-top:1px solid #111; font-weight:bold; font-size:18px;">Total Amount</td>
-          <td style="padding:10px 0; border-top:1px solid #111; text-align:right; font-weight:bold; font-size:18px; color:#111;">${formatMoney(order.total)}</td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div style="text-align:center; margin:40px 0;">
-      <p style="margin-bottom:20px; color:#555;">We hope you love your new items!</p>
-      <a href="${storeUrl}" style="background-color:#111; color:#fff; padding:15px 35px; text-decoration:none; font-weight:bold; border-radius:0; text-transform:uppercase; letter-spacing:1px; display:inline-block;">Thanks for Shopping - Visit Store</a>
-    </div>
-
-    <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
-      <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
-      <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
-    </div>
-  </div>`;
-};
-
+/**
+ * Send order confirmation email
+ */
 const sendOrderConfirmationEmail = async ({ to, order }) => {
-  try {
-    console.log('[sendOrderConfirmationEmail] Starting to send order confirmation...');
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
-    const html = buildOrderHtml(order);
+  const html = `
+    <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+      <div style="text-align:center; margin-bottom:30px;">
+        <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+        <p style="color:#777; font-size:14px; margin-top:5px;">Thank you for your purchase!</p>
+      </div>
 
-    // Try Resend first
-    const resendResult = await sendViaResend({ from, to, bcc, subject: `Order Confirmation - ${order.id}`, html });
-    if (resendResult?.sent) {
-      return resendResult;
-    }
+      <div style="margin-bottom:30px;">
+        <h2 style="font-size:18px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:15px; text-transform:uppercase;">Order Summary</h2>
+        <p style="margin:5px 0;"><strong>Order ID:</strong> ${order.id}</p>
+        <p style="margin:5px 0;"><strong>Customer:</strong> ${order.customer?.fullName || ''}</p>
+        <p style="margin:5px 0;"><strong>Delivery to:</strong> ${order.customer?.address || ''}</p>
+        <p style="margin:5px 0;"><strong>Payment:</strong> ${order.paymentMethod === 'cash' ? 'Cash On Delivery' : 'Card Payment'}</p>
+      </div>
 
-    // Fall back to SMTP
-    const transporter = await getTransporter();
-    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
+      <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+        <thead>
+          <tr style="text-align:left; font-size:12px; text-transform:uppercase; color:#999; letter-spacing:1px;">
+            <th style="padding-bottom:10px; border-bottom:1px solid #111;">Product</th>
+            <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Qty</th>
+            <th style="padding-bottom:10px; border-bottom:1px solid #111; text-align:right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(order.items || []).map(i => `
+            <tr>
+              <td style="padding:10px 0; border-bottom:1px solid #eee;">
+                <div style="font-weight:bold; color:#111;">${i.name}</div>
+                <div style="color:#777; font-size:12px;">${i.selectedColor || ''} ${i.selectedSize ? `/ ${i.selectedSize}` : ''}</div>
+              </td>
+              <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111;">x${i.quantity}</td>
+              <td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; color:#111; font-weight:bold;">${formatMoney(i.price * i.quantity)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:20px 0 5px; color:#777;">Subtotal</td>
+            <td style="padding:20px 0 5px; text-align:right; color:#111;">${formatMoney(order.subtotal)}</td>
+          </tr>
+          ${order.discount > 0 ? `
+            <tr>
+              <td colspan="2" style="padding:10px 0; color:#777;">Card Discount (7%)</td>
+              <td style="padding:10px 0; text-align:right; color:#d4af37;">- ${formatMoney(order.discount)}</td>
+            </tr>
+          ` : ''}
+          <tr>
+            <td colspan="2" style="padding:10px 0; border-top:1px solid #111; font-weight:bold; font-size:18px;">Total Amount</td>
+            <td style="padding:10px 0; border-top:1px solid #111; text-align:right; font-weight:bold; font-size:18px; color:#111;">${formatMoney(order.total)}</td>
+          </tr>
+        </tfoot>
+      </table>
 
-    try {
-      const info = await transporter.sendMail({
-        from,
-        to,
-        bcc, // BCC admin
-        subject: `Order Confirmation - ${order.id}`,
-        html,
-      });
+      <div style="text-align:center; margin:40px 0;">
+        <p style="margin-bottom:20px; color:#555;">We hope you love your new items!</p>
+        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color:#111; color:#fff; padding:15px 35px; text-decoration:none; font-weight:bold; border-radius:0; text-transform:uppercase; letter-spacing:1px; display:inline-block;">Thanks for Shopping - Visit Store</a>
+      </div>
 
-      const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-      return { sent: true, previewUrl };
-    } catch (err) {
-      console.error('[sendOrderConfirmationEmail] SMTP send failed:', err.message);
-      return { sent: false, reason: err.message };
-    }
-  } catch (err) {
-    console.error('[sendOrderConfirmationEmail] FAILED:', err.message);
-    return { sent: false, reason: err.message };
-  }
-};
-
-const sendCustomEmail = async ({ to, subject, html, text }) => {
-  try {
-    console.log('[sendCustomEmail] Starting to send email...');
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const bcc = process.env.ADMIN_EMAIL; // BCC the admin
-
-    // Try Resend first
-    const resendResult = await sendViaResend({ from, to, bcc, subject, html, text });
-    if (resendResult?.sent) {
-      return resendResult;
-    }
-
-    // Fall back to SMTP
-    console.log('[sendCustomEmail] Getting transporter...');
-    const transporter = await getTransporter();
-    if (!transporter) {
-      console.error('[sendCustomEmail] No transporter available');
-      return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
-    }
-    console.log('[sendCustomEmail] Got transporter');
-
-    console.log('[sendCustomEmail] Sending from:', from, 'to:', to, 'bcc:', bcc);
-    
-    try {
-      console.log('[sendCustomEmail] Calling transporter.sendMail...');
-      const info = await transporter.sendMail({
-        from,
-        to,
-        bcc, // BCC admin
-        subject,
-        html,
-        text,
-      });
-      
-      console.log('[sendCustomEmail] Email sent successfully');
-      const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-      console.log('[sendCustomEmail] Preview URL:', previewUrl);
-      return { sent: true, previewUrl };
-    } catch (err) {
-      console.error('[sendCustomEmail] SMTP send failed:', err.message);
-      console.error('[sendCustomEmail] Full error:', err);
-      return { sent: false, reason: err.message };
-    }
-  } catch (err) {
-    console.error('[sendCustomEmail] FAILED:', err.message);
-    console.error('[sendCustomEmail] Full error:', err);
-    return { sent: false, reason: err.message };
-  }
-};
-
-const sendOtpEmail = async ({ to, otp }) => {
-  try {
-    const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
-      <h2 style="margin:0 0 8px;">Your Login Code</h2>
-      <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
-      <div style="font-size:28px; letter-spacing:6px; font-weight:700; padding:14px 16px; border:1px solid #eee; display:inline-block;">${otp}</div>
-      <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
+      <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+        <p style="margin:5px 0;">If you have any questions, simply reply to this email.</p>
+        <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+      </div>
     </div>`;
-    const text = `Your OTP code is: ${otp}. It expires in 10 minutes.`;
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-    const bcc = process.env.ADMIN_EMAIL;
 
-    // Try Resend first
-    const resendResult = await sendViaResend({ from, to, bcc, subject: 'Your OTP Login Code', html, text });
-    if (resendResult?.sent) {
-      return resendResult;
-    }
-
-    // Fall back to SMTP
-    const transporter = await getTransporter();
-    if (!transporter) return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
-
-    try {
-      const info = await transporter.sendMail({
-        from,
-        to,
-        bcc,
-        subject: 'Your OTP Login Code',
-        html,
-        text,
-      });
-
-      const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-      return { sent: true, previewUrl };
-    } catch (err) {
-      console.error('[sendOtpEmail] SMTP send failed:', err.message);
-      return { sent: false, reason: err.message };
-    }
-  } catch (err) {
-    console.error('[sendOtpEmail] FAILED:', err.message);
-    return { sent: false, reason: err.message };
-  }
+  return sendEmail({
+    to,
+    bcc: process.env.ADMIN_EMAIL,
+    subject: `Order Confirmation - ${order.id}`,
+    html
+  });
 };
 
+/**
+ * Send OTP email
+ */
+const sendOtpEmail = async ({ to, otp }) => {
+  const html = `
+    <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+      <div style="text-align:center; margin-bottom:30px;">
+        <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+        <p style="color:#777; font-size:14px; margin-top:5px;">Admin Login Verification</p>
+      </div>
+
+      <div style="margin-bottom:30px;">
+        <h2 style="font-size:18px; color:#111; margin:0 0 8px;">Your Login Code</h2>
+        <p style="margin:0 0 14px; color:#555;">Use this code to login. This code expires in 10 minutes.</p>
+        <div style="font-size:36px; letter-spacing:8px; font-weight:700; padding:20px; border:1px solid #eee; text-align:center; display:inline-block; width:100%; box-sizing:border-box;">${otp}</div>
+        <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request this code, you can ignore this email.</p>
+      </div>
+
+      <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+        <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+      </div>
+    </div>`;
+
+  const text = `Your OTP code is: ${otp}. It expires in 10 minutes.`;
+
+  return sendEmail({
+    to,
+    subject: 'Your OTP Login Code - LIBBAAS',
+    html,
+    text
+  });
+};
+
+/**
+ * Send password reset email
+ */
 const sendPasswordResetEmail = async ({ to, resetUrl }) => {
-  console.log('[sendPasswordResetEmail] Attempting to send to:', to);
-  const html = `<div style="font-family:Arial, sans-serif; line-height:1.5; color:#111;">
-    <h2 style="margin:0 0 8px;">Password Reset Request</h2>
-    <p style="margin:0 0 14px; color:#555;">You requested to reset your password. Click the button below to set a new password. This link expires in 1 hour.</p>
-    <a href="${resetUrl}" style="background-color:#000; color:#fff; padding:12px 24px; text-decoration:none; display:inline-block; font-weight:bold; letter-spacing:1px; text-transform:uppercase; font-size:12px;">Reset Password</a>
-    <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request a password reset, you can ignore this email.</p>
-    <p style="margin:8px 0 0; color:#777; font-size:10px;">Link: ${resetUrl}</p>
-  </div>`;
+  console.log('[Email Service] Sending password reset email to:', to);
+
+  const html = `
+    <div style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:1.6; color:#333; max-width:600px; margin:0 auto; padding:20px; border:1px solid #f0f0f0;">
+      <div style="text-align:center; margin-bottom:30px;">
+        <h1 style="margin:0; color:#111; text-transform:uppercase; letter-spacing:2px; font-size:24px;">LIBBAAS</h1>
+        <p style="color:#777; font-size:14px; margin-top:5px;">Password Reset Request</p>
+      </div>
+
+      <div style="margin-bottom:30px;">
+        <h2 style="font-size:18px; color:#111; margin:0 0 8px;">Password Reset Request</h2>
+        <p style="margin:0 0 14px; color:#555;">You requested to reset your password. Click the button below to set a new password. This link expires in 1 hour.</p>
+        
+        <div style="text-align:center; margin:30px 0;">
+          <a href="${resetUrl}" style="background-color:#111; color:#fff; padding:12px 30px; text-decoration:none; display:inline-block; font-weight:bold; letter-spacing:1px; text-transform:uppercase; font-size:14px;">Reset Password</a>
+        </div>
+        
+        <p style="margin:18px 0 0; color:#777; font-size:12px;">If you did not request a password reset, you can ignore this email.</p>
+        <p style="margin:8px 0 0; color:#777; font-size:10px;">Link: ${resetUrl}</p>
+      </div>
+
+      <div style="text-align:center; border-top:1px solid #eee; padding-top:20px; color:#999; font-size:12px;">
+        <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} LIBBAAS. All rights reserved.</p>
+      </div>
+    </div>`;
+
   const text = `You requested a password reset. Use this link: ${resetUrl}`;
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER || 'no-reply@luxelingerie.local';
-  const bcc = process.env.ADMIN_EMAIL; // BCC the admin
 
-  // Try Resend first
-  const resendResult = await sendViaResend({ from, to, bcc, subject: 'Reset Your Password', html, text });
-  if (resendResult?.sent) {
-    console.log('[sendPasswordResetEmail] SUCCESS via Resend');
-    return resendResult;
-  }
-
-  // Fall back to SMTP
-  const transporter = await getTransporter();
-  if (!transporter) {
-    console.error('[sendPasswordResetEmail] No transporter available');
-    return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
-  }
-
-  try {
-    console.log('[sendPasswordResetEmail] Sending from:', from, 'bcc:', bcc);
-    const info = await transporter.sendMail({
-      from,
-      to,
-      bcc, // BCC admin
-      subject: 'Reset Your Password',
-      html,
-      text,
-    });
-
-    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-    console.log('[sendPasswordResetEmail] SUCCESS. Preview:', previewUrl);
-    return { sent: true, previewUrl };
-  } catch (err) {
-    console.error('[sendPasswordResetEmail] FAILED:', err.message);
-    throw err;
-  }
+  return sendEmail({
+    to,
+    subject: 'Reset Your Password - LIBBAAS',
+    html,
+    text
+  });
 };
 
-module.exports = { sendOrderConfirmationEmail, sendCustomEmail, sendOtpEmail, sendPasswordResetEmail };
+/**
+ * Send custom email
+ */
+const sendCustomEmail = async ({ to, subject, html, text }) => {
+  return sendEmail({
+    to,
+    bcc: process.env.ADMIN_EMAIL,
+    subject,
+    html,
+    text
+  });
+};
+
+module.exports = {
+  sendEmail,
+  sendOrderConfirmationEmail,
+  sendCustomEmail,
+  sendOtpEmail,
+  sendPasswordResetEmail
+};
