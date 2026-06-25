@@ -39,11 +39,14 @@ const createSmtpTransport = () => {
 
   // Explicit Gmail configuration for reliability (only if no custom host is set)
   if ((service?.toLowerCase() === 'gmail' || user?.includes('@gmail.com')) && !host) {
-    console.log('[createSmtpTransport] Using Gmail explicit configuration (port 465 SSL)');
+    console.log('[createSmtpTransport] Using Gmail explicit configuration - trying port 587 (STARTTLS) first, then 465 (SSL)');
+    
+    // Try port 587 (STARTTLS) first - more widely allowed on hosting platforms
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false, // STARTTLS will upgrade to secure
+      requireTLS: true,
       auth: { user, pass },
       ...commonOptions,
     });
@@ -68,6 +71,7 @@ const createSmtpTransport = () => {
     host,
     port,
     secure: port === 465,
+    requireTLS: port === 587 || port === 25, // Require STARTTLS for common non-SSL ports
     auth: { user, pass },
     ...commonOptions,
   });
