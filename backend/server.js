@@ -103,13 +103,13 @@ app.get('/api/debug/test-email', async (req, res) => {
       });
     }
 
-    console.log('\n� Sending test email...');
+    console.log('\n📧 Sending test email via Brevo SMTP...');
     const result = await sendCustomEmail({
       to,
-      subject: '✅ TEST EMAIL - LIBBAAS',
+      subject: '✅ TEST EMAIL - LIBBAAS (SMTP)',
       html: `
         <div style="font-family: Arial, sans-serif; line-height:1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #111; text-align: center;">✅ TEST EMAIL SUCCESS!</h1>
+          <h1 style="color: #111; text-align: center;">✅ TEST EMAIL SUCCESS (SMTP)!</h1>
           <p style="font-size: 16px;">Hi there!</p>
           <p style="font-size: 16px;">If you're reading this, your Brevo SMTP setup is <strong>WORKING PERFECTLY!</strong> 🎉</p>
           <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -118,10 +118,10 @@ app.get('/api/debug/test-email', async (req, res) => {
             <p style="margin: 5px 0 0 0; font-size: 14px;">Sent to: ${to}</p>
             <p style="margin: 5px 0 0 0; font-size: 14px;">Time: ${new Date().toLocaleString()}</p>
           </div>
-          <p style="font-size: 14px; color: #777; text-align: center;">This email was sent from your LIBBAAS backend.</p>
+          <p style="font-size: 14px; color: #777; text-align: center;">This email was sent using Nodemailer & Brevo SMTP from your LIBBAAS backend.</p>
         </div>
       `,
-      text: `TEST EMAIL SUCCESS!\nIf you're reading this, your Brevo SMTP setup is WORKING PERFECTLY!`
+      text: `TEST EMAIL SUCCESS (SMTP)!\nIf you're reading this, your Brevo SMTP setup is WORKING PERFECTLY!`
     });
 
     console.log('\n📧 Test email result:', JSON.stringify(result, null, 2));
@@ -131,19 +131,21 @@ app.get('/api/debug/test-email', async (req, res) => {
       sent: result.sent,
       previewUrl: result.previewUrl,
       reason: result.reason,
-      brevoConfig: {
-        BREVO_API_KEY: process.env.BREVO_API_KEY ? '*** SET ***' : (process.env.SMTP_PASS ? '*** SET (using SMTP_PASS) ***' : 'NOT SET'),
+      smtpConfig: {
+        SMTP_HOST: process.env.SMTP_HOST,
+        SMTP_PORT: process.env.SMTP_PORT,
+        SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,10) + '...' : 'not set',
         EMAIL_FROM: process.env.EMAIL_FROM
       },
       result: result
     });
 
   } catch (err) {
-    console.error('\n❌ TEST EMAIL FAILED CATASTROPHICALLY');
-    console.error('Error name:', err.name);
-    console.error('Error message:', err.message);
-    console.error('Error stack:', err.stack);
-    console.error('Full error object:', JSON.stringify(err, null, 2));
+    console.error('\n❌ TEST EMAIL FAILED CATASTROPHICALLY!');
+    console.error('Error Name:', err.name);
+    console.error('Error Message:', err.message);
+    console.error('Error Stack:', err.stack);
+    console.error('Full Error Object:', JSON.stringify(err, null, 2));
 
     res.status(500).json({
       success: false,
@@ -161,16 +163,16 @@ const start = async () => {
   console.log('\n📋 ALL ENVIRONMENT VARIABLES (filtered):');
   const envToLog = {};
   Object.keys(process.env).forEach(key => {
-    if (['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'EMAIL_FROM', 'ADMIN_EMAIL', 'PORT', 'NODE_ENV', 'BREVO_API_KEY'].includes(key)) {
-      envToLog[key] = (key.includes('PASS') || key.includes('SECRET') || key.includes('API_KEY')) ? (process.env[key] ? '*** SET ***' : 'NOT SET') : process.env[key];
+    if (['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'EMAIL_FROM', 'ADMIN_EMAIL', 'PORT', 'NODE_ENV'].includes(key)) {
+      envToLog[key] = key.includes('PASS') || key.includes('SECRET') ? '***' : process.env[key];
     } else if (key.includes('SMTP') || key.includes('EMAIL')) {
       envToLog[key] = '***';
     }
   });
   console.log(JSON.stringify(envToLog, null, 2));
 
-  // Initialize email service FIRST
-  console.log('\n📧 STEP 1: INITIALIZE EMAIL SERVICE');
+  // Initialize email service FIRST with VERIFY()
+  console.log('\n📧 STEP 1: INITIALIZE & VERIFY EMAIL SERVICE (SMTP)');
   try {
     await initTransporter();
   } catch (err) {

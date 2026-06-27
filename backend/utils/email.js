@@ -1,117 +1,190 @@
-const axios = require('axios');
+const nodemailer = require('nodemailer');
 
 console.log('========================================');
-console.log('📧 EMAIL SERVICE (BREVO REST API): MODULE LOADED');
+console.log('📧 EMAIL SERVICE (BREVO SMTP ONLY): MODULE LOADED');
 console.log('========================================');
+
+// SINGLE TRANSPORTER INSTANCE (cached)
+let transporter = null;
 
 /**
- * Sends an email using Brevo's official REST API (100% Render-compatible!)
+ * Creates and verifies a Nodemailer transporter for Brevo SMTP
+ * @returns {Promise<object|null>} Verified transporter or null on failure
+ */
+const createTransporter = async () => {
+  console.log('\n========================================');
+  console.log('📧 CREATE & VERIFY TRANSPORTER: STARTED');
+  console.log('========================================');
+
+  // Log environment variables
+  const envVars = {
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT,
+    SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET',
+    EMAIL_FROM: process.env.EMAIL_FROM
+  };
+  console.log('\n📋 ENVIRONMENT VARIABLES:');
+  console.log(JSON.stringify(envVars, null, 2));
+
+  // Validate required variables
+  const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
+  const missing = required.filter(key => !process.env[key]);
+  console.log('\n✅ Required variables present:', required.filter(key => process.env[key]));
+  console.log('❌ Missing variables:', missing);
+
+  if (missing.length > 0) {
+    console.log('\n❌ TRANSPORTER CREATION FAILED: Missing required env vars');
+    console.log('========================================');
+    return null;
+  }
+
+  // Create transporter with EXACT Brevo config
+  const port = parseInt(process.env.SMTP_PORT, 10);
+  const config = {
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    logger: true,
+    debug: true
+  };
+  console.log('\n⚙️ TRANSPORTER CONFIGURATION:');
+  console.log(JSON.stringify({
+    ...config,
+    auth: { user: config.auth.user.substring(0,10) + '...', pass: '***' }
+  }, null, 2));
+
+  try {
+    console.log('\n🔧 Creating transporter...');
+    const newTransporter = nodemailer.createTransport(config);
+
+    console.log('\n🔍 Verifying connection to Brevo SMTP...');
+    await newTransporter.verify();
+    console.log('✅ TRANSPORTER CREATED & VERIFIED SUCCESSFULLY!');
+    console.log('========================================');
+
+    return newTransporter;
+
+  } catch (error) {
+    console.log('\n❌ TRANSPORTER CREATION/VERIFICATION FAILED!');
+    console.log('  Error Name:', error.name);
+    console.log('  Error Message:', error.message);
+    console.log('  Error Code:', error.code);
+    console.log('  Error Command:', error.command);
+    console.log('  Error Stack:', error.stack);
+    console.log('========================================');
+    return null;
+  }
+};
+
+/**
+ * Initializes or returns the cached single transporter instance
+ * @returns {Promise<object|null>} Verified transporter
+ */
+const initTransporter = async () => {
+  if (transporter) {
+    console.log('✅ Using cached transporter');
+    return transporter;
+  }
+  transporter = await createTransporter();
+  return transporter;
+};
+
+/**
+ * Sends an email using Nodemailer & Brevo SMTP ONLY
  * @param {object} options
- * @param {string} options.to - Recipient email address
- * @param {string} options.subject - Email subject line
- * @param {string} options.html - HTML email content
- * @param {string} [options.text] - Plain text fallback (optional, auto-generated if not provided)
- * @param {string} [options.bcc] - BCC recipient email (optional)
- * @returns {Promise<object>} Send result with success status, messageId, and debug info
+ * @param {string} options.to - Recipient email
+ * @param {string} options.subject - Email subject
+ * @param {string} options.html - HTML content
+ * @param {string} [options.text] - Plain text fallback
+ * @param {string} [options.bcc] - BCC recipient
+ * @returns {Promise<object>} Send result
  */
 const sendEmail = async (options) => {
   console.log('\n========================================');
-  console.log('� SEND EMAIL VIA BREVO REST API: STARTED');
+  console.log('📧 SEND EMAIL VIA BREVO SMTP: STARTED');
   console.log('========================================');
 
-  const { to, subject, html, text, bcc } = options;
-  const apiKey = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
-  const senderEmail = process.env.EMAIL_FROM;
-  const senderName = 'LIBBAAS';
+  // Log env vars before sending
+  console.log('\n📋 SMTP CONFIGURATION BEFORE SEND:');
+  console.log('  SMTP_HOST:', process.env.SMTP_HOST);
+  console.log('  SMTP_PORT:', process.env.SMTP_PORT);
+  console.log('  SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
+  console.log('  EMAIL_FROM:', process.env.EMAIL_FROM);
 
-  // Step 1: Log everything (for debugging)
-  console.log('\n📋 INPUT PARAMETERS:');
-  console.log('  To:', to);
-  console.log('  Subject:', subject);
-  console.log('  BCC:', bcc || 'none');
-  console.log('  API Key set:', !!apiKey);
-  console.log('  Sender email set:', !!senderEmail);
-
-  // Step 2: Validate required fields
-  console.log('\n🔍 VALIDATING REQUIRED FIELDS:');
-  const errors = [];
-  if (!apiKey) errors.push('Missing BREVO_API_KEY or SMTP_PASS in Render environment variables');
-  if (!senderEmail) errors.push('Missing EMAIL_FROM in Render environment variables');
-  if (!to) errors.push('Missing recipient email (to parameter)');
-  if (!subject) errors.push('Missing email subject');
-  
-  if (errors.length > 0) {
-    console.log('❌ VALIDATION FAILED:');
-    errors.forEach(e => console.log('  -', e));
+  // Get transporter
+  const t = await initTransporter();
+  if (!t) {
+    const result = { sent: false, reason: 'Transporter not initialized/verified' };
+    console.log('\n❌', result.reason);
     console.log('========================================');
-    return { sent: false, reason: errors.join('; ') };
+    return result;
   }
 
-  // Step 3: Prepare API payload
-  console.log('\n📦 PREPARING API PAYLOAD:');
-  const payload = {
-    sender: { name: senderName, email: senderEmail },
-    to: [{ email: to }],
-    subject: subject,
-    htmlContent: html,
-    textContent: text || html.replace(/<[^>]*>/g, '')
+  // Prepare mail options
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    text: options.text || options.html.replace(/<[^>]*>/g, '')
   };
-  if (bcc) payload.bcc = [{ email: bcc }];
-  console.log('  Payload (truncated):', {
-    sender: payload.sender,
-    to: payload.to,
-    bcc: payload.bcc,
-    subject: payload.subject,
-    htmlContent: payload.htmlContent.substring(0, 50) + '...'
-  });
+  if (options.bcc) {
+    mailOptions.bcc = options.bcc;
+  }
+  console.log('\n📧 MAIL OPTIONS (truncated):');
+  console.log(JSON.stringify({
+    ...mailOptions,
+    html: mailOptions.html.substring(0, 50) + '...'
+  }, null, 2));
 
-  // Step 4: Send request to Brevo API
-  console.log('\n� SENDING REQUEST TO BREVO API...');
+  // Send email
+  console.log('\n🚀 Calling transporter.sendMail()...');
   try {
-    const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
-      headers: {
-        'accept': 'application/json',
-        'api-key': apiKey,
-        'content-type': 'application/json'
-      },
-      timeout: 30000
-    });
+    const info = await t.sendMail(mailOptions);
 
-    // Step 5: Log success
     console.log('\n✅ EMAIL SENT SUCCESSFULLY!');
-    console.log('  Brevo Status Code:', response.status);
-    console.log('  Brevo Message ID:', response.data.messageId);
-    console.log('  Full Response:', JSON.stringify(response.data, null, 2));
-    
+    console.log('  Message ID:', info.messageId);
+    console.log('  Accepted:', JSON.stringify(info.accepted));
+    console.log('  Rejected:', JSON.stringify(info.rejected));
+    console.log('  Response:', info.response);
+
     const result = {
       sent: true,
-      method: 'brevo-rest-api',
-      messageId: response.data.messageId,
-      brevoResponse: response.data
+      method: 'nodemailer-brevo-smtp',
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response,
+      previewUrl: nodemailer.getTestMessageUrl(info)
     };
     console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
     console.log('========================================');
     return result;
 
   } catch (error) {
-    // Step 6: Log detailed error
     console.log('\n❌ FAILED TO SEND EMAIL!');
     console.log('  Error Name:', error.name);
     console.log('  Error Message:', error.message);
     console.log('  Error Code:', error.code);
-    if (error.response) {
-      console.log('  Brevo Status Code:', error.response.status);
-      console.log('  Brevo Error Data:', JSON.stringify(error.response.data, null, 2));
-    }
+    console.log('  Error Command:', error.command);
     console.log('  Error Stack:', error.stack);
 
     const result = {
       sent: false,
-      method: 'brevo-rest-api',
+      method: 'nodemailer-brevo-smtp',
       reason: error.message,
-      errorCode: error.code,
-      brevoStatusCode: error.response?.status,
-      brevoError: error.response?.data
+      error: error
     };
     console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
     console.log('========================================');
@@ -122,7 +195,7 @@ const sendEmail = async (options) => {
 const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
 
 const sendOrderConfirmationEmail = async ({ to, order }) => {
-  console.log('\n� SEND ORDER CONFIRMATION EMAIL');
+  console.log('\n📦 SEND ORDER CONFIRMATION EMAIL');
   return sendEmail({
     to,
     bcc: process.env.ADMIN_EMAIL,
@@ -251,14 +324,6 @@ const sendCustomEmail = async ({ to, subject, html, text }) => {
     html,
     text
   });
-};
-
-const initTransporter = async () => {
-  console.log('\n========================================');
-  console.log('📧 INITIALIZE EMAIL SERVICE (REST API ONLY)');
-  console.log('========================================');
-  console.log('✅ Email service initialized');
-  return true;
 };
 
 module.exports = {
