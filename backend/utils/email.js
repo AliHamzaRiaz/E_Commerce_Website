@@ -1,10 +1,11 @@
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 console.log('========================================');
-console.log('📧 EMAIL SERVICE (BREVO SMTP ONLY): MODULE LOADED');
+console.log('📧 EMAIL SERVICE: MODULE LOADED');
 console.log('========================================');
 
-// SINGLE TRANSPORTER INSTANCE (cached)
+// SINGLE TRANSPORTER INSTANCE (cached for SMTP)
 let transporter = null;
 
 /**
@@ -38,11 +39,12 @@ const createTransporter = async () => {
     return null;
   }
 
-  // Create transporter with EXACT Brevo config
-  const port = parseInt(process.env.SMTP_PORT, 10);
+  // Create transporter with EXACT config as requested
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT);
   const config = {
-    host: 'smtp-relay.brevo.com',
-    port: 587,
+    host: host,
+    port: port,
     secure: false,
     requireTLS: true,
     auth: {
@@ -52,17 +54,19 @@ const createTransporter = async () => {
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
+    dnsTimeout: 30000,
     logger: true,
     debug: true
   };
-  console.log('\n⚙️ TRANSPORTER CONFIGURATION:');
-  console.log(JSON.stringify({
-    ...config,
-    auth: { user: config.auth.user.substring(0,10) + '...', pass: '***' }
-  }, null, 2));
+  console.log('\n⚙️ EXACT TRANSPORTER CONFIGURATION:');
+  console.log(`  Host: ${host}`);
+  console.log(`  Port: ${port}`);
+  console.log(`  Secure: false`);
+  console.log(`  Require TLS: true`);
+  console.log(`  SMTP User: ${config.auth.user.substring(0, 10)}...`);
+  console.log(`  Timeouts: connection=30s, greeting=30s, socket=30s, dns=30s`);
+  console.log(`  Logger: true`);
+  console.log(`  Debug: true`);
 
   try {
     console.log('\n🔧 Creating transporter...');
@@ -101,95 +105,167 @@ const initTransporter = async () => {
 };
 
 /**
- * Sends an email using Nodemailer & Brevo SMTP ONLY
+ * Sends an email via Brevo REST API (Render-compatible fallback)
  * @param {object} options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.html - HTML content
- * @param {string} [options.text] - Plain text fallback
- * @param {string} [options.bcc] - BCC recipient
  * @returns {Promise<object>} Send result
  */
-const sendEmail = async (options) => {
+const sendEmailViaBrevoAPI = async (options) => {
   console.log('\n========================================');
-  console.log('📧 SEND EMAIL VIA BREVO SMTP: STARTED');
+  console.log('📧 FALLBACK: SENDING VIA BREVO REST API');
   console.log('========================================');
 
-  // Log env vars before sending
-  console.log('\n📋 SMTP CONFIGURATION BEFORE SEND:');
-  console.log('  SMTP_HOST:', process.env.SMTP_HOST);
-  console.log('  SMTP_PORT:', process.env.SMTP_PORT);
-  console.log('  SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
-  console.log('  EMAIL_FROM:', process.env.EMAIL_FROM);
+  const { to, subject, html, text, bcc } = options;
+  const apiKey = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
+  const senderEmail = process.env.EMAIL_FROM;
+  const senderName = 'LIBBAAS';
 
-  // Get transporter
-  const t = await initTransporter();
-  if (!t) {
-    const result = { sent: false, reason: 'Transporter not initialized/verified' };
+  console.log('\n📋 API PARAMS:');
+  console.log('  To:', to);
+  console.log('  Subject:', subject);
+  console.log('  Bcc:', bcc || 'none');
+  console.log('  API Key set:', !!apiKey);
+  console.log('  Sender email set:', !!senderEmail);
+
+  // Validate required
+  const errors = [];
+  if (!apiKey) errors.push('Missing BREVO_API_KEY or SMTP_PASS');
+  if (!senderEmail) errors.push('Missing EMAIL_FROM');
+  if (!to) errors.push('Missing recipient email');
+  if (!subject) errors.push('Missing subject');
+  if (errors.length > 0) {
+    const result = { sent: false, method: 'brevo-api', reason: errors.join('; ') };
     console.log('\n❌', result.reason);
     console.log('========================================');
     return result;
   }
 
-  // Prepare mail options
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: options.to,
-    subject: options.subject,
-    html: options.html,
-    text: options.text || options.html.replace(/<[^>]*>/g, '')
+  // Prepare API payload
+  const payload = {
+    sender: { name: senderName, email: senderEmail },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+    textContent: text || html.replace(/<[^>]*>/g, '')
   };
-  if (options.bcc) {
-    mailOptions.bcc = options.bcc;
-  }
-  console.log('\n📧 MAIL OPTIONS (truncated):');
-  console.log(JSON.stringify({
-    ...mailOptions,
-    html: mailOptions.html.substring(0, 50) + '...'
-  }, null, 2));
+  if (bcc) payload.bcc = [{ email: bcc }];
 
-  // Send email
-  console.log('\n🚀 Calling transporter.sendMail()...');
+  console.log('\n🚀 Calling Brevo API...');
   try {
-    const info = await t.sendMail(mailOptions);
+    const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      timeout: 30000
+    });
 
-    console.log('\n✅ EMAIL SENT SUCCESSFULLY!');
-    console.log('  Message ID:', info.messageId);
-    console.log('  Accepted:', JSON.stringify(info.accepted));
-    console.log('  Rejected:', JSON.stringify(info.rejected));
-    console.log('  Response:', info.response);
+    console.log('\n✅ EMAIL SENT SUCCESSFULLY VIA API!');
+    console.log('  Brevo Status:', response.status);
+    console.log('  Response Data:', JSON.stringify(response.data, null, 2));
 
     const result = {
       sent: true,
-      method: 'nodemailer-brevo-smtp',
-      messageId: info.messageId,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      response: info.response,
-      previewUrl: nodemailer.getTestMessageUrl(info)
+      method: 'brevo-api',
+      messageId: response.data.messageId,
+      response: response.data
     };
     console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
     console.log('========================================');
     return result;
 
   } catch (error) {
-    console.log('\n❌ FAILED TO SEND EMAIL!');
+    console.log('\n❌ API SEND FAILED!');
     console.log('  Error Name:', error.name);
     console.log('  Error Message:', error.message);
     console.log('  Error Code:', error.code);
-    console.log('  Error Command:', error.command);
+    if (error.response) {
+      console.log('  Brevo Status:', error.response.status);
+      console.log('  Brevo Error Data:', JSON.stringify(error.response.data, null, 2));
+    }
     console.log('  Error Stack:', error.stack);
 
     const result = {
       sent: false,
-      method: 'nodemailer-brevo-smtp',
+      method: 'brevo-api',
       reason: error.message,
-      error: error
+      error
     };
     console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
     console.log('========================================');
     return result;
   }
+};
+
+/**
+ * Sends an email: try SMTP first, fall back to Brevo REST API
+ * @param {object} options
+ * @returns {Promise<object>} Send result
+ */
+const sendEmail = async (options) => {
+  console.log('\n========================================');
+  console.log('📧 SEND EMAIL: STARTED');
+  console.log('========================================');
+
+  // Log SMTP config before trying
+  console.log('\n📋 SMTP CONFIG TO TRY:');
+  console.log('  SMTP_HOST:', process.env.SMTP_HOST);
+  console.log('  SMTP_PORT:', process.env.SMTP_PORT);
+  console.log('  SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,10) + '...' : 'NOT SET');
+  console.log('  EMAIL_FROM:', process.env.EMAIL_FROM);
+
+  // Try SMTP first
+  console.log('\n📧 STEP 1: TRYING SMTP FIRST');
+  const t = await initTransporter();
+  if (t) {
+    try {
+      const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text || options.html.replace(/<[^>]*>/g, '')
+      };
+      if (options.bcc) mailOptions.bcc = options.bcc;
+
+      console.log('\n📧 MAIL OPTIONS (truncated):');
+      console.log(JSON.stringify({
+        ...mailOptions,
+        html: mailOptions.html.substring(0,50) + '...'
+      }, null, 2));
+
+      console.log('\n🚀 Calling transporter.sendMail()...');
+      const info = await t.sendMail(mailOptions);
+
+      console.log('\n✅ EMAIL SENT SUCCESSFULLY VIA SMTP!');
+      console.log('  Message ID:', info.messageId);
+      console.log('  Accepted:', JSON.stringify(info.accepted));
+      console.log('  Rejected:', JSON.stringify(info.rejected));
+      console.log('  Response:', info.response);
+
+      const result = {
+        sent: true,
+        method: 'nodemailer-brevo-smtp',
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        response: info.response,
+        previewUrl: nodemailer.getTestMessageUrl(info)
+      };
+      console.log('\n📤 FINAL RESULT:', JSON.stringify(result, null, 2));
+      console.log('========================================');
+      return result;
+
+    } catch (smtpError) {
+      console.log('\n⚠️ SMTP SEND FAILED! Trying Brevo API fallback...');
+      console.log('  SMTP Error:', smtpError.message);
+    }
+  } else {
+    console.log('\n⚠️ SMTP Transporter not available! Trying Brevo API fallback...');
+  }
+
+  // Fallback to API
+  return await sendEmailViaBrevoAPI(options);
 };
 
 const formatMoney = (n) => `Rs ${Number(n || 0).toLocaleString()}`;
