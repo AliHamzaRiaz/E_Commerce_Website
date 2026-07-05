@@ -219,6 +219,11 @@ const getProductById = async (id) => {
 };
 
 const insertProduct = async (body) => {
+  console.log('\n========================================');
+  console.log('🟢 INSERT PRODUCT CALLED');
+  console.log('========================================');
+  console.log('📥 RAW REQUEST BODY:', JSON.stringify(body, null, 2));
+
   const id = `P-${Date.now()}`;
   const product = {
     id,
@@ -238,32 +243,52 @@ const insertProduct = async (body) => {
     type: body.type || '',
   };
 
-  const p = getPool();
-  await p.query(
-    `INSERT INTO products (id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12,$13::jsonb,$14::jsonb,$15)`,
-    [
-      product.id,
-      product.name,
-      product.description,
-      product.price,
-      product.originalPrice,
-      product.discount,
-      product.category,
-      JSON.stringify(product.colors),
-      JSON.stringify(product.sizes),
-      product.image,
-      product.available,
-      product.stock,
-      JSON.stringify(product.colorImages),
-      JSON.stringify(product.variations),
-      product.type,
-    ]
-  );
-  return product;
+  console.log('✅ PROCESSED PRODUCT TO INSERT:', JSON.stringify(product, null, 2));
+
+  try {
+    const p = getPool();
+    console.log('📡 CONNECTING TO DATABASE AND EXECUTING INSERT...');
+    await p.query(
+      `INSERT INTO products (id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11,$12,$13::jsonb,$14::jsonb,$15)`,
+      [
+        product.id,
+        product.name,
+        product.description,
+        product.price,
+        product.originalPrice,
+        product.discount,
+        product.category,
+        JSON.stringify(product.colors),
+        JSON.stringify(product.sizes),
+        product.image,
+        product.available,
+        product.stock,
+        JSON.stringify(product.colorImages),
+        JSON.stringify(product.variations),
+        product.type,
+      ]
+    );
+    console.log('✅ PRODUCT INSERTED SUCCESSFULLY! ID:', product.id);
+    return product;
+  } catch (e) {
+    console.error('❌ FAILED TO INSERT PRODUCT!');
+    console.error('  ERROR NAME:', e.name);
+    console.error('  ERROR MESSAGE:', e.message);
+    console.error('  ERROR CODE:', e.code);
+    console.error('  ERROR STACK:', e.stack);
+    throw e;
+  }
 };
 
 const updateProduct = async (id, body, prev) => {
+  console.log('\n========================================');
+  console.log('🟡 UPDATE PRODUCT CALLED');
+  console.log('========================================');
+  console.log('📥 PRODUCT ID TO UPDATE:', id);
+  console.log('📥 RAW REQUEST BODY:', JSON.stringify(body, null, 2));
+  console.log('📥 PREVIOUS PRODUCT STATE:', JSON.stringify(prev, null, 2));
+
   const next = {
     ...prev,
     name: body.name ?? prev.name,
@@ -282,31 +307,44 @@ const updateProduct = async (id, body, prev) => {
     type: body.type ?? prev.type ?? '',
   };
 
-  const p = getPool();
-  await p.query(
-    `UPDATE products SET
-      name = $2, description = $3, price = $4, original_price = $5, discount = $6, category = $7,
-      colors = $8::jsonb, sizes = $9::jsonb, image = $10, available = $11, stock = $12, color_images = $13::jsonb, variations = $14::jsonb, type = $15
-     WHERE id = $1`,
-    [
-      String(id),
-      next.name,
-      next.description,
-      next.price,
-      next.originalPrice,
-      next.discount,
-      next.category,
-      JSON.stringify(next.colors),
-      JSON.stringify(next.sizes),
-      next.image,
-      next.available,
-      next.stock,
-      JSON.stringify(next.colorImages),
-      JSON.stringify(next.variations),
-      next.type,
-    ]
-  );
-  return next;
+  console.log('✅ UPDATED PRODUCT STATE (NEXT):', JSON.stringify(next, null, 2));
+
+  try {
+    const p = getPool();
+    console.log('📡 CONNECTING TO DATABASE AND EXECUTING UPDATE...');
+    await p.query(
+      `UPDATE products SET
+        name = $2, description = $3, price = $4, original_price = $5, discount = $6, category = $7,
+        colors = $8::jsonb, sizes = $9::jsonb, image = $10, available = $11, stock = $12, color_images = $13::jsonb, variations = $14::jsonb, type = $15
+       WHERE id = $1`,
+      [
+        String(id),
+        next.name,
+        next.description,
+        next.price,
+        next.originalPrice,
+        next.discount,
+        next.category,
+        JSON.stringify(next.colors),
+        JSON.stringify(next.sizes),
+        next.image,
+        next.available,
+        next.stock,
+        JSON.stringify(next.colorImages),
+        JSON.stringify(next.variations),
+        next.type,
+      ]
+    );
+    console.log('✅ PRODUCT UPDATED SUCCESSFULLY! ID:', id);
+    return next;
+  } catch (e) {
+    console.error('❌ FAILED TO UPDATE PRODUCT!');
+    console.error('  ERROR NAME:', e.name);
+    console.error('  ERROR MESSAGE:', e.message);
+    console.error('  ERROR CODE:', e.code);
+    console.error('  ERROR STACK:', e.stack);
+    throw e;
+  }
 };
 
 const deleteProduct = async (id) => {
