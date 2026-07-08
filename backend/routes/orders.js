@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const { sendOrderConfirmationEmail } = require('../utils/email');
 const { insertOrder, listRecentOrdersByEmail } = require('../utils/orderRepository');
 const { applyOrderStock } = require('../utils/productRepository');
@@ -115,6 +116,52 @@ router.post('/', async (req, res) => {
       signatureImage: String(signatureImage || ''),
       emailMeta,
     });
+
+    // =========================================================
+    // NEW CODE: Send order to n8n webhook (only if order saved)
+    // =========================================================
+    try {
+      const webhookUrl = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/new-order';
+      const webhookPayload = {
+        orderId: orderId,
+        customerName: orderForEmail.customer.fullName,
+        email: orderForEmail.customer.email,
+        phone: orderForEmail.customer.phone,
+        total: total,
+        status: orderForEmail.status,
+        createdAt: orderForEmail.createdAt
+      };
+
+      console.log('\n📤 Sending order to n8n webhook:', webhookUrl);
+      console.log('📤 Webhook payload:', JSON.stringify(webhookPayload, null, 2));
+
+      if (typeof fetch === 'function') {
+        // Use native fetch API if available
+        const fetchResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookPayload)
+        });
+        if (!fetchResponse.ok) {
+          console.error('❌ n8n webhook failed with status:', fetchResponse.status);
+        } else {
+          console.log('✅ n8n webhook sent successfully via fetch');
+        }
+      } else {
+        // Fallback to axios
+        const axiosResponse = await axios.post(webhookUrl, webhookPayload, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        console.log('✅ n8n webhook sent successfully via axios:', axiosResponse.status);
+      }
+    } catch (webhookError) {
+      // Log error but DO NOT fail the order creation
+      console.error('\n❌ Failed to send order to n8n webhook (order still created):', webhookError.message);
+      console.error('❌ n8n webhook error details:', webhookError.stack);
+    }
+    // =========================================================
+    // END NEW CODE
+    // =========================================================
 
     return res.status(201).json({
       orderId,
