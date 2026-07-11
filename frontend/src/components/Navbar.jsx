@@ -97,6 +97,7 @@ const Navbar = ({ onCartClick }) => {
                   onError={(e) => e.target.style.display = 'none'}
                 />
                 <div className="flex flex-col border-l border-neutral-100 pl-4">
+                  {/* Brand name updated: removed "Luxe Lingerie" */}
                   <h1 className="text-xl sm:text-2xl font-serif tracking-[0.3em] uppercase text-[#0b2a3d] leading-none">
                     LIBBAAS
                   </h1>
