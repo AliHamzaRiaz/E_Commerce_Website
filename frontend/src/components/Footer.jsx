@@ -81,11 +81,16 @@ const Footer = () => {
             <div className="space-y-4 sm:space-y-6 lg:space-y-8">
               <h3 className="text-[9px] sm:text-[10px] font-bold tracking-[0.3em] sm:tracking-[0.4em] uppercase text-gold">Support</h3>
               <ul className="space-y-2 sm:space-y-3 lg:space-y-4">
-                {['Shipping', 'Returns', 'Size Guide', 'FAQ'].map(item => (
-                  <li key={item}>
-                    <button className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors text-left">
-                      {item}
-                    </button>
+                {[
+                  { name: 'Shipping', path: '/shipping' },
+                  { name: 'Returns', path: '/returns' },
+                  { name: 'Size Guide', path: '/size-guide' },
+                  { name: 'FAQ', path: '/faq' }
+                ].map(item => (
+                  <li key={item.name}>
+                    <Link to={item.path} className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors">
+                      {item.name}
+                    </Link>
                   </li>
                 ))}
               </ul>
