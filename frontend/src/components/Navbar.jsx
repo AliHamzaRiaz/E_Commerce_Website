@@ -100,9 +100,6 @@ const Navbar = ({ onCartClick }) => {
                   <h1 className="text-xl sm:text-2xl font-serif tracking-[0.3em] uppercase text-[#0b2a3d] leading-none">
                     LIBBAAS
                   </h1>
-                  <span className="text-[7px] tracking-[0.5em] uppercase text-gold font-black mt-1.5 opacity-80">
-                    Luxe Lingerie
-                  </span>
                 </div>
               </Link>
             </div>
