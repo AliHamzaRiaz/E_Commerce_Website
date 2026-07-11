@@ -99,15 +99,15 @@ const Footer = () => {
               <ul className="space-y-4 sm:space-y-6">
                 <li className="flex items-start gap-3 sm:gap-4 text-[#0b2a3d]/70 group">
                   <MapPin size={16} sm:size={18} className="text-gold shrink-0 mt-0.5" />
-                  <span className="text-xs sm:text-xs font-medium leading-relaxed">Liberty Market, Gulberg III, Lahore</span>
+                  <span className="text-xs sm:text-xs font-medium leading-relaxed">C-II Block C 2 Phase 1 Johar Town, Lahore, 54770</span>
                 </li>
                 <li className="flex items-center gap-3 sm:gap-4 text-[#0b2a3d]/70 group">
                   <Phone size={16} sm:size={18} className="text-gold shrink-0" />
-                  <span className="text-xs sm:text-xs font-medium">+92 313 7812008</span>
+                  <span className="text-xs sm:text-xs font-medium">03187327773</span>
                 </li>
                 <li className="flex items-center gap-3 sm:gap-4 text-[#0b2a3d]/70 group">
                   <Mail size={16} sm:size={18} className="text-gold shrink-0" />
-                  <span className="text-xs sm:text-xs font-medium">concierge@libbaas.com</span>
+                  <span className="text-xs sm:text-xs font-medium">libbaasbyjh@gmail.com</span>
                 </li>
               </ul>
             </div>

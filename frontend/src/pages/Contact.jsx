@@ -90,7 +90,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Email Inquiry</p>
-                      <p className="text-sm font-bold text-[#0b2a3d] tracking-wide">concierge@libbaas.com</p>
+                      <p className="text-sm font-bold text-[#0b2a3d] tracking-wide">libbaasbyjh@gmail.com</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-6 group">
@@ -99,7 +99,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Personal Assistance</p>
-                      <p className="text-sm font-bold text-[#0b2a3d] tracking-wide">+92 313 7812008</p>
+                      <p className="text-sm font-bold text-[#0b2a3d] tracking-wide">03187327773</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-6 group">
@@ -109,7 +109,7 @@ const Contact = () => {
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Our Flagship</p>
                       <p className="text-sm font-bold text-[#0b2a3d] tracking-wide leading-relaxed">
-                        Liberty Market, Gulberg III,<br/>Lahore, Pakistan
+                        C-II Block C 2 Phase 1 Johar Town,<br/>Lahore, 54770
                       </p>
                     </div>
                   </div>
