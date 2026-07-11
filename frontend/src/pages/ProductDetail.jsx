@@ -446,7 +446,7 @@ const ProductDetail = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-bold text-gray-900">Size</span>
-                  <button className="text-[11px] font-bold text-gray-900 underline underline-offset-4">Size Chart</button>
+                  <Link to="/size-guide" className="text-[11px] font-bold text-gray-900 underline underline-offset-4">Size Chart</Link>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(product.sizes || []).map(size => (
