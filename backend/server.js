@@ -37,6 +37,10 @@ app.options(/.*/, cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Serve frontend static files
+const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendBuildPath));
+
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
@@ -50,6 +54,12 @@ app.get('/', (req, res) => {
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API working' });
+});
+
+// Catch-all route to serve React app for any non-API routes
+app.get('*', (req, res) => {
+  const indexPath = path.join(frontendBuildPath, 'index.html');
+  res.sendFile(indexPath);
 });
 
 app.get('/api/debug/seed-products', async (req, res) => {
