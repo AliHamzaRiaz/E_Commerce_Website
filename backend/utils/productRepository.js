@@ -416,4 +416,6 @@ module.exports = {
   updateProduct,
   deleteProduct,
   applyOrderStock,
+  mergeSeedProducts,
+  seedIfEmpty,
 };
