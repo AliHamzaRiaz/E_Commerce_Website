@@ -196,16 +196,6 @@ const start = async () => {
     const { listProducts: list } = require('./utils/productRepository');
     const currentProducts = await list();
     console.log('📊 Current products in DB:', currentProducts.length);
-
-    if (currentProducts.length === 0) {
-      console.log('⚠️ No products found, seeding defaults...');
-      await seedIfEmpty(defaultProducts);
-    } else {
-      console.log('✅ Products already exist, skipping seed');
-    }
-
-    const productsAfter = await list();
-    console.log('📊 Products after seeding:', productsAfter.length);
   } catch (err) {
     console.error('[startup] ❌ Products DB init failed!');
     console.error('[startup] Full error:', err);
