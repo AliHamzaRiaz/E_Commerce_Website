@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiUrl } from '../utils/apiUrl';
-import { ArrowRight, Star, ShieldCheck, Truck, ChevronRight, ChevronLeft } from 'lucide-react';
-import { fallbackCategories, fallbackProducts } from '../data/fallbackData';
+import { ArrowRight, Star, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
+import { useReviews } from '../hooks/useReviews';
 
 const Home = () => {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [allProducts, setAllProducts] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { products: allProducts, isLoading: productsLoading } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { reviews, isLoading: reviewsLoading } = useReviews();
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
 
+  const loading = productsLoading || categoriesLoading || reviewsLoading;
+  const featuredProducts = allProducts.slice(0, 8);
+  
   // Auto-rotate hero images
   useEffect(() => {
     if (currentHeroIndex >= categories.length && categories.length > 0) {
@@ -38,50 +39,6 @@ const Home = () => {
       return () => clearInterval(interval);
     }
   }, [reviews.length]);
-
-  // Fetch data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [prodRes, catRes, reviewRes] = await Promise.all([
-          axios.get(apiUrl('/api/products'), { timeout: 10000 }), // Increased timeout
-          axios.get(apiUrl('/api/categories'), { timeout: 10000 }),
-          axios.get(apiUrl('/api/reviews'), { timeout: 10000 })
-        ]);
-        const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
-        const allCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []);
-        const allReviews = Array.isArray(reviewRes.data) ? reviewRes.data : [];
-        
-        const validCategories = allCategories.filter(cat => 
-          cat.displayName && cat.displayName.trim() !== ''
-        );
-        
-        setAllProducts(products);
-        setFeaturedProducts(products.slice(0, 8));
-        setCategories(validCategories);
-        setReviews(allReviews);
-        setCurrentHeroIndex(0);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        // Use fallback data if API fails
-        const validFallbackCategories = fallbackCategories.filter(cat => 
-          cat.displayName && cat.displayName.trim() !== ''
-        );
-        setAllProducts(fallbackProducts);
-        setFeaturedProducts(fallbackProducts.slice(0, 8));
-        setCategories(validFallbackCategories);
-        setReviews([
-          { userName: "Esha", rating: 5, comment: "Fast delivery, impressive quality!" },
-          { userName: "Shaheen", rating: 5, comment: "Pleasant, really happy to get it!" },
-          { userName: "Fatima", rating: 5, comment: "Excellent fabric and stitching!" }
-        ]);
-        setCurrentHeroIndex(0);
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   const getCategoryImage = (category, fallback) => {
     if (!allProducts || allProducts.length === 0) return fallback;
@@ -111,6 +68,18 @@ const Home = () => {
     alert('Thank you for subscribing!');
   };
 
+  // Show loading indicator while data is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#c5a059] border-t-transparent"></div>
+          <p className="text-sm text-gray-600 uppercase tracking-widest">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="pb-0">
       {/* Hero Section - Professional Luxury */}
@@ -131,6 +100,7 @@ const Home = () => {
                     key={categories[currentHeroIndex].id}
                     src={categories[currentHeroIndex].image || getCategoryImage(categories[currentHeroIndex].displayName, 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=1920&h=1080&fit=crop')}
                     alt={categories[currentHeroIndex].displayName}
+                    loading="lazy"
                     initial={{ opacity: 0, scale: 1.1 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 1.1 }}
@@ -298,6 +268,7 @@ const Home = () => {
                     <img
                       src={cat.image || getCategoryImage(cat.displayName, '/imags/sports-bra.jpg')}
                       alt={cat.displayName}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-115 transition-transform duration-700"
                       onError={(e) => {e.target.src = 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400&h=400&fit=crop'}}
                     />
@@ -347,6 +318,7 @@ const Home = () => {
                   <img
                     src={p.image}
                     alt={p.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

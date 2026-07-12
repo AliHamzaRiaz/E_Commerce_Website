@@ -4,12 +4,12 @@ import { ShoppingCart, Menu, X, User, Search, ChevronDown, Heart, LogOut, Chevro
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { fallbackCategories } from '../data/fallbackData';
+import { useCategories } from '../hooks/useCategories';
 
 const Navbar = ({ onCartClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(true);
-  const [categories] = useState(fallbackCategories);
+  const { categories } = useCategories();
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-import { apiUrl } from '../utils/apiUrl';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart, X, ChevronRight, Filter, ChevronDown, Package, Tag, CheckCircle2, XCircle } from 'lucide-react';
+import { Heart, ShoppingCart, X, ChevronRight, Filter, ChevronDown, Package } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { fallbackProducts, fallbackCategories } from '../data/fallbackData';
+import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
 
-const ProductCard = ({ product, cartItems, addToCart, toggleFavorite, isFavorite, selectingId, setSelectingId, tempColor, setTempColor, tempSize, setTempSize }) => {
+const ProductCard = React.memo(({ product, cartItems, addToCart, toggleFavorite, isFavorite, selectingId, setSelectingId, tempColor, setTempColor, tempSize, setTempSize }) => {
   const defaultColor = (product.colors && product.colors[0]) || 'Default';
   const defaultSize = (product.sizes && product.sizes[0]) || 'One Size';
   const [activeColor, setActiveColor] = useState(defaultColor);
@@ -44,6 +43,7 @@ const ProductCard = ({ product, cartItems, addToCart, toggleFavorite, isFavorite
           <img
             src={getDisplayImage()}
             alt={product.name}
+            loading="lazy"
             className="max-w-full max-h-full object-contain transition-all duration-700"
           />
         </Link>
@@ -103,6 +103,7 @@ const ProductCard = ({ product, cartItems, addToCart, toggleFavorite, isFavorite
                           return product.image;
                         })()} 
                         alt="" 
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -222,7 +223,7 @@ const ProductCard = ({ product, cartItems, addToCart, toggleFavorite, isFavorite
       </div>
     </div>
   );
-};
+});
 
 const Shop = () => {
   const svgDataUri = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -249,12 +250,11 @@ const Shop = () => {
   const navigate = useNavigate();
   const { addToCart, cartItems } = useCart();
   const { isLoggedIn, isFavorite, toggleFavorite } = useAuth();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
-  const [retryTick, setRetryTick] = useState(0);
+  const { products, isLoading: productsLoading } = useProducts();
+  const { categories, isLoading: categoriesLoading } = useCategories();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const loading = productsLoading || categoriesLoading;
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
@@ -263,7 +263,6 @@ const Shop = () => {
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedVariations, setSelectedVariations] = useState({}); // { "Cup Size": ["B", "C"] }
-  const [hoveredCategory, setHoveredCategory] = useState(null);
 
   // State for quick-add selection
   const [selectingId, setSelectingId] = useState(null);
@@ -418,40 +417,7 @@ const Shop = () => {
     });
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchData = async () => {
-      setLoading(true);
-      setFetchError('');
-      try {
-        const [prodRes, catRes] = await Promise.all([
-          axios.get(apiUrl('/api/products'), {
-            timeout: 10000,
-            params: selectedCategory === 'All' ? {} : { category: selectedCategory },
-          }),
-          axios.get(apiUrl('/api/categories'), { timeout: 10000 })
-        ]);
-        
-        if (!cancelled) {
-          setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
-          setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-        }
-      } catch (error) {
-        console.error('Error fetching data', error);
-        if (!cancelled) {
-          // Use fallback data if API fails
-          setProducts(fallbackProducts);
-          setCategories(fallbackCategories);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCategory, retryTick]);
+
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
