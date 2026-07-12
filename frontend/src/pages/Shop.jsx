@@ -426,9 +426,10 @@ const Shop = () => {
       try {
         const [prodRes, catRes] = await Promise.all([
           axios.get(apiUrl('/api/products'), {
+            timeout: 10000,
             params: selectedCategory === 'All' ? {} : { category: selectedCategory },
           }),
-          axios.get(apiUrl('/api/categories'))
+          axios.get(apiUrl('/api/categories'), { timeout: 10000 })
         ]);
         
         if (!cancelled) {
@@ -438,17 +439,9 @@ const Shop = () => {
       } catch (error) {
         console.error('Error fetching data', error);
         if (!cancelled) {
-          setProducts([]);
-          setCategories([]);
-          const data = error?.response?.data;
-          const detail =
-            (data && typeof data === 'object' && (data.detail || data.message)) ||
-            (typeof data === 'string' && data) ||
-            error?.message;
-          setFetchError(
-            detail ||
-              'Could not load products.'
-          );
+          // Use fallback data if API fails
+          setProducts(fallbackProducts);
+          setCategories(fallbackCategories);
         }
       } finally {
         if (!cancelled) setLoading(false);

@@ -1,27 +1,33 @@
 const express = require('express');
-const { listCategories, addCategory, deleteCategory, updateCategory } = require('../utils/categoryRepository');
+const { listCategories, addCategory, deleteCategory, updateCategory, defaultCategories } = require('../utils/categoryRepository');
 const adminAuth = require('../middleware/adminAuth');
 
 const router = express.Router();
 
-// Fallback categories in case DB fails
-const fallbackCategories = [
-  { id: 1, name: 'bra', displayName: 'Bra' },
-  { id: 2, name: 'underwear', displayName: 'Underwear' },
-  { id: 3, name: 'nightwear', displayName: 'Nightwear' },
-  { id: 4, name: 'activewear', displayName: 'Activewear' }
-];
+// Simple in-memory cache for categories
+let categoriesCache = null;
+let categoriesCacheTime = 0;
+const CACHE_DURATION = 30000; // 30 seconds
 
 // Public route to list categories
 router.get('/', async (req, res) => {
   console.log('[GET /api/categories] Received request');
   try {
+    // Check cache first
+    const now = Date.now();
+    if (categoriesCache && now - categoriesCacheTime < CACHE_DURATION) {
+      return res.json(categoriesCache);
+    }
     const categories = await listCategories();
     console.log('[GET /api/categories] Sending categories:', categories);
+    // Update cache
+    categoriesCache = categories;
+    categoriesCacheTime = now;
     return res.json(categories);
   } catch (e) {
     console.error('[GET /api/categories]', e);
-    return res.status(500).json({ message: 'Failed to load categories' });
+    // Fallback to default categories if DB fails
+    return res.json(defaultCategories);
   }
 });
 
@@ -66,4 +72,10 @@ router.delete('/:id', adminAuth, async (req, res) => {
   }
 });
 
-module.exports = router;
+// Function to invalidate cache (called from admin routes)
+const invalidateCategoriesCache = () => {
+  categoriesCache = null;
+  categoriesCacheTime = 0;
+};
+
+module.exports = { router, invalidateCategoriesCache };

@@ -1,5 +1,5 @@
 const express = require('express');
-const { listReviewsByProduct, listAllReviews, addReview } = require('../utils/reviewRepository');
+const { listReviewsByProduct, listAllReviews, addReview, defaultReviews } = require('../utils/reviewRepository');
 
 const router = express.Router();
 
@@ -10,7 +10,8 @@ router.get('/', async (req, res) => {
     res.json(reviews);
   } catch (e) {
     console.error('[GET /api/reviews]', e);
-    res.status(500).json({ message: 'Failed to load reviews' });
+    // Fallback to default reviews if DB fails
+    res.json(defaultReviews);
   }
 });
 

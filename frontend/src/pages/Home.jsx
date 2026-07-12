@@ -4,6 +4,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiUrl } from '../utils/apiUrl';
 import { ArrowRight, Star, ShieldCheck, Truck, ChevronRight, ChevronLeft } from 'lucide-react';
+import { fallbackCategories, fallbackProducts } from '../data/fallbackData';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -43,9 +44,9 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const [prodRes, catRes, reviewRes] = await Promise.all([
-          axios.get(apiUrl('/api/products'), { timeout: 5000 }),
-          axios.get(apiUrl('/api/categories'), { timeout: 5000 }),
-          axios.get(apiUrl('/api/reviews'), { timeout: 5000 })
+          axios.get(apiUrl('/api/products'), { timeout: 10000 }), // Increased timeout
+          axios.get(apiUrl('/api/categories'), { timeout: 10000 }),
+          axios.get(apiUrl('/api/reviews'), { timeout: 10000 })
         ]);
         const products = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data?.products || []);
         const allCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.categories || []);
@@ -63,6 +64,19 @@ const Home = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
+        // Use fallback data if API fails
+        const validFallbackCategories = fallbackCategories.filter(cat => 
+          cat.displayName && cat.displayName.trim() !== ''
+        );
+        setAllProducts(fallbackProducts);
+        setFeaturedProducts(fallbackProducts.slice(0, 8));
+        setCategories(validFallbackCategories);
+        setReviews([
+          { userName: "Esha", rating: 5, comment: "Fast delivery, impressive quality!" },
+          { userName: "Shaheen", rating: 5, comment: "Pleasant, really happy to get it!" },
+          { userName: "Fatima", rating: 5, comment: "Excellent fabric and stitching!" }
+        ]);
+        setCurrentHeroIndex(0);
         setLoading(false);
       }
     };
@@ -71,7 +85,10 @@ const Home = () => {
 
   const getCategoryImage = (category, fallback) => {
     if (!allProducts || allProducts.length === 0) return fallback;
-    const product = allProducts.find(p => p.category === category);
+    // Case-insensitive category match
+    const product = allProducts.find(p => 
+      String(p.category).toLowerCase() === String(category).toLowerCase()
+    );
     return product ? product.image : fallback;
   };
 
@@ -92,7 +109,6 @@ const Home = () => {
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
     alert('Thank you for subscribing!');
-    setNewsletterEmail('');
   };
 
   return (

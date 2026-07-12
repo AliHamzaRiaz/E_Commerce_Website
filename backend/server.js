@@ -15,11 +15,11 @@ dotenv.config({ path: backendEnvPath });
 
 const express = require('express');
 const cors = require('cors');
-const productRoutes = require('./routes/products');
+const { router: productRoutes, invalidateProductsCache } = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
-const categoryRoutes = require('./routes/categories');
+const { router: categoryRoutes, invalidateCategoriesCache } = require('./routes/categories');
 const reviewRoutes = require('./routes/reviews');
 const { initProductsDb, seedIfEmpty } = require('./utils/productRepository');
 const { initOrdersDb } = require('./utils/orderRepository');
@@ -43,7 +43,7 @@ app.use(express.static(frontendBuildPath));
 
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes(invalidateProductsCache, invalidateCategoriesCache));
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
@@ -54,12 +54,6 @@ app.get('/', (req, res) => {
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API working' });
-});
-
-// Catch-all route to serve React app for any non-API routes
-app.get('*', (req, res) => {
-  const indexPath = path.join(frontendBuildPath, 'index.html');
-  res.sendFile(indexPath);
 });
 
 app.get('/api/debug/seed-products', async (req, res) => {
@@ -163,6 +157,12 @@ app.get('/api/debug/test-email', async (req, res) => {
       stack: err.stack
     });
   }
+});
+
+// Catch-all route to serve React app for any non-API routes
+app.use((req, res) => {
+  const indexPath = path.join(frontendBuildPath, 'index.html');
+  res.sendFile(indexPath);
 });
 
 const start = async () => {

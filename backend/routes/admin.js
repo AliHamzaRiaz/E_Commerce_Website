@@ -17,8 +17,8 @@ const {
   deleteCategory,
 } = require('../utils/categoryRepository');
 
-
-const router = express.Router();
+module.exports = (invalidateProductsCache, invalidateCategoriesCache) => {
+  const router = express.Router();
 
 // Test email endpoint
 router.get('/test-email', async (req, res) => {
@@ -406,6 +406,8 @@ router.post('/products', async (req, res) => {
       return res.status(400).json({ message: 'Missing name or price' });
     }
     const product = await insertProduct(body);
+    // Invalidate products cache
+    invalidateProductsCache();
     res.status(201).json(product);
   } catch (e) {
     console.error(e);
@@ -418,6 +420,8 @@ router.put('/products/:id', async (req, res) => {
     const prev = await getProductById(req.params.id);
     if (!prev) return res.status(404).json({ message: 'Product not found' });
     const next = await updateProduct(req.params.id, req.body || {}, prev);
+    // Invalidate products cache
+    invalidateProductsCache();
     res.json(next);
   } catch (e) {
     console.error(e);
@@ -429,6 +433,8 @@ router.delete('/products/:id', async (req, res) => {
   try {
     const ok = await deleteProduct(req.params.id);
     if (!ok) return res.status(404).json({ message: 'Product not found' });
+    // Invalidate products cache
+    invalidateProductsCache();
     res.json({ ok: true });
   } catch (e) {
     console.error(e);
@@ -460,6 +466,8 @@ router.post('/categories', async (req, res) => {
     }
     const category = await addCategory(body);
     console.log('Category added successfully:', category);
+    // Invalidate categories cache
+    invalidateCategoriesCache();
     res.status(201).json(category);
   } catch (e) {
     console.error('ERROR IN POST /api/admin/categories:', e);
@@ -482,6 +490,8 @@ router.put('/categories/:id', async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
     console.log('Category updated successfully:', category);
+    // Invalidate categories cache
+    invalidateCategoriesCache();
     res.json(category);
   } catch (e) {
     console.error('ERROR IN PUT /api/admin/categories/:id:', e);
@@ -496,6 +506,8 @@ router.delete('/categories/:id', async (req, res) => {
   try {
     await deleteCategory(req.params.id);
     console.log('Category deleted successfully');
+    // Invalidate categories cache
+    invalidateCategoriesCache();
     res.json({ ok: true });
   } catch (e) {
     console.error('ERROR IN DELETE /api/admin/categories/:id:', e);
@@ -503,4 +515,5 @@ router.delete('/categories/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+  return router;
+};

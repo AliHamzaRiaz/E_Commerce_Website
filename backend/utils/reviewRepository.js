@@ -1,10 +1,10 @@
 const { getPool } = require('./productRepository');
 
 const defaultReviews = [
-  { userName: "Esha", productId: 1, rating: 5, comment: "Fast delivery, impressive quality!" },
-  { userName: "Shaheen", productId: 2, rating: 5, comment: "Pleasant, really happy to get it!" },
-  { userName: "Awais", productId: 3, rating: 5, comment: "Loved this dress! The color and design are beautiful, and the fit is perfect." },
-  { userName: "Fatima", productId: 4, rating: 5, comment: "Excellent fabric and stitching. Will definitely order again!" }
+  { id: 1, userName: "Esha", productId: 1, rating: 5, comment: "Fast delivery, impressive quality!" },
+  { id: 2, userName: "Shaheen", productId: 2, rating: 5, comment: "Pleasant, really happy to get it!" },
+  { id: 3, userName: "Awais", productId: 3, rating: 5, comment: "Loved this dress! The color and design are beautiful, and the fit is perfect." },
+  { id: 4, userName: "Fatima", productId: 4, rating: 5, comment: "Excellent fabric and stitching. Will definitely order again!" }
 ];
 
 const initReviewsTable = async () => {
@@ -114,5 +114,6 @@ module.exports = {
   listReviewsByProduct,
   listAllReviews,
   seedReviewsIfEmpty,
-  addReview
+  addReview,
+  defaultReviews
 };
