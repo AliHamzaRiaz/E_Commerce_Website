@@ -41,13 +41,28 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendBuildPath));
 
+// Debug uploads path
+const uploadsPath = path.join(__dirname, "../uploads");
+app.get("/debug-uploads-path", (req, res) => {
+  const fs = require("fs");
+  res.json({
+    uploadsPath,
+    exists: fs.existsSync(uploadsPath),
+    contents: fs.existsSync(uploadsPath) ? fs.readdirSync(uploadsPath) : null,
+    productsPath: path.join(uploadsPath, "products"),
+    productsExists: fs.existsSync(path.join(uploadsPath, "products")),
+    productsContents: fs.existsSync(path.join(uploadsPath, "products")) ? fs.readdirSync(path.join(uploadsPath, "products")) : null
+  });
+});
+
+// Log upload requests
+app.use("/uploads", (req, res, next) => {
+  console.log("UPLOAD REQUEST:", req.originalUrl);
+  next();
+});
+
 // Serve uploaded images
-app.use(
-  "/uploads",
-  express.static(
-    path.join(__dirname, "../uploads")
-  )
-);
+app.use("/uploads", express.static(uploadsPath));
 
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
