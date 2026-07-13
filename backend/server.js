@@ -41,28 +41,25 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendBuildPath));
 
-// Debug uploads path
+// Serve uploaded images
 const uploadsPath = path.join(__dirname, "../uploads");
-app.get("/debug-uploads-path", (req, res) => {
+app.use("/uploads", express.static(uploadsPath));
+
+app.get("/debug-uploads", (req, res) => {
   const fs = require("fs");
   res.json({
     uploadsPath,
-    exists: fs.existsSync(uploadsPath),
-    contents: fs.existsSync(uploadsPath) ? fs.readdirSync(uploadsPath) : null,
-    productsPath: path.join(uploadsPath, "products"),
+    uploadsExists: fs.existsSync(uploadsPath),
     productsExists: fs.existsSync(path.join(uploadsPath, "products")),
-    productsContents: fs.existsSync(path.join(uploadsPath, "products")) ? fs.readdirSync(path.join(uploadsPath, "products")) : null
+    sampleFileExists: fs.existsSync(
+      path.join(
+        uploadsPath,
+        "products",
+        "P-1783885062079.png"
+      )
+    )
   });
 });
-
-// Log upload requests
-app.use("/uploads", (req, res, next) => {
-  console.log("UPLOAD REQUEST:", req.originalUrl);
-  next();
-});
-
-// Serve uploaded images
-app.use("/uploads", express.static(uploadsPath));
 
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
@@ -161,7 +158,7 @@ app.get('/api/debug/test-email', async (req, res) => {
       smtpConfig: {
         SMTP_HOST: process.env.SMTP_HOST,
         SMTP_PORT: process.env.SMTP_PORT,
-        SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,10) + '...' : 'not set',
+        SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'not set',
         EMAIL_FROM: process.env.EMAIL_FROM
       },
       result: result
@@ -182,27 +179,12 @@ app.get('/api/debug/test-email', async (req, res) => {
   }
 });
 
-app.get("/test-upload", (req, res) => {
-  const fs = require("fs");
-  const path = require("path");
-
-  const file = path.join(
-      __dirname,
-      "../uploads/products/P-1783885062079.png"
-  );
-
-  res.json({
-      exists: fs.existsSync(file),
-      path: file
-  });
-});
-
 // Catch-all route to serve React app for any non-API routes
 app.get("*", (req, res, next) => {
   if (
     req.path.startsWith("/api") ||
     req.path.startsWith("/uploads") ||
-    req.path === "/test-upload"
+    req.path === "/debug-uploads"
   ) {
     return next();
   }
