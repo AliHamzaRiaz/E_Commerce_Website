@@ -3,9 +3,9 @@ const path = require('path');
 const pool = require('./db');
 
 // Utility to save Base64 images to files
-const saveBase64Image = async (base64Data, productId, index = 0) => {
-  if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) {
-    return base64Data; // Already a path or invalid, return as is
+const saveBase64Image = async (base64Data, productId, pathKey = '') => {
+  if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:image/')) {
+    return { converted: false, value: base64Data }; // Already a path or invalid, return as is
   }
 
   // Create uploads directory if it doesn't exist
@@ -15,7 +15,7 @@ const saveBase64Image = async (base64Data, productId, index = 0) => {
   // Extract file extension from base64 data
   const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
   if (!matches || matches.length !== 3) {
-    return base64Data;
+    return { converted: false, value: base64Data };
   }
 
   const mimeType = matches[1];
@@ -26,38 +26,75 @@ const saveBase64Image = async (base64Data, productId, index = 0) => {
   else if (mimeType === 'image/gif') extension = 'gif';
   else if (mimeType === 'image/webp') extension = 'webp';
 
-  const fileName = `${productId}-${Date.now()}-${index}.${extension}`;
+  const fileName = `${productId}-${pathKey}-${Date.now()}.${extension}`;
   const filePath = path.join(uploadsDir, fileName);
   await fs.writeFile(filePath, Buffer.from(data, 'base64'));
 
   // Return relative path for storage in DB
-  return `/uploads/products/${fileName}`;
+  return { converted: true, value: `/uploads/products/${fileName}` };
+};
+
+// Recursive function to process any value
+const processValueRecursively = async (value, productId, currentPath = '') => {
+  if (Array.isArray(value)) {
+    const results = await Promise.all(
+      value.map((item, index) => 
+        processValueRecursively(item, productId, `${currentPath}[${index}]`)
+      )
+    );
+    return {
+      convertedCount: results.reduce((sum, res) => sum + res.convertedCount, 0),
+      value: results.map(res => res.value)
+    };
+  } else if (value && typeof value === 'object') {
+    const keys = Object.keys(value);
+    const processedObj = {};
+    let totalConverted = 0;
+    for (const key of keys) {
+      const result = await processValueRecursively(
+        value[key], 
+        productId, 
+        currentPath ? `${currentPath}.${key}` : key
+      );
+      processedObj[key] = result.value;
+      totalConverted += result.convertedCount;
+    }
+    return { convertedCount: totalConverted, value: processedObj };
+  } else {
+    const result = await saveBase64Image(value, productId, currentPath);
+    return { convertedCount: result.converted ? 1 : 0, value: result.value };
+  }
 };
 
 // Process all images in a product (main image and colorImages)
 const processProductImages = async (product, productId) => {
   const processed = { ...product };
+  let totalConverted = 0;
 
   // Process main image
   if (processed.image) {
-    processed.image = await saveBase64Image(processed.image, productId, 0);
-  }
-
-  // Process colorImages
-  if (processed.colorImages && typeof processed.colorImages === 'object') {
-    const processedColorImages = {};
-    for (const [color, images] of Object.entries(processed.colorImages)) {
-      const imagesArray = Array.isArray(images) ? images : [images];
-      const processedImages = [];
-      for (let i = 0; i < imagesArray.length; i++) {
-        const img = imagesArray[i];
-        processedImages.push(await saveBase64Image(img, productId, `${color}-${i}`));
-      }
-      processedColorImages[color] = processedImages;
+    const result = await saveBase64Image(processed.image, productId, 'main');
+    if (result.converted) {
+      totalConverted++;
+      processed.image = result.value;
     }
-    processed.colorImages = processedColorImages;
   }
 
+  // Process colorImages recursively
+  if (processed.colorImages) {
+    const result = await processValueRecursively(processed.colorImages, productId, 'colorImages');
+    totalConverted += result.convertedCount;
+    processed.colorImages = result.value;
+  }
+
+  // Also process variations just in case there are images there
+  if (processed.variations) {
+    const result = await processValueRecursively(processed.variations, productId, 'variations');
+    totalConverted += result.convertedCount;
+    processed.variations = result.value;
+  }
+
+  console.log(`Processed ${totalConverted} images for product ${productId}`);
   return processed;
 };
 

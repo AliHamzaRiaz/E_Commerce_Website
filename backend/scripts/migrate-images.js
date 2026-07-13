@@ -11,9 +11,9 @@ const pool = require('../utils/db');
 
 // Copy of saveBase64Image from productRepository.js
 const fs = require('fs/promises');
-const saveBase64Image = async (base64Data, productId, index = 0) => {
-  if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) {
-    return base64Data; // Already a path or invalid, return as is
+const saveBase64Image = async (base64Data, productId, pathKey = '') => {
+  if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:image/')) {
+    return { converted: false, value: base64Data }; // Already a path or invalid, return as is
   }
 
   // Create uploads directory if it doesn't exist
@@ -23,7 +23,7 @@ const saveBase64Image = async (base64Data, productId, index = 0) => {
   // Extract file extension from base64 data
   const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
   if (!matches || matches.length !== 3) {
-    return base64Data;
+    return { converted: false, value: base64Data };
   }
 
   const mimeType = matches[1];
@@ -34,70 +34,120 @@ const saveBase64Image = async (base64Data, productId, index = 0) => {
   else if (mimeType === 'image/gif') extension = 'gif';
   else if (mimeType === 'image/webp') extension = 'webp';
 
-  const fileName = `${productId}-${Date.now()}-${index}.${extension}`;
+  const fileName = `${productId}-${pathKey}-${Date.now()}.${extension}`;
   const filePath = path.join(uploadsDir, fileName);
   await fs.writeFile(filePath, Buffer.from(data, 'base64'));
 
   // Return relative path for storage in DB
-  return `/uploads/products/${fileName}`;
+  return { converted: true, value: `/uploads/products/${fileName}` };
+};
+
+// Recursive function to process any value
+const processValueRecursively = async (value, productId, currentPath = '') => {
+  if (Array.isArray(value)) {
+    const results = await Promise.all(
+      value.map((item, index) => 
+        processValueRecursively(item, productId, `${currentPath}[${index}]`)
+      )
+    );
+    return {
+      convertedCount: results.reduce((sum, res) => sum + res.convertedCount, 0),
+      value: results.map(res => res.value)
+    };
+  } else if (value && typeof value === 'object') {
+    const keys = Object.keys(value);
+    const processedObj = {};
+    let totalConverted = 0;
+    for (const key of keys) {
+      const result = await processValueRecursively(
+        value[key], 
+        productId, 
+        currentPath ? `${currentPath}.${key}` : key
+      );
+      processedObj[key] = result.value;
+      totalConverted += result.convertedCount;
+    }
+    return { convertedCount: totalConverted, value: processedObj };
+  } else {
+    const result = await saveBase64Image(value, productId, currentPath);
+    return { convertedCount: result.converted ? 1 : 0, value: result.value };
+  }
 };
 
 const migrateProduct = async (product) => {
-  let updated = false;
+  let totalConverted = 0;
   let newImage = product.image;
   let newColorImages = product.color_images;
+  let newVariations = product.variations;
 
   // Process main image
-  if (product.image && product.image.startsWith('data:')) {
-    newImage = await saveBase64Image(product.image, product.id, 'main');
-    updated = true;
-  }
-
-  // Process color images
-  if (product.color_images && typeof product.color_images === 'object') {
-    const processedColorImages = {};
-    let colorUpdated = false;
-    for (const [color, images] of Object.entries(product.color_images)) {
-      const imagesArray = Array.isArray(images) ? images : [images];
-      const processedImages = [];
-      for (let i = 0; i < imagesArray.length; i++) {
-        const img = imagesArray[i];
-        const processed = await saveBase64Image(img, product.id, `${color}-${i}`);
-        if (processed !== img) colorUpdated = true;
-        processedImages.push(processed);
-      }
-      processedColorImages[color] = processedImages;
-    }
-    if (colorUpdated) {
-      newColorImages = processedColorImages;
-      updated = true;
+  if (product.image) {
+    const result = await saveBase64Image(product.image, product.id, 'main');
+    if (result.converted) {
+      totalConverted++;
+      newImage = result.value;
     }
   }
 
-  if (updated) {
+  // Process color images recursively
+  if (product.color_images) {
+    const result = await processValueRecursively(product.color_images, product.id, 'colorImages');
+    totalConverted += result.convertedCount;
+    newColorImages = result.value;
+  }
+
+  // Process variations recursively (just in case)
+  if (product.variations) {
+    const result = await processValueRecursively(product.variations, product.id, 'variations');
+    totalConverted += result.convertedCount;
+    newVariations = result.value;
+  }
+
+  if (totalConverted > 0) {
     await pool.query(
-      `UPDATE products SET image = $1, color_images = $2 WHERE id = $3`,
-      [newImage, JSON.stringify(newColorImages), product.id]
+      `UPDATE products SET image = $1, color_images = $2, variations = $3 WHERE id = $4`,
+      [newImage, JSON.stringify(newColorImages), JSON.stringify(newVariations), product.id]
     );
-    console.log(`✅ Migrated product ${product.id}`);
+    console.log(`✅ Migrated ${totalConverted} images for product ${product.id}`);
+    return totalConverted;
   } else {
     console.log(`ℹ️ Product ${product.id} already has file paths, skipping`);
+    return 0;
   }
 };
 
 const runMigration = async () => {
   console.log('🚀 Starting image migration...');
+  let totalImagesConverted = 0;
   
   try {
     // Get all products
-    const { rows: products } = await pool.query('SELECT id, image, color_images FROM products');
+    const { rows: products } = await pool.query('SELECT id, image, color_images, variations FROM products');
     console.log(`📦 Found ${products.length} products to check`);
 
     for (const product of products) {
-      await migrateProduct(product);
+      const converted = await migrateProduct(product);
+      totalImagesConverted += converted;
     }
 
-    console.log('🎉 Migration completed successfully!');
+    // Verify migration
+    console.log('🔍 Verifying migration...');
+    const { rows } = await pool.query(`
+      SELECT COUNT(*) 
+      FROM products 
+      WHERE image::text LIKE '%data:image%' 
+         OR color_images::text LIKE '%data:image%'
+         OR variations::text LIKE '%data:image%'
+    `);
+    const remaining = Number(rows[0].count);
+
+    if (remaining === 0) {
+      console.log('✅ Verification passed! No Base64 images remaining.');
+    } else {
+      console.warn(`⚠️ Verification failed! ${remaining} products still have Base64 images.`);
+    }
+
+    console.log(`🎉 Migration completed! Total images converted: ${totalImagesConverted}`);
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);
