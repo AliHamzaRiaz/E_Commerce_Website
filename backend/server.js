@@ -21,12 +21,11 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const { router: categoryRoutes, invalidateCategoriesCache } = require('./routes/categories');
 const reviewRoutes = require('./routes/reviews');
-const { initProductsDb, seedIfEmpty } = require('./utils/productRepository');
+const { initProductsDb } = require('./utils/productRepository');
 const { initOrdersDb } = require('./utils/orderRepository');
 const { initUsersTable } = require('./utils/userRepository');
 const { initCategoriesTable, seedCategoriesIfEmpty } = require('./utils/categoryRepository');
 const { initReviewsTable, seedReviewsIfEmpty } = require('./utils/reviewRepository');
-const { defaultProducts } = require('./data/defaultProducts');
 const { sendCustomEmail, initTransporter } = require('./utils/email');
 
 const app = express();
@@ -42,25 +41,21 @@ const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendBuildPath));
 
 // Serve uploaded images
-const uploadsPath = path.join(__dirname, "../uploads");
-app.use("/uploads", express.static(uploadsPath));
+const uploadsPath = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsPath));
 
-app.get("/debug-uploads", (req, res) => {
-  const fs = require("fs");
+// Debug uploads endpoint
+app.get('/debug-uploads', (req, res) => {
+  const fs = require('fs');
   res.json({
-    uploadsPath,
+    uploadsPath: uploadsPath,
     uploadsExists: fs.existsSync(uploadsPath),
-    productsExists: fs.existsSync(path.join(uploadsPath, "products")),
-    sampleFileExists: fs.existsSync(
-      path.join(
-        uploadsPath,
-        "products",
-        "P-1783885062079.png"
-      )
-    )
+    productsExists: fs.existsSync(path.join(uploadsPath, 'products')),
+    sampleFileExists: fs.existsSync(path.join(uploadsPath, 'products', 'P-1783885062079.png'))
   });
 });
 
+// API routes
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes(invalidateProductsCache, invalidateCategoriesCache));
@@ -106,9 +101,6 @@ app.get('/api/debug/admin-creds', (req, res) => {
   });
 });
 
-// ============================================
-// 📧 TEST EMAIL ENDPOINT - FOR DEBUGGING
-// ============================================
 app.get('/api/debug/test-email', async (req, res) => {
   console.log('\n========================================');
   console.log('📧 TEST EMAIL ENDPOINT: RECEIVED REQUEST');
@@ -180,16 +172,16 @@ app.get('/api/debug/test-email', async (req, res) => {
 });
 
 // Catch-all route to serve React app for any non-API routes
-app.get("*", (req, res, next) => {
+app.get('*', (req, res, next) => {
   if (
-    req.path.startsWith("/api") ||
-    req.path.startsWith("/uploads") ||
-    req.path === "/debug-uploads"
+    req.path.startsWith('/api') ||
+    req.path.startsWith('/uploads') ||
+    req.path === '/debug-uploads'
   ) {
     return next();
   }
 
-  const indexPath = path.join(frontendBuildPath, "index.html");
+  const indexPath = path.join(frontendBuildPath, 'index.html');
   res.sendFile(indexPath);
 });
 
