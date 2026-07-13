@@ -167,9 +167,32 @@ app.get('/api/debug/test-email', async (req, res) => {
   }
 });
 
+app.get("/test-upload", (req, res) => {
+  const fs = require("fs");
+  const path = require("path");
+
+  const file = path.join(
+      __dirname,
+      "../uploads/products/P-1783885062079.png"
+  );
+
+  res.json({
+      exists: fs.existsSync(file),
+      path: file
+  });
+});
+
 // Catch-all route to serve React app for any non-API routes
-app.use((req, res) => {
-  const indexPath = path.join(frontendBuildPath, 'index.html');
+app.get("*", (req, res, next) => {
+  if (
+    req.path.startsWith("/api") ||
+    req.path.startsWith("/uploads") ||
+    req.path === "/test-upload"
+  ) {
+    return next();
+  }
+
+  const indexPath = path.join(frontendBuildPath, "index.html");
   res.sendFile(indexPath);
 });
 
