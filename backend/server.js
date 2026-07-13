@@ -41,6 +41,14 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendBuildPath));
 
+// Serve uploaded images
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "../uploads")
+  )
+);
+
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes(invalidateProductsCache, invalidateCategoriesCache));

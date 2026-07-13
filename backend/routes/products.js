@@ -4,7 +4,7 @@ const { defaultProducts } = require('../data/defaultProducts');
 
 const router = express.Router();
 
-// Simple in-memory cache
+// Simple in-memory cache for lightweight products
 let productsCache = null;
 let productsCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     if (productsCache && now - productsCacheTime < CACHE_DURATION) {
       return res.json(productsCache);
     }
-    const products = await listProducts();
+    const products = await listProducts(false); // lightweight by default
     // Update cache
     productsCache = products;
     productsCacheTime = now;

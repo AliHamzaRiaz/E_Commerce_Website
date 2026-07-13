@@ -390,7 +390,7 @@ router.post('/orders/:id/message/email', async (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     console.log('\n🟢 ADMIN REQUESTED ALL PRODUCTS');
-    const products = await listProducts();
+    const products = await listProducts(true); // full products for admin
     console.log(`🟢 SENDING ${products.length} PRODUCTS TO ADMIN FRONTEND`);
     res.json(products);
   } catch (e) {

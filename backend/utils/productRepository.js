@@ -2,6 +2,65 @@ const fs = require('fs/promises');
 const path = require('path');
 const pool = require('./db');
 
+// Utility to save Base64 images to files
+const saveBase64Image = async (base64Data, productId, index = 0) => {
+  if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) {
+    return base64Data; // Already a path or invalid, return as is
+  }
+
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'products');
+  await fs.mkdir(uploadsDir, { recursive: true });
+
+  // Extract file extension from base64 data
+  const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    return base64Data;
+  }
+
+  const mimeType = matches[1];
+  const data = matches[2];
+  let extension = 'png';
+  if (mimeType === 'image/jpeg') extension = 'jpg';
+  else if (mimeType === 'image/png') extension = 'png';
+  else if (mimeType === 'image/gif') extension = 'gif';
+  else if (mimeType === 'image/webp') extension = 'webp';
+
+  const fileName = `${productId}-${Date.now()}-${index}.${extension}`;
+  const filePath = path.join(uploadsDir, fileName);
+  await fs.writeFile(filePath, Buffer.from(data, 'base64'));
+
+  // Return relative path for storage in DB
+  return `/uploads/products/${fileName}`;
+};
+
+// Process all images in a product (main image and colorImages)
+const processProductImages = async (product, productId) => {
+  const processed = { ...product };
+
+  // Process main image
+  if (processed.image) {
+    processed.image = await saveBase64Image(processed.image, productId, 0);
+  }
+
+  // Process colorImages
+  if (processed.colorImages && typeof processed.colorImages === 'object') {
+    const processedColorImages = {};
+    for (const [color, images] of Object.entries(processed.colorImages)) {
+      const imagesArray = Array.isArray(images) ? images : [images];
+      const processedImages = [];
+      for (let i = 0; i < imagesArray.length; i++) {
+        const img = imagesArray[i];
+        processedImages.push(await saveBase64Image(img, productId, `${color}-${i}`));
+      }
+      processedColorImages[color] = processedImages;
+    }
+    processed.colorImages = processedColorImages;
+  }
+
+  return processed;
+};
+
 const LEGACY_PRODUCTS_JSON = path.join(__dirname, '..', 'data', 'products.json');
 
 const getPool = () => {
@@ -190,7 +249,27 @@ const mergeSeedProducts = async (products) => {
   }
 };
 
-const listProducts = async () => {
+const rowToLightweightProduct = (row) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    price: Number(row.price),
+    originalPrice: Number(row.original_price),
+    discount: row.discount || '',
+    category: row.category || 'Other',
+    colors: jsonbToStringArray(row.colors),
+    sizes: jsonbToStringArray(row.sizes),
+    image: row.image || '',
+    available: row.available === true || row.available === 'true' || row.available === 1 || row.available === null || row.available === undefined,
+    stock: Number(row.stock || 0),
+    type: row.type || '',
+    backend_update_timestamp: Date.now(),
+  };
+};
+
+const listProducts = async (full = false) => {
   const p = getPool();
   console.log('\n🔍 QUERYING ALL PRODUCTS FROM DATABASE...');
   const { rows } = await p.query(
@@ -201,7 +280,7 @@ const listProducts = async () => {
   rows.forEach((row, i) => {
     console.log(`  Product ${i+1}: id=${row.id}, name="${row.name}", available=${row.available}`);
   });
-  const mappedProducts = rows.map(rowToProduct);
+  const mappedProducts = rows.map(full ? rowToProduct : rowToLightweightProduct);
   console.log(`\n✅ MAPPED ${mappedProducts.length} PRODUCTS FOR RESPONSE`);
   return mappedProducts;
 };
@@ -225,7 +304,7 @@ const insertProduct = async (body) => {
   console.log('📥 RAW REQUEST BODY:', JSON.stringify(body, null, 2));
 
   const id = `P-${Date.now()}`;
-  const product = {
+  let product = {
     id,
     name: body.name,
     description: body.description || '',
@@ -242,6 +321,9 @@ const insertProduct = async (body) => {
     variations: body.variations || {},
     type: body.type || '',
   };
+
+  // Process Base64 images to file paths
+  product = await processProductImages(product, id);
 
   console.log('✅ PROCESSED PRODUCT TO INSERT:', JSON.stringify(product, null, 2));
 
@@ -289,7 +371,7 @@ const updateProduct = async (id, body, prev) => {
   console.log('📥 RAW REQUEST BODY:', JSON.stringify(body, null, 2));
   console.log('📥 PREVIOUS PRODUCT STATE:', JSON.stringify(prev, null, 2));
 
-  const next = {
+  let next = {
     ...prev,
     name: body.name ?? prev.name,
     description: body.description ?? prev.description,
@@ -306,6 +388,9 @@ const updateProduct = async (id, body, prev) => {
     variations: body.variations ?? prev.variations ?? {},
     type: body.type ?? prev.type ?? '',
   };
+
+  // Process Base64 images to file paths
+  next = await processProductImages(next, id);
 
   console.log('✅ UPDATED PRODUCT STATE (NEXT):', JSON.stringify(next, null, 2));
 
