@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import userApi from '../utils/userApi';
-import axios from 'axios';
-import { apiUrl } from '../utils/apiUrl';
+import apiClient from '../utils/api';
 
 const Account = () => {
   const { user, isLoggedIn, favorites, logout } = useAuth();
@@ -19,7 +18,10 @@ const Account = () => {
     if (!isLoggedIn) return;
     userApi.get('/history')
       .then((res) => setOrders(Array.isArray(res.data?.orders) ? res.data.orders : []))
-      .catch(() => {});
+      .catch((error) => {
+        console.error('Failed to load account order history:', error);
+        setOrders([]);
+      });
   }, [isLoggedIn]);
 
   useEffect(() => {
@@ -27,10 +29,13 @@ const Account = () => {
       setFavProducts([]);
       return;
     }
-    axios.get(apiUrl('/api/products')).then((res) => {
+    apiClient.get('/api/products').then((res) => {
       const all = Array.isArray(res.data) ? res.data : [];
       setFavProducts(all.filter((p) => favorites.includes(String(p.id))));
-    }).catch(() => setFavProducts([]));
+    }).catch((error) => {
+      console.error('Failed to load favorite products from API:', error);
+      setFavProducts([]);
+    });
   }, [favorites]);
 
   if (!isLoggedIn) return <Navigate to="/login?next=/account" replace />;

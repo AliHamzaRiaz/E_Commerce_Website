@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   ShoppingCart, 
   Heart, 
@@ -19,7 +18,7 @@ import {
   Copy
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { apiUrl } from '../utils/apiUrl';
+import apiClient from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -57,10 +56,10 @@ const ProductDetail = () => {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const res = await axios.get(apiUrl(`/api/reviews/${id}`));
+      const res = await apiClient.get(`/api/reviews/${id}`);
       setReviews(res.data);
     } catch (error) {
-      console.error("Error fetching reviews", error);
+      console.error('Error fetching reviews for product details page:', error);
     } finally {
       setLoadingReviews(false);
     }
@@ -71,7 +70,7 @@ const ProductDetail = () => {
     if (!newComment.trim()) return;
     
     try {
-      const res = await axios.post(apiUrl('/api/reviews'), {
+      const res = await apiClient.post('/api/reviews', {
         productId: id,
         userName: isLoggedIn ? 'Verified Customer' : 'Guest User',
         rating: newRating,
@@ -83,20 +82,20 @@ const ProductDetail = () => {
       setShowReviewForm(false);
       toast.success('Thank you for your feedback!');
     } catch (error) {
-      console.error("Error submitting review", error);
+      console.error('Error submitting review:', error);
       toast.error('Failed to submit review');
     }
   };
 
-  // Mock data for professional look
   const points = 9;
   const estShipping = new Date();
   estShipping.setDate(estShipping.getDate() + 5);
 
   useEffect(() => {
     const fetchProduct = async () => {
+      setLoading(true);
       try {
-        const res = await axios.get(apiUrl(`/api/products/${id}`));
+        const res = await apiClient.get(`/api/products/${id}`);
         const data = res.data;
         setProduct(data);
         const firstColor = Array.isArray(data.colors) && data.colors.length > 0 ? data.colors[0] : 'Default';
@@ -116,9 +115,10 @@ const ProductDetail = () => {
         } else {
           setCurrentImage(data.image);
         }
-        setLoading(false);
       } catch (error) {
-        console.error("Error fetching product", error);
+        console.error('Error fetching product details from API:', error);
+        setProduct(null);
+      } finally {
         setLoading(false);
       }
     };

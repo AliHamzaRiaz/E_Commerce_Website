@@ -30,8 +30,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('userProfile', JSON.stringify(u || null));
         setFavorites(Array.isArray(res.data?.favorites) ? res.data.favorites.map(String) : []);
       })
-      .catch(() => {
+      .catch((error) => {
         if (cancelled) return;
+        console.error('Failed to restore authenticated user session:', error);
         localStorage.removeItem('userToken');
         localStorage.removeItem('userProfile');
         setUser(null);

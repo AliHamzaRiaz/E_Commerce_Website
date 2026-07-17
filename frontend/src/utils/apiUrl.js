@@ -1,13 +1,11 @@
 /**
- * Get the base API URL, which should include any origin and path prefix.
- * - In development: use Vite proxy (empty string)
- * - In production: use VITE_API_URL environment variable or your domain
+ * Prefer same-origin API requests unless an explicit production API URL is set.
+ * This keeps the deployed frontend and backend on the same host and avoids
+ * stale or unreachable absolute URLs baked into the production bundle.
  */
 export const getApiOrigin = () => {
-  if (import.meta.env.PROD) {
-    return import.meta.env.VITE_API_URL || 'https://libbaas.com';
-  }
-  return '';
+  const configuredOrigin = String(import.meta.env.VITE_API_URL || '').trim();
+  return configuredOrigin.replace(/\/+$/, '');
 };
 
 /**

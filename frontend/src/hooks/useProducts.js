@@ -11,7 +11,10 @@ export function useProducts() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 1 minute
+      dedupingInterval: 60000,
+      onError: (fetchError) => {
+        console.error('Failed to load products from /api/products:', fetchError);
+      },
     }
   );
 
