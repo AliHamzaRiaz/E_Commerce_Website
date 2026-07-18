@@ -172,7 +172,7 @@ app.get('/api/debug/test-email', async (req, res) => {
 });
 
 // Catch-all route to serve React app for any non-API routes
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
   if (
     req.path.startsWith('/api') ||
     req.path.startsWith('/uploads') ||
@@ -183,6 +183,17 @@ app.get('*', (req, res, next) => {
 
   const indexPath = path.join(frontendBuildPath, 'index.html');
   res.sendFile(indexPath);
+});
+
+// Error handling middleware (must be after all routes)
+app.use((err, req, res, next) => {
+  console.error('❌ [SERVER] Unhandled error:', err);
+  console.error('❌ [SERVER] Error stack:', err.stack);
+  res.status(500).json({ 
+    message: 'Internal Server Error', 
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 const start = async () => {
