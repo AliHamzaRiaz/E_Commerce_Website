@@ -330,6 +330,26 @@ const AdminProducts = () => {
     }
   };
 
+  const removeAll = async () => {
+    if (products.length === 0) return;
+    const confirmed = window.confirm(
+      `Remove ALL ${products.length} products? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setError('');
+    try {
+      await adminApi.delete('/products');
+      await load();
+      startCreate();
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        logoutToLogin();
+        return;
+      }
+      setError(err?.response?.data?.message || 'Failed to remove all products');
+    }
+  };
+
   const toggleAvailability = async (p) => {
     setError('');
     try {
@@ -410,13 +430,22 @@ const AdminProducts = () => {
             </p>
           </div>
 
-          <div className="relative z-10 flex gap-3">
+          <div className="relative z-10 flex flex-wrap gap-3">
             <button 
               onClick={load} 
               className="flex items-center gap-2 px-6 py-3 bg-white/10 text-white rounded-2xl border border-white/10 hover:bg-white/20 transition-all font-bold uppercase tracking-widest text-[10px]"
             >
               <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
               Refresh Data
+            </button>
+            <button
+              type="button"
+              onClick={removeAll}
+              disabled={products.length === 0}
+              className="flex items-center gap-2 px-6 py-3 bg-red-500/90 text-white rounded-2xl border border-red-400/30 hover:bg-red-500 transition-all font-bold uppercase tracking-widest text-[10px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-500/90"
+            >
+              <Trash2 size={16} />
+              Remove All
             </button>
             <button 
               onClick={startCreate} 

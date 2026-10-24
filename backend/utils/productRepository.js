@@ -475,6 +475,17 @@ const deleteProduct = async (id) => {
   return rowCount > 0;
 };
 
+const deleteAllProducts = async () => {
+  const p = getPool();
+  try {
+    await p.query('DELETE FROM reviews');
+  } catch (_) {
+    // reviews table may not exist yet
+  }
+  const { rowCount } = await p.query('DELETE FROM products');
+  return rowCount;
+};
+
 const applyOrderStock = async (items) => {
   const normalized = Array.isArray(items)
     ? items
@@ -537,6 +548,7 @@ module.exports = {
   insertProduct,
   updateProduct,
   deleteProduct,
+  deleteAllProducts,
   applyOrderStock,
   mergeSeedProducts,
   seedIfEmpty,

@@ -46,6 +46,7 @@ const {
   insertProduct,
   updateProduct,
   deleteProduct,
+  deleteAllProducts,
   getProductById,
 } = require('../utils/productRepository');
 
@@ -426,6 +427,17 @@ router.put('/products/:id', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: 'Failed to update product' });
+  }
+});
+
+router.delete('/products', async (req, res) => {
+  try {
+    const deleted = await deleteAllProducts();
+    invalidateProductsCache();
+    res.json({ ok: true, deleted });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Failed to delete all products' });
   }
 });
 

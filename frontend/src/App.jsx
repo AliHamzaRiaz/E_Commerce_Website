@@ -25,6 +25,7 @@ import AdminCategories from './pages/AdminCategories';
 import AdminLogin from './pages/AdminLogin';
 import Cart from './components/Cart';
 import AdminRoute from './components/AdminRoute';
+import WhatsAppButton from './components/WhatsAppButton';
 import { Toaster } from 'react-hot-toast';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 
@@ -94,6 +95,7 @@ function App() {
           </AnimatePresence>
         </main>
         {!showAdmin ? <Footer /> : null}
+        {!showAdmin ? <WhatsAppButton /> : null}
       </div>
     </AdminAuthProvider>
   );
