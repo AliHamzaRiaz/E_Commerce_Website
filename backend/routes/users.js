@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const userAuth = require('../middleware/userAuth');
+const verifyCaptcha = require('../middleware/verifyCaptcha');
+const { authRateLimit } = require('../middleware/rateLimit');
 const {
   createUser,
   findUserWithPasswordByEmail,
@@ -27,7 +29,7 @@ const safeUser = (u) => ({
 const signUserToken = (u) =>
   jwt.sign({ role: 'user', userId: u.id, email: u.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-router.post('/register', async (req, res) => {
+router.post('/register', authRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
     const email = String(req.body?.email || '').trim().toLowerCase();
@@ -51,7 +53,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
@@ -83,7 +85,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     console.log('[POST /forgot-password] Email received:', email);
@@ -128,7 +130,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', authRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const { token, password } = req.body;
     if (!token || !password) return res.status(400).json({ message: 'Token and password are required' });

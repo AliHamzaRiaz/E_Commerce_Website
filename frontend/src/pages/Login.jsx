@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import CaptchaWidget from '../components/CaptchaWidget';
 
 const Login = () => {
   const { login } = useAuth();
+  const captchaRef = useRef(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,12 +22,18 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (captchaRef.current && !captchaRef.current.isReady()) {
+      setError('Complete the security check first');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await login({ email, password });
+      const captcha = captchaRef.current?.getPayload?.() || {};
+      await login({ email, password, ...captcha });
       navigate(nextPath, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Login failed');
+      captchaRef.current?.refresh?.();
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +81,7 @@ const Login = () => {
               </Link>
             </div>
           </div>
+          <CaptchaWidget ref={captchaRef} />
           {error ? <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           <button
             type="submit"

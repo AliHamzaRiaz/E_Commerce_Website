@@ -288,10 +288,11 @@ const mergeSeedProducts = async (products) => {
 
 const rowToLightweightProduct = (row) => {
   if (!row) return null;
+  const description = String(row.description || '');
   return {
     id: row.id,
     name: row.name,
-    description: row.description || '',
+    description: description.length > 180 ? `${description.slice(0, 177)}...` : description,
     price: Number(row.price),
     originalPrice: Number(row.original_price),
     discount: row.discount || '',
@@ -302,24 +303,29 @@ const rowToLightweightProduct = (row) => {
     available: row.available === true || row.available === 'true' || row.available === 1 || row.available === null || row.available === undefined,
     stock: Number(row.stock || 0),
     type: row.type || '',
+    // Keep variations for Shop filters; omit heavy colorImages on list
+    variations: (() => {
+      try {
+        const raw = row.variations;
+        if (!raw) return {};
+        return typeof raw === 'string' ? JSON.parse(raw) : raw;
+      } catch {
+        return {};
+      }
+    })(),
     backend_update_timestamp: Date.now(),
   };
 };
 
 const listProducts = async (full = false) => {
   const p = getPool();
-  console.log('\n🔍 QUERYING ALL PRODUCTS FROM DATABASE...');
-  const { rows } = await p.query(
-    `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type, created_at
-     FROM products ORDER BY created_at DESC, id DESC`
-  );
-  console.log(`✅ FOUND ${rows.length} TOTAL PRODUCTS IN DATABASE:`);
-  rows.forEach((row, i) => {
-    console.log(`  Product ${i+1}: id=${row.id}, name="${row.name}", available=${row.available}`);
-  });
-  const mappedProducts = rows.map(full ? rowToProduct : rowToLightweightProduct);
-  console.log(`\n✅ MAPPED ${mappedProducts.length} PRODUCTS FOR RESPONSE`);
-  return mappedProducts;
+  const sql = full
+    ? `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, color_images, variations, type, created_at
+       FROM products ORDER BY created_at DESC, id DESC`
+    : `SELECT id, name, description, price, original_price, discount, category, colors, sizes, image, available, stock, variations, type, created_at
+       FROM products ORDER BY created_at DESC, id DESC`;
+  const { rows } = await p.query(sql);
+  return rows.map(full ? rowToProduct : rowToLightweightProduct);
 };
 
 const getProductById = async (id) => {

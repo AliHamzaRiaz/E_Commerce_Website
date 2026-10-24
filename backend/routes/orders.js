@@ -2,6 +2,8 @@ const express = require('express');
 const { sendOrderConfirmationEmail } = require('../utils/email');
 const { insertOrder, listRecentOrdersByEmail } = require('../utils/orderRepository');
 const { applyOrderStock } = require('../utils/productRepository');
+const verifyCaptcha = require('../middleware/verifyCaptcha');
+const { checkoutRateLimit, authRateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
@@ -14,7 +16,7 @@ const computeTotals = ({ items, paymentMethod }) => {
 
 const isValidEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
 
-router.post('/history', async (req, res) => {
+router.post('/history', authRateLimit, async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim();
     if (!isValidEmail(email)) {
@@ -28,7 +30,7 @@ router.post('/history', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', checkoutRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const { customer, items, paymentMethod, paymentDetails, signatureImage } = req.body || {};
 

@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const adminAuth = require('../middleware/adminAuth');
+const verifyCaptcha = require('../middleware/verifyCaptcha');
+const { authRateLimit } = require('../middleware/rateLimit');
 const { sendOrderConfirmationEmail, sendCustomEmail, sendOtpEmail } = require('../utils/email');
 const {
   listAllOrders,
@@ -81,7 +83,7 @@ const checkAdminCredentials = async ({ email, password }) => {
   return { ok: true, adminEmail };
 };
 
-router.post('/auth/login', async (req, res) => {
+router.post('/auth/login', authRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');

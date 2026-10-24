@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Lock, 
@@ -14,9 +14,11 @@ import {
 } from 'lucide-react';
 import adminApi from '../utils/adminApi';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import CaptchaWidget from '../components/CaptchaWidget';
 
 const AdminLogin = () => {
   const { login } = useAdminAuth();
+  const captchaRef = useRef(null);
   const [email, setEmail] = useState(localStorage.getItem('adminEmail') || '');
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -34,14 +36,23 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError('');
     setPreviewUrl('');
+    if (!needsOtp && captchaRef.current && !captchaRef.current.isReady()) {
+      setError('Complete the security check first');
+      return;
+    }
+    setIsSubmitting(true);
     try {
       localStorage.removeItem('adminKey');
       localStorage.removeItem('adminToken');
       setOtpStatus('');
-      const res = await adminApi.post('/auth/login', { email: adminEmailNormalized, password });
+      const captcha = captchaRef.current?.getPayload?.() || {};
+      const res = await adminApi.post('/auth/login', {
+        email: adminEmailNormalized,
+        password,
+        ...captcha,
+      });
       if (res.data?.step === 'otp') {
         setNeedsOtp(true);
         localStorage.setItem('adminEmail', adminEmailNormalized);
@@ -65,6 +76,7 @@ const AdminLogin = () => {
         (typeof data === 'string' && data) ||
         err?.response?.statusText;
       setError(apiMsg || err?.message || 'Invalid email or password');
+      captchaRef.current?.refresh?.();
     } finally {
       setIsSubmitting(false);
     }
@@ -169,6 +181,10 @@ const AdminLogin = () => {
                       Reset Password
                     </Link>
                   </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 text-[#0b2a3d]">
+                  <CaptchaWidget ref={captchaRef} />
                 </div>
               </div>
             ) : (

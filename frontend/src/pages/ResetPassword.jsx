@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import userApi from '../utils/userApi';
+import CaptchaWidget from '../components/CaptchaWidget';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
+  const captchaRef = useRef(null);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,13 +31,20 @@ const ResetPassword = () => {
       return;
     }
 
+    if (captchaRef.current && !captchaRef.current.isReady()) {
+      setError('Complete the security check first');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const res = await userApi.post('/reset-password', { token, password });
+      const captcha = captchaRef.current?.getPayload?.() || {};
+      const res = await userApi.post('/reset-password', { token, password, ...captcha });
       setStatus(res.data.message);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to reset password. The link may be invalid or expired.');
+      captchaRef.current?.refresh?.();
     } finally {
       setIsSubmitting(false);
     }
@@ -104,6 +113,8 @@ const ResetPassword = () => {
                 required
               />
             </div>
+
+            <CaptchaWidget ref={captchaRef} />
 
             {error ? (
               <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">

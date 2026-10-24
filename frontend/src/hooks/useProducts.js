@@ -1,8 +1,8 @@
-
 import useSWR from 'swr';
 import apiClient from '../utils/api';
 
-const fetcher = (url) => apiClient.get(url).then(res => res.data);
+const fetcher = (url) =>
+  apiClient.get(url, { timeout: 8000 }).then((res) => res.data);
 
 export function useProducts() {
   const { data: products, error, isLoading } = useSWR(
@@ -11,7 +11,9 @@ export function useProducts() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 60000,
+      dedupingInterval: 120000,
+      keepPreviousData: true,
+      errorRetryCount: 2,
       onError: (fetchError) => {
         console.error('Failed to load products from /api/products:', fetchError);
       },

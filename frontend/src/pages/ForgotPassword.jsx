@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import userApi from '../utils/userApi';
+import CaptchaWidget from '../components/CaptchaWidget';
 
 const ForgotPassword = () => {
+  const captchaRef = useRef(null);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -14,15 +16,21 @@ const ForgotPassword = () => {
     setError('');
     setStatus('');
     setPreviewUrl('');
+    if (captchaRef.current && !captchaRef.current.isReady()) {
+      setError('Complete the security check first');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const res = await userApi.post('/forgot-password', { email });
+      const captcha = captchaRef.current?.getPayload?.() || {};
+      const res = await userApi.post('/forgot-password', { email, ...captcha });
       setStatus(res.data.message);
       if (res.data.previewUrl) {
         setPreviewUrl(res.data.previewUrl);
       }
     } catch (err) {
       setError(err?.response?.data?.message || 'Something went wrong. Please try again.');
+      captchaRef.current?.refresh?.();
     } finally {
       setIsSubmitting(false);
     }
@@ -71,6 +79,8 @@ const ForgotPassword = () => {
                 required
               />
             </div>
+
+            <CaptchaWidget ref={captchaRef} />
 
             {error ? (
               <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">

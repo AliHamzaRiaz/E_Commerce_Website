@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
@@ -6,11 +6,13 @@ import { apiUrl } from '../utils/apiUrl';
 import { ArrowLeft, ShieldCheck, CreditCard, Truck, CheckCircle2, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import CaptchaWidget from '../components/CaptchaWidget';
 
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
+  const captchaRef = useRef(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   
   // Delivery State
@@ -94,10 +96,15 @@ const Checkout = () => {
   const handlePay = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
-    setIsSubmitting(true);
     setSuccess(false);
     setError('');
+
+    if (captchaRef.current && !captchaRef.current.isReady()) {
+      setError('Complete the security check first');
+      return;
+    }
     
+    setIsSubmitting(true);
     try {
       if (!isLoggedIn) {
         setError('Please login to place your order');
@@ -107,12 +114,14 @@ const Checkout = () => {
       
       const fullName = `${firstName} ${lastName}`.trim();
       const address = `${streetAddress}${apartment ? ', ' + apartment : ''}, ${area ? area + ', ' : ''}${city}, ${province}, ${postcode}, ${country}`;
+      const captcha = captchaRef.current?.getPayload?.() || {};
       
       const res = await axios.post(apiUrl('/api/orders'), {
         customer: { fullName, email, phone, address, note: orderNote },
         items: cartItems,
         paymentMethod,
         paymentDetails: paymentMethod === 'card' ? { cardNumber, expiry, cvv } : undefined,
+        ...captcha,
       });
       
       clearCart();
@@ -121,6 +130,7 @@ const Checkout = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setError(err?.response?.data?.message || 'Transaction failed. Please try again.');
+      captchaRef.current?.refresh?.();
     } finally {
       setIsSubmitting(false);
     }
@@ -297,6 +307,9 @@ const Checkout = () => {
                 <div className="flex justify-between items-end mb-10">
                   <div className="space-y-2"><span className="text-[10px] tracking-[0.5em] uppercase font-bold text-white/30">Total Value</span><p className="text-[8px] text-gold uppercase tracking-[0.3em] italic">Inc. Premium Packaging</p></div>
                   <span className="text-4xl font-serif text-white">Rs {total.toLocaleString()}</span>
+                </div>
+                <div className="mb-6 rounded-2xl bg-white p-4 text-[#0b2a3d]">
+                  <CaptchaWidget ref={captchaRef} />
                 </div>
                 {error && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-500/10 border border-red-500/20 text-red-200 text-[9px] font-bold tracking-[0.3em] uppercase text-center rounded-xl mb-6">{error}</motion.div>}
                 <button disabled={isSubmitting || cartItems.length === 0} className="w-full bg-gold text-[#0b2a3d] py-6 rounded-2xl text-[11px] font-bold tracking-[0.5em] uppercase hover:bg-white transition-all duration-700 shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-4">

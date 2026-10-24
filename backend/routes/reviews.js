@@ -1,5 +1,7 @@
 const express = require('express');
 const { listReviewsByProduct, listAllReviews, addReview, defaultReviews } = require('../utils/reviewRepository');
+const verifyCaptcha = require('../middleware/verifyCaptcha');
+const { authRateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
@@ -27,7 +29,7 @@ router.get('/:productId', async (req, res) => {
 });
 
 // Add a new review
-router.post('/', async (req, res) => {
+router.post('/', authRateLimit, verifyCaptcha, async (req, res) => {
   try {
     const { productId, userName, rating, comment } = req.body;
     if (!productId || !userName || !rating || !comment) {

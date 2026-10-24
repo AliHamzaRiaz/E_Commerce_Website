@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import CaptchaWidget from '../components/CaptchaWidget';
 
 const Register = () => {
   const { register } = useAuth();
+  const captchaRef = useRef(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,12 +30,18 @@ const Register = () => {
       setError('Passwords do not match');
       return;
     }
+    if (captchaRef.current && !captchaRef.current.isReady()) {
+      setError('Complete the security check first');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await register({ name, email, password });
+      const captcha = captchaRef.current?.getPayload?.() || {};
+      await register({ name, email, password, ...captcha });
       navigate(nextPath || '/shop', { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Sign up failed');
+      captchaRef.current?.refresh?.();
     } finally {
       setIsSubmitting(false);
     }
@@ -117,6 +125,8 @@ const Register = () => {
               </button>
             </div>
           </div>
+
+          <CaptchaWidget ref={captchaRef} />
 
           {error ? (
             <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">

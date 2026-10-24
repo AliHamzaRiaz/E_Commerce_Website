@@ -21,6 +21,8 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const { router: categoryRoutes, invalidateCategoriesCache } = require('./routes/categories');
 const reviewRoutes = require('./routes/reviews');
+const captchaRoutes = require('./routes/captcha');
+const { globalLimiter, requestQueue } = require('./middleware/rateLimit');
 const { initProductsDb } = require('./utils/productRepository');
 const { initOrdersDb } = require('./utils/orderRepository');
 const { initUsersTable } = require('./utils/userRepository');
@@ -31,10 +33,13 @@ const { sendCustomEmail, initTransporter } = require('./utils/email');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.set('trust proxy', 1);
 app.use(cors());
 app.options(/.*/, cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(globalLimiter);
+app.use(requestQueue);
 
 // Serve frontend static files
 const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
@@ -56,6 +61,7 @@ app.get('/debug-uploads', (req, res) => {
 });
 
 // API routes
+app.use('/api/captcha', captchaRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes(invalidateProductsCache, invalidateCategoriesCache));

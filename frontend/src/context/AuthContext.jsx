@@ -52,15 +52,28 @@ export const AuthProvider = ({ children }) => {
     setUser(u);
   };
 
-  const register = async ({ name, email, password }) => {
-    const res = await userApi.post('/register', { name, email, password });
+  const register = async ({ name, email, password, captchaId, captchaAnswer, captchaRadius }) => {
+    const res = await userApi.post('/register', {
+      name,
+      email,
+      password,
+      captchaId,
+      captchaAnswer,
+      captchaRadius,
+    });
     saveAuth(res.data?.token || '', res.data?.user || null);
     setFavorites([]);
     return res.data;
   };
 
-  const login = async ({ email, password }) => {
-    const res = await userApi.post('/login', { email, password });
+  const login = async ({ email, password, captchaId, captchaAnswer, captchaRadius }) => {
+    const res = await userApi.post('/login', {
+      email,
+      password,
+      captchaId,
+      captchaAnswer,
+      captchaRadius,
+    });
     saveAuth(res.data?.token || '', res.data?.user || null);
     const me = await userApi.get('/me');
     setFavorites(Array.isArray(me.data?.favorites) ? me.data.favorites.map(String) : []);

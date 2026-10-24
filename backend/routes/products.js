@@ -4,22 +4,26 @@ const { defaultProducts } = require('../data/defaultProducts');
 
 const router = express.Router();
 
-// Simple in-memory cache for lightweight products
+// In-memory cache — long enough for smooth 2–3s browse, invalidated on admin writes
 let productsCache = null;
 let productsCacheTime = 0;
-const CACHE_DURATION = 30000; // 30 seconds
+const CACHE_DURATION = Number(process.env.PRODUCTS_CACHE_MS || 180000); // 3 minutes
 
 router.get('/', async (req, res) => {
   try {
-    // Check cache first
     const now = Date.now();
     if (productsCache && now - productsCacheTime < CACHE_DURATION) {
+      res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+      res.setHeader('X-Products-Cache', 'HIT');
       return res.json(productsCache);
     }
+    const started = Date.now();
     const products = await listProducts(false); // lightweight by default
-    // Update cache
     productsCache = products;
     productsCacheTime = now;
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+    res.setHeader('X-Products-Cache', 'MISS');
+    res.setHeader('X-Products-Ms', String(Date.now() - started));
     return res.json(products);
   } catch (e) {
     console.error('[GET /api/products]', e);
