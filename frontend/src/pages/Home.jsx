@@ -274,41 +274,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Founders */}
-      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-6">
-            <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase">Founded 2026</span>
-            <h2 className="text-3xl md:text-5xl font-serif text-[#0b2a3d] leading-tight">
-              Meet Arslan & Hassam
-            </h2>
-            <p className="text-gray-600 leading-relaxed text-lg font-light">
-              Libbaas was founded by two friends with one vision: premium quality and great style should be accessible to everyone. This is your identity. Rise Above Ordinary.
-            </p>
-            <Link
-              to="/about"
-              className="inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[0.3em] text-[#0b2a3d] hover:text-gold transition-colors"
-            >
-              Read Our Story <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            {[
-              { name: 'Arslan', img: '/imags/founder-arslan.jpg' },
-              { name: 'Hassam', img: '/imags/founder-hassam.jpg' },
-            ].map((person) => (
-              <div key={person.name} className="space-y-3">
-                <div className="aspect-[3/4] overflow-hidden rounded-[1.5rem] bg-neutral-100 shadow-lg">
-                  <img src={person.img} alt={person.name} className="w-full h-full object-cover" />
-                </div>
-                <p className="text-sm font-serif text-[#0b2a3d]">{person.name}</p>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Co-Founder</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* What's New */}
       <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-16">
         <div className="text-center mb-12">
