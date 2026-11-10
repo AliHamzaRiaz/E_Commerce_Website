@@ -23,24 +23,21 @@ const createChallenge = () => {
   const op = crypto.randomInt(0, 2) === 0 ? '+' : '−';
   const answer = op === '+' ? a + b : a - b;
   const id = crypto.randomBytes(16).toString('hex');
-  const targetAngle = crypto.randomInt(20, 340);
 
   challenges.set(id, {
     answerHash: hashAnswer(String(answer)),
     expiresAt: Date.now() + TTL_MS,
     used: false,
-    targetAngle,
   });
 
   return {
     id,
     question: `${a} ${op} ${b}`,
-    targetAngle,
     expiresIn: Math.floor(TTL_MS / 1000),
   };
 };
 
-const verifyChallenge = ({ id, answer, radiusAngle }) => {
+const verifyChallenge = ({ id, answer }) => {
   prune();
   if (String(process.env.CAPTCHA_DISABLED || '').toLowerCase() === 'true') {
     return { ok: true, skipped: true };
@@ -54,20 +51,8 @@ const verifyChallenge = ({ id, answer, radiusAngle }) => {
     return { ok: false, message: 'Captcha expired. Please refresh and try again.' };
   }
 
-  const answerOk = entry.answerHash === hashAnswer(String(answer ?? ''));
-  const angle = Number(radiusAngle);
-  const norm = (d) => ((Number(d) % 360) + 360) % 360;
-  const angleDiff = (() => {
-    const a = norm(angle);
-    const b = norm(entry.targetAngle);
-    return Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
-  })();
-  const angleOk =
-    Number.isFinite(angle) &&
-    angleDiff <= Number(process.env.CAPTCHA_ANGLE_TOLERANCE || 18);
-
-  if (!answerOk || !angleOk) {
-    return { ok: false, message: 'Captcha failed. Align the dial and enter the correct answer.' };
+  if (entry.answerHash !== hashAnswer(String(answer ?? ''))) {
+    return { ok: false, message: 'Incorrect captcha answer. Please try again.' };
   }
 
   entry.used = true;

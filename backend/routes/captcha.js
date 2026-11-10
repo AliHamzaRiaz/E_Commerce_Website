@@ -13,14 +13,13 @@ const captchaIssueLimit = createRateLimit({
 router.get('/', captchaIssueLimit, (req, res) => {
   try {
     if (String(process.env.CAPTCHA_DISABLED || '').toLowerCase() === 'true') {
-      return res.json({ disabled: true, id: null, question: null, targetAngle: 0 });
+      return res.json({ disabled: true, id: null, question: null });
     }
     const challenge = createChallenge();
     return res.json({
       disabled: false,
       id: challenge.id,
       question: challenge.question,
-      targetAngle: challenge.targetAngle,
       expiresIn: challenge.expiresIn,
     });
   } catch (e) {

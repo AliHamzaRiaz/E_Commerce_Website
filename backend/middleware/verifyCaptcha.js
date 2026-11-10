@@ -7,12 +7,10 @@ const verifyCaptcha = (req, res, next) => {
 
   const captchaId = req.body?.captchaId || req.headers['x-captcha-id'];
   const captchaAnswer = req.body?.captchaAnswer ?? req.headers['x-captcha-answer'];
-  const captchaRadius = req.body?.captchaRadius ?? req.headers['x-captcha-radius'];
 
   const result = verifyChallenge({
     id: captchaId,
     answer: captchaAnswer,
-    radiusAngle: captchaRadius,
   });
 
   if (!result.ok) {

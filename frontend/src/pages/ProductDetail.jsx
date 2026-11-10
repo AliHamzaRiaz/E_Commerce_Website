@@ -26,7 +26,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, cartItems } = useCart();
-  const { isLoggedIn, isFavorite, toggleFavorite } = useAuth();
+  const { isLoggedIn, user, isFavorite, toggleFavorite } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState('');
@@ -39,6 +39,8 @@ const ProductDetail = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
+  const [reviewerName, setReviewerName] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
@@ -68,22 +70,32 @@ const ProductDetail = () => {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    
+    if (isSubmittingReview) return;
+
+    const name =
+      String(reviewerName || user?.name || '').trim() ||
+      (isLoggedIn ? 'Verified Customer' : 'Guest');
+
+    setIsSubmittingReview(true);
     try {
       const res = await apiClient.post('/api/reviews', {
-        productId: id,
-        userName: isLoggedIn ? 'Verified Customer' : 'Guest User',
+        productId: String(id),
+        userName: name,
         rating: newRating,
-        comment: newComment
+        comment: newComment.trim(),
       });
-      
+
       setReviews([res.data, ...reviews]);
       setNewComment('');
+      setReviewerName('');
+      setNewRating(5);
       setShowReviewForm(false);
       toast.success('Thank you for your feedback!');
     } catch (error) {
       console.error('Error submitting review:', error);
-      toast.error('Failed to submit review');
+      toast.error(error?.response?.data?.message || 'Failed to submit review');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -505,7 +517,10 @@ const ProductDetail = () => {
               </div>
             </div>
             <button 
-              onClick={() => setShowReviewForm(true)}
+              onClick={() => {
+                setReviewerName(String(user?.name || '').trim());
+                setShowReviewForm(true);
+              }}
               className="bg-black text-white px-8 py-4 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-[#0b2a3d] transition-all shadow-lg active:scale-95"
             >
               Write a Review
@@ -587,6 +602,17 @@ const ProductDetail = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">Your Name</label>
+                  <input
+                    type="text"
+                    value={reviewerName}
+                    onChange={(e) => setReviewerName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full bg-neutral-50 border border-gray-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b2a3d]/10 focus:border-[#0b2a3d] transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-900 uppercase tracking-widest">Your Comment</label>
                   <textarea
                     required
@@ -599,9 +625,10 @@ const ProductDetail = () => {
 
                 <button 
                   type="submit"
-                  className="w-full bg-[#0b2a3d] text-white py-5 rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95"
+                  disabled={isSubmittingReview}
+                  className="w-full bg-[#0b2a3d] text-white py-5 rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Post Review
+                  {isSubmittingReview ? 'Posting...' : 'Post Review'}
                 </button>
               </form>
             </div>
