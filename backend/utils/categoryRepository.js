@@ -1,10 +1,10 @@
 const { getPool } = require('./productRepository');
 
 const defaultCategories = [
-  { name: 'bra', displayName: 'Bra', image: '', types: ['Push-Up', 'Bralette', 'Sports', 'Lace', 'Seamless'] },
-  { name: 'underwear', displayName: 'Underwear', image: '', types: ['Hipster', 'Thong', 'Brief', 'High-Waist'] },
-  { name: 'nightwear', displayName: 'Nightwear', image: '', types: ['Chemise', 'Nightgown', 'Robe'] },
-  { name: 'activewear', displayName: 'Activewear', image: '', types: ['Sports Bra', 'Leggings'] }
+  { name: 'winter', displayName: 'Winter Collection', image: '/imags/banner-fashion.jpg', types: ['Coats', 'Sweaters', 'Layers', 'Essentials'] },
+  { name: 'watches', displayName: 'Watches', image: '/imags/banner-advance.jpg', types: ['Classic', 'Sport', 'Luxury', 'Everyday'] },
+  { name: 'clothing', displayName: 'Clothing', image: '/imags/banner-fashion.jpg', types: ['Tops', 'Bottoms', 'Dresses', 'Outerwear'] },
+  { name: 'accessories', displayName: 'Accessories', image: '/imags/banner-advance.jpg', types: ['Bags', 'Belts', 'Jewelry'] }
 ];
 
 const initCategoriesTable = async () => {
@@ -129,18 +129,17 @@ const updateCategory = async (id, { displayName, image, types }) => {
 
 const seedCategoriesIfEmpty = async () => {
   const p = getPool();
-  const { rows } = await p.query('SELECT COUNT(*)::int AS c FROM categories');
-  if (rows[0].c > 0) return;
-
+  // Ensure fashion categories exist even if older lingerie categories are present
   for (const cat of defaultCategories) {
     try {
+      const { rows } = await p.query('SELECT id FROM categories WHERE name = $1 LIMIT 1', [cat.name]);
+      if (rows[0]) continue;
       await addCategory(cat);
     } catch (e) {
-      // Ignore duplicates (in case of race conditions)
       console.warn('[seedCategoriesIfEmpty] Skipping category:', cat.name, e.message);
     }
   }
-  console.log('[seedCategoriesIfEmpty] Seeded default categories');
+  console.log('[seedCategoriesIfEmpty] Ensured default fashion categories');
 };
 
 module.exports = {

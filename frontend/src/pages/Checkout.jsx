@@ -79,8 +79,10 @@ const Checkout = () => {
 
   const discount = useMemo(() => {
     if (cartItems.length === 0) return 0;
+    // 5% off for advance payment (card) when order is over Rs 15,000
     if (paymentMethod !== 'card') return 0;
-    return Math.round(cartTotal * 0.07);
+    if (cartTotal <= 15000) return 0;
+    return Math.round(cartTotal * 0.05);
   }, [cartItems.length, cartTotal, paymentMethod]);
 
   const total = Math.max(0, cartTotal - discount);
@@ -268,18 +270,35 @@ const Checkout = () => {
                   <p className="text-[9px] text-[#0b2a3d]/40 font-medium uppercase tracking-[0.2em] leading-relaxed">Available nationwide across Pakistan</p>
                 </div>
               </button>
-              <button type="button" className="flex flex-col p-10 border border-neutral-100 opacity-30 cursor-not-allowed rounded-[2rem] text-left gap-6 bg-neutral-50/30 group relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4"><span className="text-[8px] font-bold text-gold uppercase tracking-[0.3em] italic">Coming Soon</span></div>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`flex flex-col p-10 border transition-all duration-700 rounded-[2rem] text-left gap-6 ${paymentMethod === 'card' ? 'border-gold bg-neutral-50 shadow-2xl shadow-[#0b2a3d]/5' : 'border-neutral-100 opacity-40 hover:opacity-100'}`}
+              >
                 <div className="flex items-center justify-between w-full">
-                  <div className="w-6 h-6 rounded-full border-2 border-neutral-200" />
-                  <CreditCard size={24} className="text-neutral-200" />
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'card' ? 'border-gold' : 'border-neutral-200'}`}>
+                    {paymentMethod === 'card' && <div className="w-3 h-3 rounded-full bg-gold" />}
+                  </div>
+                  <CreditCard size={24} className={paymentMethod === 'card' ? 'text-gold' : 'text-neutral-200'} />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold tracking-[0.4em] uppercase text-neutral-300 mb-2">Card / Bank Transfer</p>
-                  <p className="text-[9px] text-neutral-300 font-medium uppercase tracking-[0.2em] leading-relaxed">Direct payment reward: 7% Off</p>
+                  <p className="text-[11px] font-bold tracking-[0.4em] uppercase text-[#0b2a3d] mb-2">Advance Payment</p>
+                  <p className="text-[9px] text-[#0b2a3d]/40 font-medium uppercase tracking-[0.2em] leading-relaxed">
+                    5% off on orders over Rs 15,000
+                  </p>
                 </div>
               </button>
             </div>
+            {paymentMethod === 'card' ? (
+              <p className="text-xs text-[#0b2a3d]/60 leading-relaxed">
+                Choose advance payment to confirm your order. Our team will share bank transfer details on WhatsApp after you place the order.
+                {cartTotal > 15000 ? (
+                  <span className="block mt-2 text-gold font-bold">You qualify for 5% advance payment discount.</span>
+                ) : (
+                  <span className="block mt-2">Add more items to reach Rs 15,000 and unlock 5% off.</span>
+                )}
+              </p>
+            ) : null}
           </section>
         </div>
 
@@ -302,7 +321,13 @@ const Checkout = () => {
             </div>
             <div className="space-y-6 pt-10 border-t border-white/5">
               <div className="flex justify-between text-[11px] tracking-[0.3em] uppercase text-white/40 font-bold"><span>Subtotal</span><span className="text-white">Rs {cartTotal.toLocaleString()}</span></div>
-              <div className="flex justify-between text-[11px] tracking-[0.3em] uppercase text-white/40 font-bold"><span>Shipping</span><span className="text-gold italic">Complimentary</span></div>
+              <div className="flex justify-between text-[11px] tracking-[0.3em] uppercase text-white/40 font-bold"><span>Shipping</span><span className="text-gold italic">Free</span></div>
+              {discount > 0 ? (
+                <div className="flex justify-between text-[11px] tracking-[0.3em] uppercase text-white/40 font-bold">
+                  <span>Advance Discount (5%)</span>
+                  <span className="text-gold">- Rs {discount.toLocaleString()}</span>
+                </div>
+              ) : null}
               <div className="pt-8 border-t border-white/10">
                 <div className="flex justify-between items-end mb-10">
                   <div className="space-y-2"><span className="text-[10px] tracking-[0.5em] uppercase font-bold text-white/30">Total Value</span><p className="text-[8px] text-gold uppercase tracking-[0.3em] italic">Inc. Premium Packaging</p></div>

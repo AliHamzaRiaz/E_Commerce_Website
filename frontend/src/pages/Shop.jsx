@@ -456,7 +456,7 @@ const Shop = () => {
               {searchQuery ? 'Search Results' : 'The Collections'}
             </span>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-serif tracking-tight uppercase text-white leading-none">
-              {searchQuery ? `"${searchQuery}"` : (selectedCategory === 'All' ? 'Art of Lingerie' : selectedCategory)}
+              {searchQuery ? `"${searchQuery}"` : (selectedCategory === 'All' ? 'Fashion Collection' : selectedCategory)}
             </h1>
             <div className="h-px w-24 bg-gold/50 mx-auto mt-10" />
             <p className="mt-10 text-white/60 text-[10px] tracking-[0.5em] uppercase font-bold">

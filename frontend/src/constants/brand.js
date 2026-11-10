@@ -1,0 +1,8 @@
+export const BRAND_PHONE = '03164314464';
+export const BRAND_PHONE_DISPLAY = '0316 4314464';
+export const BRAND_WHATSAPP = '923164314464';
+export const BRAND_WHATSAPP_URL = `https://wa.me/${BRAND_WHATSAPP}`;
+export const BRAND_EMAIL = 'libbaasbyjh@gmail.com';
+export const BRAND_TAGLINE = 'Rise Above Ordinary';
+export const ADVANCE_DISCOUNT_MIN = 15000;
+export const ADVANCE_DISCOUNT_RATE = 0.05;

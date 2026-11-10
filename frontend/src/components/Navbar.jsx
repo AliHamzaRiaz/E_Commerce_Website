@@ -49,25 +49,31 @@ const Navbar = ({ onCartClick }) => {
             <div className="max-w-[1800px] mx-auto px-6 py-2 flex items-center relative overflow-hidden">
               <div className="animate-marquee-css flex items-center whitespace-nowrap">
                 <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
-                  <span className="px-10">Welcome to our shop</span>
+                  <span className="px-10">Rise Above Ordinary</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">Pakistan's Premier Lingerie Destination</span>
+                  <span className="px-10">Clothing & Fashion</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">FREE DELIVERY</span>
+                  <span className="px-10">FREE DELIVERY ON ALL ORDERS</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">5% OFF ADVANCE PAYMENT OVER RS 15,000</span>
                 </p>
                 <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
-                  <span className="px-10">Welcome to our shop</span>
+                  <span className="px-10">Rise Above Ordinary</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">Pakistan's Premier Lingerie Destination</span>
+                  <span className="px-10">Clothing & Fashion</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">FREE DELIVERY</span>
+                  <span className="px-10">FREE DELIVERY ON ALL ORDERS</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">5% OFF ADVANCE PAYMENT OVER RS 15,000</span>
                 </p>
                 <p className="text-[8px] sm:text-[9px] font-black tracking-[0.4em] uppercase flex items-center">
-                  <span className="px-10">Welcome to our shop</span>
+                  <span className="px-10">Rise Above Ordinary</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">Pakistan's Premier Lingerie Destination</span>
+                  <span className="px-10">Clothing & Fashion</span>
                   <span className="text-gold/40 text-[12px]">|</span>
-                  <span className="px-10">FREE DELIVERY</span>
+                  <span className="px-10">FREE DELIVERY ON ALL ORDERS</span>
+                  <span className="text-gold/40 text-[12px]">|</span>
+                  <span className="px-10">5% OFF ADVANCE PAYMENT OVER RS 15,000</span>
                 </p>
               </div>
               <button 

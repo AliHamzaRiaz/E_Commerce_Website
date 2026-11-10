@@ -1,10 +1,11 @@
 const { getPool } = require('./productRepository');
 
 const defaultReviews = [
-  { id: 1, userName: "Esha", productId: 1, rating: 5, comment: "Fast delivery, impressive quality!" },
-  { id: 2, userName: "Shaheen", productId: 2, rating: 5, comment: "Pleasant, really happy to get it!" },
-  { id: 3, userName: "Awais", productId: 3, rating: 5, comment: "Loved this dress! The color and design are beautiful, and the fit is perfect." },
-  { id: 4, userName: "Fatima", productId: 4, rating: 5, comment: "Excellent fabric and stitching. Will definitely order again!" }
+  { id: 1, userName: 'Ayesha', productId: 1, rating: 5, comment: 'Premium quality clothing at a fair price. Libbaas truly helps you rise above ordinary!' },
+  { id: 2, userName: 'Hassan', productId: 2, rating: 5, comment: 'Ordered from the Winter Collection — fabric, fit, and packaging were excellent. Free shipping was a plus.' },
+  { id: 3, userName: 'Zara', productId: 3, rating: 5, comment: 'Love the watch I bought. Stylish, affordable, and arrived quickly. Will shop again.' },
+  { id: 4, userName: 'Omar', productId: 4, rating: 5, comment: 'Advance payment discount on my big order was great. Quality feels premium without the premium price.' },
+  { id: 5, userName: 'Fatima', productId: 5, rating: 5, comment: 'Modern styles and confident looks. Libbaas is becoming my go-to fashion destination.' },
 ];
 
 const initReviewsTable = async () => {
@@ -40,17 +41,20 @@ const initReviewsTable = async () => {
 
 const seedReviewsIfEmpty = async () => {
   const p = getPool();
-  
+
   const { rows } = await p.query(`SELECT COUNT(*) FROM reviews`);
-  if (Number(rows[0].count) === 0) {
-    console.log('Seeding default reviews...');
+  const count = Number(rows[0].count);
+  // Refresh demo reviews for the fashion rebrand when only seed-sized data exists
+  if (count === 0 || count <= 8) {
+    console.log('Seeding fashion reviews...');
+    await p.query('DELETE FROM reviews');
     for (const review of defaultReviews) {
       await p.query(
         `INSERT INTO reviews (product_id, user_name, rating, comment, created_at) VALUES ($1, $2, $3, $4, NOW())`,
         [review.productId, review.userName, review.rating, review.comment]
       );
     }
-    console.log('✅ Default reviews seeded');
+    console.log('✅ Fashion reviews seeded');
   } else {
     console.log('✅ Reviews already exist, skipping seed');
   }

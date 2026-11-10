@@ -72,7 +72,7 @@ const Contact = () => {
         {/* Header Section */}
         <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto mb-24">
           <p className="text-[#0b2a3d]/60 text-sm leading-relaxed font-medium italic">
-            "Whether you seek advice on sizing, styling, or have an inquiry about your order, our dedicated team is here to ensure your LIBBAAS experience is flawless."
+            &quot;Whether you seek advice on sizing, styling, or have an inquiry about your order, our dedicated team is here to ensure your LIBBAAS experience is flawless.&quot;
           </p>
         </motion.div>
 
@@ -98,8 +98,8 @@ const Contact = () => {
                       <Phone size={18} strokeWidth={1.5} />
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Personal Assistance</p>
-                      <p className="text-sm font-bold text-[#0b2a3d] tracking-wide">03187327773</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Phone / WhatsApp</p>
+                      <p className="text-sm font-bold text-[#0b2a3d] tracking-wide">0316 4314464</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-6 group">
@@ -107,9 +107,9 @@ const Contact = () => {
                       <MapPin size={18} strokeWidth={1.5} />
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Our Flagship</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Location</p>
                       <p className="text-sm font-bold text-[#0b2a3d] tracking-wide leading-relaxed">
-                        C-II Block C 2 Phase 1 Johar Town,<br/>Lahore, 54770
+                        Online store only — physical outlets coming soon
                       </p>
                     </div>
                   </div>

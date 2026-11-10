@@ -1,4 +1,4 @@
-# LIBBAAS - Luxury Lingerie E-commerce
+# LIBBAAS - Fashion & Clothing E-commerce
 
 ## Project Structure
 

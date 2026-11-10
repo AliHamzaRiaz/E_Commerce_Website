@@ -23,11 +23,11 @@ const Footer = () => {
                 />
                 <h2 className="text-2xl sm:text-2xl lg:text-3xl font-serif tracking-[0.3em] uppercase text-[#0b2a3d] font-bold">LIBBAAS</h2>
               </div>
-              <span className="text-[7px] sm:text-[8px] tracking-[0.5em] sm:tracking-[0.6em] uppercase text-gold font-bold opacity-80">Premium Lingerie Destination</span>
+              <span className="text-[7px] sm:text-[8px] tracking-[0.5em] sm:tracking-[0.6em] uppercase text-gold font-bold opacity-80">Rise Above Ordinary</span>
             </Link>
             
             <p className="text-[#0b2a3d]/60 text-xs sm:text-sm leading-relaxed max-w-sm font-medium">
-              Redefining luxury through invisible elegance. Our collections are crafted for the sophisticated woman.
+              Premium-quality fashion, modern styles, and exceptional value — built by Arslan and Hassam in 2026.
             </p>
 
             <div className="flex items-center gap-4 sm:gap-6">
@@ -68,10 +68,14 @@ const Footer = () => {
             <div className="space-y-4 sm:space-y-6 lg:space-y-8">
               <h3 className="text-[9px] sm:text-[10px] font-bold tracking-[0.3em] sm:tracking-[0.4em] uppercase text-gold">Company</h3>
               <ul className="space-y-2 sm:space-y-3 lg:space-y-4">
-                {['Our Story', 'Craftsmanship', 'Contact', 'Journal'].map(item => (
-                  <li key={item}>
-                    <Link to={item === 'Contact' ? '/contact' : '/about'} className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors">
-                      {item}
+                {[
+                  { name: 'Our Story', path: '/about' },
+                  { name: 'Contact', path: '/contact' },
+                  { name: 'FAQ', path: '/faq' },
+                ].map((item) => (
+                  <li key={item.name}>
+                    <Link to={item.path} className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#0b2a3d]/70 hover:text-gold transition-colors">
+                      {item.name}
                     </Link>
                   </li>
                 ))}
@@ -104,11 +108,11 @@ const Footer = () => {
               <ul className="space-y-4 sm:space-y-6">
                 <li className="flex items-start gap-3 sm:gap-4 text-[#0b2a3d]/70 group">
                   <MapPin size={16} sm:size={18} className="text-gold shrink-0 mt-0.5" />
-                  <span className="text-xs sm:text-xs font-medium leading-relaxed">C-II Block C 2 Phase 1 Johar Town, Lahore, 54770</span>
+                  <span className="text-xs sm:text-xs font-medium leading-relaxed">Online store only — outlets coming soon</span>
                 </li>
                 <li className="flex items-center gap-3 sm:gap-4 text-[#0b2a3d]/70 group">
                   <Phone size={16} sm:size={18} className="text-gold shrink-0" />
-                  <span className="text-xs sm:text-xs font-medium">03187327773</span>
+                  <span className="text-xs sm:text-xs font-medium">0316 4314464</span>
                 </li>
                 <li className="flex items-center gap-3 sm:gap-4 text-[#0b2a3d]/70 group">
                   <Mail size={16} sm:size={18} className="text-gold shrink-0" />

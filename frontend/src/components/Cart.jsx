@@ -174,7 +174,7 @@ const Cart = ({ isOpen, onClose }) => {
                 </div>
                 
                 <p className="text-center text-[10px] text-neutral-400 uppercase tracking-[0.2em] pt-2">
-                  Free shipping on orders over Rs 5,000
+                  Free shipping on all orders · 5% off advance payment over Rs 15,000
                 </p>
               </div>
             )}

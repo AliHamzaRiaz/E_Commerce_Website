@@ -9,7 +9,9 @@ const router = express.Router();
 
 const computeTotals = ({ items, paymentMethod }) => {
   const subtotal = (items || []).reduce((sum, i) => sum + Number(i.price || 0) * Number(i.quantity || 0), 0);
-  const discount = paymentMethod === 'card' ? Math.round(subtotal * 0.07) : 0;
+  // 5% off when paying in advance (card) on orders over Rs 15,000
+  const discount =
+    paymentMethod === 'card' && subtotal > 15000 ? Math.round(subtotal * 0.05) : 0;
   const total = Math.max(0, subtotal - discount);
   return { subtotal, discount, total };
 };
@@ -51,14 +53,8 @@ router.post('/', checkoutRateLimit, verifyCaptcha, async (req, res) => {
     if (paymentMethod !== 'cash' && paymentMethod !== 'card') {
       return res.status(400).json({ message: 'Invalid payment method' });
     }
-    if (paymentMethod === 'card') {
-      const cardNumber = paymentDetails?.cardNumber || '';
-      const expiry = paymentDetails?.expiry || '';
-      const cvv = paymentDetails?.cvv || '';
-      if (!cardNumber || !expiry || !cvv) {
-        return res.status(400).json({ message: 'Missing card details' });
-      }
-    }
+    // Advance payment (stored as 'card') — bank details shared after order; no card fields required
+
 
     const { subtotal, discount, total } = computeTotals({ items, paymentMethod });
     const now = new Date().toISOString();

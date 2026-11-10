@@ -59,7 +59,7 @@ const Returns = () => {
                 Email us at: <a href="mailto:libbaasbyjh@gmail.com" className="text-gold hover:underline">libbaasbyjh@gmail.com</a>
                 </p>
                 <p className="text-sm font-medium text-[#0b2a3d]">
-                  Contact us on WhatsApp at: <a href="https://wa.me/923187327773" className="text-gold hover:underline">+92 318 7327773</a> (24/7)
+                  Contact us on WhatsApp at: <a href="https://wa.me/923164314464" className="text-gold hover:underline">0316 4314464</a> (24/7)
                 </p>
               </div>
             </div>
