@@ -66,18 +66,20 @@ const Navbar = ({ onCartClick }) => {
       <div className="bg-black text-white border-t border-white/10">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 sm:h-[72px]">
-            <Link to="/" className="flex items-center gap-3 shrink-0">
+            <Link to="/" className="flex items-center shrink-0 group" aria-label="LIBBAAS Home">
               <img
                 src="/imags/logo.png"
-                alt="LIBBAAS"
-                className="h-9 sm:h-11 w-auto object-contain brightness-0 invert"
+                alt="LIBBAAS.com — Rise Above Extraordinary"
+                className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                 onError={(e) => {
                   e.target.style.display = 'none';
+                  const fallback = e.target.nextElementSibling;
+                  if (fallback) fallback.classList.remove('hidden');
                 }}
               />
-              <div className="leading-none">
-                <div className="text-lg sm:text-xl font-serif tracking-[0.2em] uppercase">LIBBAAS</div>
-                <div className="text-[8px] tracking-[0.35em] uppercase text-white/50 mt-1">Rise Above Ordinary</div>
+              <div className="hidden leading-none pl-1">
+                <div className="text-lg sm:text-xl font-serif tracking-[0.2em] uppercase text-[#d4af37]">LIBBAAS</div>
+                <div className="text-[8px] tracking-[0.28em] uppercase text-[#d4af37]/70 mt-1">Rise Above Extraordinary</div>
               </div>
             </Link>
 

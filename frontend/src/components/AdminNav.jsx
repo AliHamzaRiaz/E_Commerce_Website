@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Package, ShoppingBag, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Package, ShoppingBag, LogOut } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 const AdminNav = () => {
@@ -33,22 +33,22 @@ const AdminNav = () => {
               to={ordersPath}
               className="flex items-center gap-4 group"
             >
-              <img 
-                src="/imags/logo.png" 
-                alt="Admin" 
-                className="h-10 w-auto object-contain"
+              <img
+                src="/imags/logo.png"
+                alt="LIBBAAS Admin"
+                className="h-12 w-auto object-contain rounded-md"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
                 }}
               />
-              <LayoutDashboard size={20} className="text-gold" />
               <div className="flex flex-col">
                 <span className="font-serif text-white tracking-[0.15em] uppercase text-lg font-bold leading-tight">
-                  Admin <span className="text-gold font-light">Panel</span>
+                  Admin <span className="text-[#d4af37] font-light">Panel</span>
                 </span>
-                <span className="text-[8px] tracking-[0.4em] uppercase text-white/40 font-bold">Secure Access</span>
+                <span className="text-[8px] tracking-[0.35em] uppercase text-[#d4af37]/70 font-bold">
+                  Rise Above Extraordinary
+                </span>
               </div>
             </Link>
             

@@ -13,17 +13,20 @@ const Footer = () => {
           
           {/* Brand Identity */}
           <div className="lg:col-span-4 space-y-6 sm:space-y-8 lg:space-y-10">
-            <Link to="/" className="flex flex-col group">
-              <div className="flex items-center gap-3 sm:gap-4 mb-2">
-                <img 
-                  src="/imags/logo.png" 
-                  alt="LIBBAAS" 
-                  className="h-10 sm:h-12 lg:h-14 w-auto object-contain transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => e.target.style.display = 'none'}
+            <Link to="/" className="inline-flex flex-col group">
+              <div className="bg-black rounded-xl p-3 sm:p-4 w-fit shadow-sm border border-black/10">
+                <img
+                  src="/imags/logo.png"
+                  alt="LIBBAAS.com — Rise Above Extraordinary"
+                  className="h-20 sm:h-24 lg:h-28 w-auto object-contain transition-transform duration-700 group-hover:scale-[1.03]"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
-                <h2 className="text-2xl sm:text-2xl lg:text-3xl font-serif tracking-[0.3em] uppercase text-[#0b2a3d] font-bold">LIBBAAS</h2>
               </div>
-              <span className="text-[7px] sm:text-[8px] tracking-[0.5em] sm:tracking-[0.6em] uppercase text-gold font-bold opacity-80">Rise Above Ordinary</span>
+              <span className="mt-3 text-[8px] sm:text-[9px] tracking-[0.35em] uppercase text-[#b38728] font-semibold">
+                Rise Above Extraordinary
+              </span>
             </Link>
             
             <p className="text-[#0b2a3d]/60 text-xs sm:text-sm leading-relaxed max-w-sm font-medium">

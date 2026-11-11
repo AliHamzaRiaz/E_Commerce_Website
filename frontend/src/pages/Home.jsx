@@ -11,7 +11,7 @@ const HERO_BANNERS = [
     id: 'fashion',
     image: '/imags/banner-fashion.jpg',
     eyebrow: 'Clothing & Fashion 2026',
-    title: 'Rise Above Ordinary',
+    title: 'Rise Above Extraordinary',
     text: 'Premium-quality fashion, modern styles, and exceptional value — built for your identity.',
     cta: 'Shop Fashion',
     to: '/shop',

@@ -24,7 +24,7 @@ const About = () => {
 
         <div className="relative z-10 text-center px-4 space-y-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <span className="text-gold tracking-[0.6em] uppercase text-[10px] font-bold block mb-2">Rise Above Ordinary</span>
+            <span className="text-gold tracking-[0.6em] uppercase text-[10px] font-bold block mb-2">Rise Above Extraordinary</span>
             <h1 className="text-4xl sm:text-6xl font-serif tracking-[0.1em] uppercase text-white">About Libbaas</h1>
             <div className="h-px w-12 bg-gold/50 mx-auto mt-6" />
           </motion.div>
@@ -38,7 +38,7 @@ const About = () => {
               <div className="w-12 h-px bg-gold" />
               <span className="text-[10px] font-bold tracking-[0.4em] uppercase">About Us</span>
             </div>
-            <h2 className="text-4xl font-serif tracking-tight text-[#0b2a3d] leading-tight">Rise Above Ordinary.</h2>
+            <h2 className="text-4xl font-serif tracking-tight text-[#0b2a3d] leading-tight">Rise Above Extraordinary.</h2>
             <p className="text-gray-600 font-light leading-relaxed">
               Founded in 2026 by Arslan and Hassam, Libbaas was born from a vision to redefine the way people experience fashion.
             </p>
@@ -55,7 +55,7 @@ const About = () => {
               Our commitment is simple: deliver value beyond expectations and help you feel confident in everything you wear.
             </p>
             <p className="text-[#0b2a3d] font-serif text-xl italic">
-              This is Libbaas. This is your identity. Rise Above Ordinary.
+              This is Libbaas. This is your identity. Rise Above Extraordinary.
             </p>
           </motion.div>
 
@@ -88,7 +88,7 @@ const About = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <motion.div {...fadeInUp} className="text-center space-y-4">
             <span className="text-gold text-[10px] font-bold tracking-[0.4em] uppercase">Our Story</span>
-            <h2 className="text-4xl font-serif tracking-tight text-[#0b2a3d]">Libbaas — Rise Above Ordinary.</h2>
+            <h2 className="text-4xl font-serif tracking-tight text-[#0b2a3d]">Libbaas — Rise Above Extraordinary.</h2>
           </motion.div>
           <motion.div {...fadeInUp} className="space-y-6 text-gray-600 font-light leading-relaxed text-base md:text-lg">
             <p>
@@ -110,7 +110,7 @@ const About = () => {
               We are not just building a store. We are building a brand, a community, and an identity.
             </p>
             <p className="text-[#0b2a3d] font-serif text-xl italic text-center pt-4">
-              Libbaas — Rise Above Ordinary.
+              Libbaas — Rise Above Extraordinary.
             </p>
           </motion.div>
         </div>
@@ -149,7 +149,7 @@ const About = () => {
 
       <section className="max-w-4xl mx-auto px-4 text-center py-16 space-y-12">
         <motion.div {...fadeInUp} className="space-y-6">
-          <h2 className="text-4xl md:text-5xl font-serif tracking-tight text-[#0b2a3d]">Rise Above Ordinary</h2>
+          <h2 className="text-4xl md:text-5xl font-serif tracking-tight text-[#0b2a3d]">Rise Above Extraordinary</h2>
           <p className="text-gray-500 text-lg font-light italic leading-relaxed">
             Discover fashion that builds confidence — premium style, exceptional value, your identity.
           </p>
