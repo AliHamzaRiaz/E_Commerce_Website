@@ -62,6 +62,46 @@ const Home = () => {
   const featuredProducts = allProducts.slice(0, 8);
   const heroSlides = HERO_BANNERS;
 
+  const getCategoryImage = (category, fallback) => {
+    if (!allProducts || allProducts.length === 0) return fallback;
+    const product = allProducts.find(
+      (p) => String(p.category).toLowerCase() === String(category).toLowerCase()
+    );
+    return product ? product.image : fallback;
+  };
+
+  const homeCategories = (() => {
+    const featuredNames = FEATURED_COLLECTIONS.map((c) => c.name.toLowerCase());
+    const fromApi = (categories || [])
+      .map((cat) => {
+        const featured = FEATURED_COLLECTIONS.find(
+          (f) => f.name.toLowerCase() === String(cat.displayName || '').toLowerCase()
+        );
+        return {
+          id: cat.id || cat.displayName,
+          name: cat.displayName,
+          path: `/shop?category=${encodeURIComponent(cat.displayName)}`,
+          image:
+            cat.image ||
+            getCategoryImage(cat.displayName, featured?.image || '/imags/banner-fashion.jpg'),
+          blurb: featured?.blurb || 'Shop the collection',
+          priority: featuredNames.includes(String(cat.displayName || '').toLowerCase()) ? 0 : 1,
+        };
+      })
+      .sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
+
+    if (fromApi.length > 0) return fromApi.slice(0, 4);
+
+    return FEATURED_COLLECTIONS.map((col) => ({
+      id: col.name,
+      name: col.name,
+      path: col.path,
+      image: getCategoryImage(col.name, col.image),
+      blurb: col.blurb,
+      priority: 0,
+    }));
+  })();
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentHeroIndex((prev) => (prev + 1) % heroSlides.length);
@@ -77,14 +117,6 @@ const Home = () => {
       return () => clearInterval(interval);
     }
   }, [reviews.length]);
-
-  const getCategoryImage = (category, fallback) => {
-    if (!allProducts || allProducts.length === 0) return fallback;
-    const product = allProducts.find(
-      (p) => String(p.category).toLowerCase() === String(category).toLowerCase()
-    );
-    return product ? product.image : fallback;
-  };
 
   if (loading) {
     return (
@@ -200,77 +232,70 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Collections */}
-      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-20">
-        <div className="text-center mb-12">
-          <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase mb-4 block">Collections</span>
-          <h2 className="text-3xl md:text-4xl font-serif text-[#1a1a1a] uppercase tracking-widest">
-            Winter & Watches
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {FEATURED_COLLECTIONS.map((col) => (
+      {/* Categories as Collections */}
+      <section className="bg-white border-y border-neutral-100">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-12 lg:py-16">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 sm:mb-8">
+            <div>
+              <span className="text-[#c5a059] text-[10px] sm:text-xs font-bold tracking-[0.35em] uppercase block mb-2">
+                Categories
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-black uppercase tracking-wide">
+                Shop Collections
+              </h2>
+            </div>
             <Link
-              key={col.name}
-              to={col.path}
-              className="group relative min-h-[360px] overflow-hidden rounded-[2rem]"
+              to="/shop"
+              className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] text-neutral-600 hover:text-black"
             >
-              <img
-                src={col.image}
-                alt={col.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0b2a3d]/90 via-[#0b2a3d]/30 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-10 space-y-3 text-white">
-                <p className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">{col.blurb}</p>
-                <h3 className="text-3xl font-serif">{col.name}</h3>
-                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em]">
-                  Explore <ArrowRight size={14} />
-                </span>
-              </div>
+              View all <ArrowRight size={14} />
             </Link>
-          ))}
-        </div>
-      </section>
+          </div>
 
-      {/* Categories */}
-      <section className="max-w-[1800px] mx-auto px-6 sm:px-10 lg:px-14 py-16 bg-[#fafaf8]">
-        <div className="text-center mb-16">
-          <span className="text-[#c5a059] text-xs font-bold tracking-[0.4em] uppercase mb-4 block">Our Collection</span>
-          <h2 className="text-3xl md:text-4xl font-serif text-[#1a1a1a] uppercase tracking-widest">
-            Find Your Style
-          </h2>
-        </div>
-        <div className="flex justify-center gap-8 md:gap-12 overflow-x-auto pb-10 scrollbar-hide">
-          {(categories.length > 0 ? categories.slice(0, 6) : FEATURED_COLLECTIONS.map((c, i) => ({
-            id: i,
-            displayName: c.name,
-            image: c.image,
-          }))).map((cat, idx) => (
-            <motion.div
-              key={cat.id || cat.displayName}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: idx * 0.1 }}
-            >
+          <div
+            className={`grid gap-2.5 sm:gap-4 lg:gap-5 ${
+              homeCategories.length === 1
+                ? 'grid-cols-1'
+                : homeCategories.length === 2
+                  ? 'grid-cols-1 sm:grid-cols-2'
+                  : homeCategories.length === 3
+                    ? 'grid-cols-2 sm:grid-cols-3'
+                    : 'grid-cols-2 lg:grid-cols-4'
+            }`}
+          >
+            {homeCategories.map((cat) => (
               <Link
-                to={`/shop?category=${encodeURIComponent(cat.displayName)}`}
-                className="flex flex-col items-center gap-4 group min-w-fit"
+                key={cat.id || cat.name}
+                to={cat.path}
+                className={`group relative overflow-hidden bg-black ${
+                  homeCategories.length <= 2
+                    ? 'h-[38vh] max-h-[320px] sm:h-[420px] sm:max-h-none'
+                    : 'aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] max-h-[42vh] sm:max-h-none'
+                }`}
               >
-                <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white shadow-xl group-hover:shadow-2xl group-hover:border-[#c5a059] transition-all duration-500">
-                  <img
-                    src={cat.image || getCategoryImage(cat.displayName, '/imags/banner-fashion.jpg')}
-                    alt={cat.displayName}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-6 lg:p-8 text-white">
+                  {cat.blurb ? (
+                    <p className="hidden sm:block text-[10px] uppercase tracking-[0.3em] text-[#d4af37] font-semibold mb-2 line-clamp-1">
+                      {cat.blurb}
+                    </p>
+                  ) : null}
+                  <h3 className="text-sm sm:text-2xl lg:text-3xl font-serif leading-tight line-clamp-2">
+                    {cat.name}
+                  </h3>
+                  <span className="mt-2 sm:mt-3 inline-flex items-center gap-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-white/90 group-hover:text-[#d4af37] transition-colors">
+                    Explore <ArrowRight size={12} />
+                  </span>
                 </div>
-                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1a1a1a] group-hover:text-[#c5a059] transition-colors duration-300">
-                  {cat.displayName}
-                </span>
               </Link>
-            </motion.div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
