@@ -5,6 +5,7 @@ import { ArrowRight, Star, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
 import { useReviews } from '../hooks/useReviews';
+import { getDiscountPercent } from '../utils/pricing';
 
 const HERO_BANNERS = [
   {
@@ -306,13 +307,13 @@ const Home = () => {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {featuredProducts.slice(0, 5).map((p) => {
-            const discountPercent =
-              p.originalPrice > p.price
-                ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
-                : null;
+            const discountPercent = getDiscountPercent(p);
+            const price = Number(p.price || 0);
+            const originalPrice = Number(p.originalPrice || 0);
+            const hasCompareAt = originalPrice > price;
             return (
               <Link key={p.id} to={`/product/${p.id}`} className="group relative">
-                {discountPercent ? (
+                {discountPercent > 0 ? (
                   <div className="absolute top-3 left-3 bg-[#e72e2e] text-white text-xs font-bold px-3 py-1 uppercase z-10">
                     -{discountPercent}%
                   </div>
@@ -327,7 +328,14 @@ const Home = () => {
                 </div>
                 <div className="mt-4 text-center">
                   <h3 className="text-sm font-medium text-[#1a1a1a]">{p.name}</h3>
-                  <p className="text-[#c5a059] font-bold mt-1">Rs {p.price?.toLocaleString()}</p>
+                  <div className="mt-1 flex items-center justify-center gap-2">
+                    {hasCompareAt ? (
+                      <span className="text-xs text-neutral-400 line-through">
+                        Rs {originalPrice.toLocaleString()}
+                      </span>
+                    ) : null}
+                    <p className="text-[#c5a059] font-bold">Rs {price.toLocaleString()}</p>
+                  </div>
                 </div>
               </Link>
             );

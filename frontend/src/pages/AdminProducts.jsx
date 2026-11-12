@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import adminApi from '../utils/adminApi';
 import AdminNav from '../components/AdminNav';
+import { formatDiscountLabel, getDiscountPercent } from '../utils/pricing';
 
 const parseList = (s) =>
   String(s || '')
@@ -285,11 +286,22 @@ const AdminProducts = () => {
         parsedVariations[k] = parseList(v);
       });
 
+      const price = Number(form.price || 0);
+      const originalPrice = Number(form.originalPrice || 0);
+      const computedOff = getDiscountPercent({ price, originalPrice, discount: form.discount });
+      const discountText = String(form.discount || '').trim();
+      // Keep custom labels (e.g. NEW); sync any % label to the real price gap
+      const discount =
+        computedOff > 0 && (!discountText || /\d+\s*%/i.test(discountText))
+          ? formatDiscountLabel(computedOff)
+          : discountText;
+
       const payload = {
         ...form,
         id: editingId, // Ensure ID is passed for updates
-        price: Number(form.price || 0),
-        originalPrice: Number(form.originalPrice || 0),
+        price,
+        originalPrice,
+        discount,
         stock: Number(form.stock || 0),
         colors: currentColors,
         sizes: parseList(form.sizes),
@@ -388,6 +400,12 @@ const AdminProducts = () => {
       totalValue: products.reduce((acc, p) => acc + (p.price * p.stock), 0)
     };
   }, [products]);
+
+  const formDiscountPercent = getDiscountPercent({
+    price: form.price,
+    originalPrice: form.originalPrice,
+    discount: form.discount,
+  });
 
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
@@ -585,6 +603,17 @@ const AdminProducts = () => {
                         className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-5 py-3.5 text-sm focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/5 transition-all rounded-2xl placeholder:text-slate-400"
                         placeholder="e.g. 15% OFF"
                       />
+                      {formDiscountPercent > 0 ? (
+                        <p className="text-[10px] text-slate-500 ml-1">
+                          Badge will show{' '}
+                          <span className="font-bold text-red-600">-{formDiscountPercent}%</span>{' '}
+                          from List vs Compare At
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 ml-1">
+                          Set Compare At higher than List Price to show an off badge
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-slate-700 ml-1">Stock Level</label>
