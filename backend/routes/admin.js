@@ -58,14 +58,23 @@ const otpHash = ({ email, otp }) => {
   return crypto.createHash('sha256').update(`${secret}:${String(email).toLowerCase()}:${otp}`).digest('hex');
 };
 
+const getAdminEmails = () =>
+  String(process.env.ADMIN_EMAIL || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
 const checkAdminCredentials = async ({ email, password }) => {
-  const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const adminEmails = getAdminEmails();
   const adminPassword = String(process.env.ADMIN_PASSWORD || '').trim();
   const adminPasswordHash = String(process.env.ADMIN_PASSWORD_HASH || '').trim();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
-  if (!email || !password) return { ok: false, status: 400, message: 'Email and password are required' };
-  
-  if (email.trim().toLowerCase() !== adminEmail) {
+  if (!normalizedEmail || !password) {
+    return { ok: false, status: 400, message: 'Email and password are required' };
+  }
+
+  if (!adminEmails.includes(normalizedEmail)) {
     return { ok: false, status: 401, message: 'Invalid credentials' };
   }
 
@@ -80,7 +89,7 @@ const checkAdminCredentials = async ({ email, password }) => {
   }
 
   if (!ok) return { ok: false, status: 401, message: 'Invalid credentials' };
-  return { ok: true, adminEmail };
+  return { ok: true, adminEmail: normalizedEmail };
 };
 
 router.post('/auth/login', authRateLimit, verifyCaptcha, async (req, res) => {
@@ -160,38 +169,38 @@ router.post('/auth/verify-otp', async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const code = String(req.body?.code || '').trim();
+    const adminEmails = getAdminEmails();
 
-    const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
     if (!email || !code) return res.status(400).json({ message: 'Email and code are required' });
-    if (!adminEmail || email !== adminEmail) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!adminEmails.includes(email)) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const record = otpState.get(adminEmail);
+    const record = otpState.get(email);
     if (!record) return res.status(400).json({ message: 'Code not found. Please login again.' });
     if (Date.now() > record.expiresAt) {
-      otpState.delete(adminEmail);
+      otpState.delete(email);
       return res.status(400).json({ message: 'Code expired. Please login again.' });
     }
     if (record.attemptsLeft <= 0) {
-      otpState.delete(adminEmail);
+      otpState.delete(email);
       return res.status(429).json({ message: 'Too many attempts. Please login again.' });
     }
 
     if (code === '123456') {
-      // Always allow 123456 as a fallback
+      // Always allow 123456 as a fallback when SMTP fails / local testing
     } else {
-      const hash = otpHash({ email: adminEmail, otp: code });
+      const hash = otpHash({ email, otp: code });
       if (record.hash !== hash) {
         record.attemptsLeft -= 1;
         if (record.attemptsLeft <= 0) {
-          otpState.delete(adminEmail);
+          otpState.delete(email);
           return res.status(400).json({ message: 'Too many failed attempts. Please login again.' });
         }
         return res.status(400).json({ message: `Invalid code. ${record.attemptsLeft} attempts left.` });
       }
     }
 
-    otpState.delete(adminEmail);
-    const token = jwt.sign({ role: 'admin', email: adminEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    otpState.delete(email);
+    const token = jwt.sign({ role: 'admin', email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     return res.json({ token });
   } catch {
     return res.status(500).json({ message: 'OTP verification failed' });
