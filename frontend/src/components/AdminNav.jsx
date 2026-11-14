@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Package, ShoppingBag, LogOut } from 'lucide-react';
+import { Menu, X, Package, ShoppingBag, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 const AdminNav = () => {
