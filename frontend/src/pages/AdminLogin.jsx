@@ -56,7 +56,8 @@ const AdminLogin = () => {
       if (res.data?.step === 'otp') {
         setNeedsOtp(true);
         localStorage.setItem('adminEmail', adminEmailNormalized);
-        if (res.data?.sent) setOtpStatus('Verification code sent to your email');
+        if (res.data?.message) setOtpStatus(res.data.message);
+        else if (res.data?.sent) setOtpStatus('Verification code sent to your email');
         else if (res.data?.previewUrl) {
           setOtpStatus('Secure verification initiated');
           setPreviewUrl(res.data.previewUrl);

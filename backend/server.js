@@ -79,14 +79,12 @@ app.get('/api/test', (req, res) => {
 
 app.get('/api/debug/seed-products', async (req, res) => {
   try {
-    const { seedIfEmpty, mergeSeedProducts, listProducts } = require('./utils/productRepository');
-    const { defaultProducts } = require('./data/defaultProducts');
-    console.log('🔧 Manually seeding products...');
-    await seedIfEmpty(defaultProducts);
-    await mergeSeedProducts(defaultProducts);
+    const { seedIfEmpty, listProducts } = require('./utils/productRepository');
+    console.log('🔧 Restoring products from products.json if DB empty...');
+    await seedIfEmpty([]);
     invalidateProductsCache();
     const products = await listProducts();
-    console.log('✅ Products seeded, total:', products.length);
+    console.log('✅ Products ready, total:', products.length);
     res.json({ success: true, count: products.length, products });
   } catch (err) {
     console.error('❌ Failed to seed products:', err);
@@ -231,14 +229,9 @@ const start = async () => {
   try {
     await initProductsDb();
     console.log('✅ Products database ready');
-    const {
-      listProducts: list,
-      seedIfEmpty,
-      mergeSeedProducts,
-    } = require('./utils/productRepository');
-    const { defaultProducts } = require('./data/defaultProducts');
-    await seedIfEmpty(defaultProducts);
-    await mergeSeedProducts(defaultProducts);
+    const { listProducts: list, seedIfEmpty } = require('./utils/productRepository');
+    // Only restore from products.json if DB is empty — never re-inject demo/default catalog
+    await seedIfEmpty([]);
     invalidateProductsCache();
     const currentProducts = await list();
     console.log('📊 Current products in DB:', currentProducts.length);

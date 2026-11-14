@@ -205,13 +205,23 @@ const loadLegacyJsonProducts = async () => {
   }
 };
 
-const seedIfEmpty = async (defaultProducts) => {
+const seedIfEmpty = async (fallbackProducts = []) => {
   const p = getPool();
   const { rows } = await p.query('SELECT COUNT(*)::int AS c FROM products');
   if (rows[0].c > 0) return;
 
   const fromFile = await loadLegacyJsonProducts();
-  const toInsert = fromFile && fromFile.length ? fromFile : defaultProducts;
+  // Prefer products.json (real catalog). Never invent demo rows unless explicitly passed.
+  const toInsert =
+    fromFile && fromFile.length
+      ? fromFile
+      : Array.isArray(fallbackProducts)
+        ? fallbackProducts
+        : [];
+  if (!toInsert.length) {
+    console.log('[seedIfEmpty] DB empty and no products.json — leaving catalog empty for admin');
+    return;
+  }
 
   const client = await p.connect();
   try {

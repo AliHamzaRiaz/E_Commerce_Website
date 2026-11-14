@@ -11,11 +11,16 @@ const createTransporter = async () => {
   console.log('📧 CREATE & VERIFY GMAIL TRANSPORTER');
   console.log('========================================');
 
+  // Support both EMAIL_FROM and MAIL_FROM (root .env uses MAIL_FROM)
+  if (!process.env.EMAIL_FROM && process.env.MAIL_FROM) {
+    process.env.EMAIL_FROM = process.env.MAIL_FROM;
+  }
+
   const envVars = {
     SMTP_HOST: 'smtp.gmail.com',
     SMTP_PORT: 587,
     SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0,10) + '...' : 'NOT SET',
-    EMAIL_FROM: process.env.EMAIL_FROM
+    EMAIL_FROM: process.env.EMAIL_FROM ? 'SET' : 'NOT SET',
   };
   console.log('\n📋 ENVIRONMENT VARIABLES:');
   console.log(JSON.stringify(envVars, null, 2));
@@ -78,8 +83,9 @@ const sendEmail = async (options) => {
     return { sent: false, reason: 'TRANSPORTER_NOT_INITIALIZED' };
   }
 
+  const fromAddress = process.env.EMAIL_FROM || process.env.MAIL_FROM;
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: fromAddress,
     to: options.to,
     subject: options.subject,
     html: options.html,
