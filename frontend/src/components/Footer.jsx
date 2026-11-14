@@ -44,7 +44,7 @@ const Footer = () => {
             <Link to="/" className="inline-flex flex-col group">
               <div className="bg-black rounded-xl p-3 sm:p-4 w-fit shadow-sm border border-black/10">
                 <img
-                  src="/imags/logo.png"
+                  src="/imags/logo.jpg?v=2"
                   alt="LIBBAAS.com — Rise Above Extraordinary"
                   className="h-20 sm:h-24 lg:h-28 w-auto object-contain transition-transform duration-700 group-hover:scale-[1.03]"
                   onError={(e) => {

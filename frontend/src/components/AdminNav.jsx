@@ -34,7 +34,7 @@ const AdminNav = () => {
               className="flex items-center gap-4 group"
             >
               <img
-                src="/imags/logo.png"
+                src="/imags/logo.jpg?v=2"
                 alt="LIBBAAS Admin"
                 className="h-12 w-auto object-contain rounded-md"
                 onError={(e) => {

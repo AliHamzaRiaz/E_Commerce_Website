@@ -68,7 +68,7 @@ const Navbar = ({ onCartClick }) => {
           <div className="flex items-center justify-between h-16 sm:h-[72px]">
             <Link to="/" className="flex items-center shrink-0 group" aria-label="LIBBAAS Home">
               <img
-                src="/imags/logo.png"
+                src="/imags/logo.jpg?v=2"
                 alt="LIBBAAS.com — Rise Above Extraordinary"
                 className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                 onError={(e) => {
