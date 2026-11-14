@@ -47,7 +47,7 @@ const AdminNav = () => {
                   Admin <span className="text-[#d4af37] font-light">Panel</span>
                 </span>
                 <span className="text-[8px] tracking-[0.35em] uppercase text-[#d4af37]/70 font-bold">
-                  Rise Above Extraordinary
+                  Rise Above Ordinary
                 </span>
               </div>
             </Link>

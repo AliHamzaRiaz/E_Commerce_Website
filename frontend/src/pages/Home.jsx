@@ -12,7 +12,7 @@ const HERO_BANNERS = [
     id: 'fashion',
     image: '/imags/banner-fashion.jpg',
     eyebrow: 'Clothing & Fashion 2026',
-    title: 'Rise Above Extraordinary',
+    title: 'Rise Above Ordinary',
     text: 'Premium-quality fashion, modern styles, and exceptional value — built for your identity.',
     cta: 'Shop Fashion',
     to: '/shop',
@@ -398,9 +398,7 @@ const Home = () => {
                             ))}
                           </div>
                           <p className="text-[#333] mb-6">{currentReview?.comment || 'Great product!'}</p>
-                          <p className="text-sm font-medium text-[#1a1a1a]">
-                            {currentReview?.userName || 'Customer'}
-                          </p>
+                          <p className="text-sm font-medium text-[#1a1a1a]/60">Verified customer</p>
                         </div>
                       );
                     })}

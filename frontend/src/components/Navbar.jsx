@@ -69,7 +69,7 @@ const Navbar = ({ onCartClick }) => {
             <Link to="/" className="flex items-center shrink-0 group" aria-label="LIBBAAS Home">
               <img
                 src="/imags/logo.jpg?v=2"
-                alt="LIBBAAS.com — Rise Above Extraordinary"
+                alt="LIBBAAS.com — Rise Above Ordinary"
                 className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -79,7 +79,7 @@ const Navbar = ({ onCartClick }) => {
               />
               <div className="hidden leading-none pl-1">
                 <div className="text-lg sm:text-xl font-serif tracking-[0.2em] uppercase text-[#d4af37]">LIBBAAS</div>
-                <div className="text-[8px] tracking-[0.28em] uppercase text-[#d4af37]/70 mt-1">Rise Above Extraordinary</div>
+                <div className="text-[8px] tracking-[0.28em] uppercase text-[#d4af37]/70 mt-1">Rise Above Ordinary</div>
               </div>
             </Link>
 

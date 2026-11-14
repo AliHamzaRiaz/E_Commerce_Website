@@ -18,6 +18,7 @@ import { useCart } from '../context/CartContext';
 import apiClient from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { mutate } from 'swr';
 import SaleCountdown from '../components/SaleCountdown';
 import { getDiscountPercent } from '../utils/pricing';
 
@@ -37,7 +38,6 @@ const ProductDetail = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
-  const [reviewerName, setReviewerName] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -61,22 +61,19 @@ const ProductDetail = () => {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!newComment.trim() || isSubmittingReview) return;
-    const name =
-      String(reviewerName || user?.name || '').trim() ||
-      (isLoggedIn ? 'Verified Customer' : 'Guest');
     setIsSubmittingReview(true);
     try {
       const res = await apiClient.post('/api/reviews', {
         productId: String(id),
-        userName: name,
+        userName: 'Verified customer',
         rating: newRating,
         comment: newComment.trim(),
       });
       setReviews([res.data, ...reviews]);
       setNewComment('');
-      setReviewerName('');
       setNewRating(5);
       setShowReviewForm(false);
+      mutate('/api/reviews');
       toast.success('Thank you for your feedback!');
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to submit review');
@@ -452,10 +449,10 @@ const ProductDetail = () => {
                 <div key={review.id} className="border border-neutral-100 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold">{review.userName}</span>
-                      <CheckCircle2 size={12} className="text-emerald-500" />
+                      <span className="text-sm font-bold text-neutral-700">Verified customer</span>
+                      <CheckCircle2 size={12} className="text-emerald-500" aria-hidden="true" />
                     </div>
-                    <div className="flex gap-0.5">
+                    <div className="flex gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star
                           key={i}
@@ -504,13 +501,6 @@ const ProductDetail = () => {
                   </button>
                 ))}
               </div>
-              <input
-                type="text"
-                value={reviewerName}
-                onChange={(e) => setReviewerName(e.target.value)}
-                placeholder="Your name"
-                className="w-full border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black"
-              />
               <textarea
                 required
                 value={newComment}

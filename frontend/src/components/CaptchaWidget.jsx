@@ -1,24 +1,44 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshCcw } from 'lucide-react';
 import apiClient from '../utils/api';
 
 /**
  * Single math captcha.
  * Parent reads value via ref: { captchaId, captchaAnswer, refresh, isReady }
+ * Auto-refreshes before expiry so "Captcha expired" is rarer.
  */
 const CaptchaWidget = React.forwardRef(function CaptchaWidget({ className = '' }, ref) {
   const [challenge, setChallenge] = useState(null);
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const refreshTimerRef = useRef(null);
+
+  const clearRefreshTimer = () => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+  };
 
   const load = useCallback(async () => {
+    clearRefreshTimer();
     setLoading(true);
     setError('');
     setAnswer('');
     try {
       const res = await apiClient.get('/api/captcha', { timeout: 8000 });
-      setChallenge(res.data || null);
+      const data = res.data || null;
+      setChallenge(data);
+
+      const expiresInSec = Number(data?.expiresIn || 0);
+      if (data?.id && expiresInSec > 15) {
+        // Refresh ~20s before server expiry
+        const refreshInMs = Math.max(15_000, (expiresInSec - 20) * 1000);
+        refreshTimerRef.current = setTimeout(() => {
+          load();
+        }, refreshInMs);
+      }
     } catch (err) {
       setChallenge(null);
       setError(err?.response?.data?.message || 'Could not load captcha');
@@ -29,6 +49,7 @@ const CaptchaWidget = React.forwardRef(function CaptchaWidget({ className = '' }
 
   useEffect(() => {
     load();
+    return () => clearRefreshTimer();
   }, [load]);
 
   React.useImperativeHandle(

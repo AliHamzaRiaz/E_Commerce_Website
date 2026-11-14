@@ -45,7 +45,7 @@ const Footer = () => {
               <div className="bg-black rounded-xl p-3 sm:p-4 w-fit shadow-sm border border-black/10">
                 <img
                   src="/imags/logo.jpg?v=2"
-                  alt="LIBBAAS.com — Rise Above Extraordinary"
+                  alt="LIBBAAS.com — Rise Above Ordinary"
                   className="h-20 sm:h-24 lg:h-28 w-auto object-contain transition-transform duration-700 group-hover:scale-[1.03]"
                   onError={(e) => {
                     e.target.style.display = 'none';
@@ -53,7 +53,7 @@ const Footer = () => {
                 />
               </div>
               <span className="mt-3 text-[8px] sm:text-[9px] tracking-[0.35em] uppercase text-[#b38728] font-semibold">
-                Rise Above Extraordinary
+                Rise Above Ordinary
               </span>
             </Link>
             

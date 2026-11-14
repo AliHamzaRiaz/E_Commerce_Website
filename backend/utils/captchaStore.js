@@ -1,7 +1,8 @@
 const crypto = require('crypto');
 
 const challenges = new Map();
-const TTL_MS = Math.max(60_000, Number(process.env.CAPTCHA_TTL_MS || 5 * 60_000));
+// Default 15 minutes — reduces "Captcha expired" during longer checkout/forms
+const TTL_MS = Math.max(60_000, Number(process.env.CAPTCHA_TTL_MS || 15 * 60_000));
 
 const hashAnswer = (answer) =>
   crypto
