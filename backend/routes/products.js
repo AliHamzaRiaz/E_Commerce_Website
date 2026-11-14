@@ -19,12 +19,17 @@ router.get('/', async (req, res) => {
     }
     const started = Date.now();
     const products = await listProducts(false); // lightweight by default
-    productsCache = products;
+    // Prefer available products on the storefront; if all are hidden, still return them
+    // so newly added items are never "invisible" after an accidental hide toggle.
+    const list = Array.isArray(products) ? products : [];
+    const visible = list.filter((p) => p && p.available !== false);
+    const payload = visible.length ? visible : list;
+    productsCache = payload;
     productsCacheTime = now;
     res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
     res.setHeader('X-Products-Cache', 'MISS');
     res.setHeader('X-Products-Ms', String(Date.now() - started));
-    return res.json(products);
+    return res.json(payload);
   } catch (e) {
     console.error('[GET /api/products]', e);
     // Fallback to default products if DB fails
@@ -34,13 +39,15 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const product = await getProductById(req.params.id);
-    if (!product || product.available === false) return res.status(404).json({ message: 'Product not found' });
+    const rawId = decodeURIComponent(String(req.params.id || '').trim());
+    const product = await getProductById(rawId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    // Always return the product page for existing items (out-of-stock still viewable)
     res.json(product);
   } catch (e) {
     console.error(e);
-    // Fallback to default products if DB fails
-    const product = defaultProducts.find(p => String(p.id) === String(req.params.id));
+    const rawId = decodeURIComponent(String(req.params.id || '').trim());
+    const product = defaultProducts.find((p) => String(p.id) === String(rawId));
     if (product) {
       return res.json(product);
     }

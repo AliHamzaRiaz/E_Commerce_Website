@@ -86,7 +86,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const res = await apiClient.get(`/api/products/${id}`);
+        const res = await apiClient.get(`/api/products/${encodeURIComponent(String(id || ''))}`);
         const data = res.data;
         setProduct(data);
         const firstColor =

@@ -368,8 +368,9 @@ const insertProduct = async (body) => {
     colors: Array.isArray(body.colors) ? body.colors : [],
     sizes: Array.isArray(body.sizes) ? body.sizes : [],
     image: body.image || '',
-    available: body.available !== false,
     stock: Number.isFinite(Number(body.stock)) ? Number(body.stock) : 0,
+    // Default visible on store unless admin explicitly unchecks Available
+    available: body.available === false || body.available === 'false' ? false : true,
     colorImages: body.colorImages || {},
     variations: body.variations || {},
     type: body.type || '',

@@ -232,6 +232,19 @@ const start = async () => {
     const { listProducts: list, seedIfEmpty } = require('./utils/productRepository');
     // Only restore from products.json if DB is empty — never re-inject demo/default catalog
     await seedIfEmpty([]);
+    // Un-hide in-stock products that were accidentally marked unavailable
+    // (storefront used to 404 detail pages for available=false items)
+    try {
+      const { getPool } = require('./utils/productRepository');
+      const fixed = await getPool().query(
+        `UPDATE products SET available = true WHERE COALESCE(available, false) = false AND COALESCE(stock, 0) > 0`
+      );
+      if (fixed.rowCount > 0) {
+        console.log(`✅ Re-published ${fixed.rowCount} in-stock product(s) that were hidden`);
+      }
+    } catch (fixErr) {
+      console.warn('[startup] Could not auto-publish hidden in-stock products:', fixErr?.message || fixErr);
+    }
     invalidateProductsCache();
     const currentProducts = await list();
     console.log('📊 Current products in DB:', currentProducts.length);
