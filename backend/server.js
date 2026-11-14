@@ -84,6 +84,7 @@ app.get('/api/debug/seed-products', async (req, res) => {
     console.log('🔧 Manually seeding products...');
     await seedIfEmpty(defaultProducts);
     await mergeSeedProducts(defaultProducts);
+    invalidateProductsCache();
     const products = await listProducts();
     console.log('✅ Products seeded, total:', products.length);
     res.json({ success: true, count: products.length, products });
@@ -230,7 +231,15 @@ const start = async () => {
   try {
     await initProductsDb();
     console.log('✅ Products database ready');
-    const { listProducts: list } = require('./utils/productRepository');
+    const {
+      listProducts: list,
+      seedIfEmpty,
+      mergeSeedProducts,
+    } = require('./utils/productRepository');
+    const { defaultProducts } = require('./data/defaultProducts');
+    await seedIfEmpty(defaultProducts);
+    await mergeSeedProducts(defaultProducts);
+    invalidateProductsCache();
     const currentProducts = await list();
     console.log('📊 Current products in DB:', currentProducts.length);
   } catch (err) {

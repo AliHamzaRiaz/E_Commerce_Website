@@ -5,14 +5,13 @@ const fetcher = (url) =>
   apiClient.get(url, { timeout: 8000 }).then((res) => res.data);
 
 export function useProducts() {
-  const { data: products, error, isLoading } = useSWR(
+  const { data: products, error, isLoading, mutate } = useSWR(
     '/api/products',
     fetcher,
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 120000,
-      keepPreviousData: true,
+      dedupingInterval: 15_000,
       errorRetryCount: 2,
       onError: (fetchError) => {
         console.error('Failed to load products from /api/products:', fetchError);
@@ -24,5 +23,6 @@ export function useProducts() {
     products: Array.isArray(products) ? products : [],
     isLoading,
     error,
+    mutate,
   };
 }
