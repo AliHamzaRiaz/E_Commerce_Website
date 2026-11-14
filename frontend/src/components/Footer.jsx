@@ -1,10 +1,38 @@
 import React from 'react';
-import { Instagram, Facebook, Twitter, Phone, Mail, MapPin, ExternalLink } from 'lucide-react';
+import { Instagram, Facebook, Phone, Mail, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+  BRAND_FACEBOOK_URL,
+  BRAND_INSTAGRAM_URL,
+  BRAND_TIKTOK_URL,
+} from '../constants/brand';
+
+const TikTokIcon = ({ size = 16, strokeWidth = 1.5 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M14.5 3.5c.5 2.4 2.1 4 4.5 4.4v3.1c-1.6.1-3.1-.4-4.4-1.3v5.7c0 3.4-2.7 6.1-6.1 6.1S2.4 18.8 2.4 15.4 5.1 9.3 8.5 9.3c.4 0 .8 0 1.2.1v3.2c-.4-.1-.8-.2-1.2-.2-1.7 0-3 1.4-3 3s1.3 3 3 3 3-1.4 3-3V3.5h3z"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth={strokeWidth * 0.2}
+    />
+  </svg>
+);
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const socialLinks = [
+    { icon: Instagram, label: 'Instagram', href: BRAND_INSTAGRAM_URL },
+    { icon: Facebook, label: 'Facebook', href: BRAND_FACEBOOK_URL },
+    { icon: TikTokIcon, label: 'TikTok', href: BRAND_TIKTOK_URL },
+  ];
 
   return (
     <footer className="bg-white border-t border-neutral-100 pt-12 sm:pt-16 lg:pt-24 pb-8 sm:pb-10 lg:pb-12 overflow-hidden">
@@ -34,19 +62,17 @@ const Footer = () => {
             </p>
 
             <div className="flex items-center gap-4 sm:gap-6">
-              {[
-                { icon: Instagram, label: 'Instagram' },
-                { icon: Facebook, label: 'Facebook' },
-                { icon: Twitter, label: 'Twitter' }
-              ].map((social) => (
+              {socialLinks.map((social) => (
                 <motion.a
                   key={social.label}
-                  href="#"
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   whileHover={{ y: -5, color: '#c5a059' }}
                   className="p-2.5 sm:p-3 bg-neutral-50 rounded-full text-[#0b2a3d]/40 hover:bg-gold/5 transition-colors duration-300"
                   aria-label={social.label}
                 >
-                  <social.icon size={16} sm:size={20} strokeWidth={1.5} />
+                  <social.icon size={16} strokeWidth={1.5} />
                 </motion.a>
               ))}
             </div>

@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Clock, Globe, Instagram, Facebook } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  BRAND_FACEBOOK_URL,
+  BRAND_INSTAGRAM_URL,
+  BRAND_TIKTOK_URL,
+} from '../constants/brand';
+
+const TikTokIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M14.5 3.5c.5 2.4 2.1 4 4.5 4.4v3.1c-1.6.1-3.1-.4-4.4-1.3v5.7c0 3.4-2.7 6.1-6.1 6.1S2.4 18.8 2.4 15.4 5.1 9.3 8.5 9.3c.4 0 .8 0 1.2.1v3.2c-.4-.1-.8-.2-1.2-.2-1.7 0-3 1.4-3 3s1.3 3 3 3 3-1.4 3-3V3.5h3z" />
+  </svg>
+);
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -118,10 +129,17 @@ const Contact = () => {
 
               <div className="pt-8 border-t border-neutral-100">
                 <div className="flex gap-6">
-                  {[Instagram, Facebook, Twitter].map((Icon, i) => (
+                  {[
+                    { Icon: Instagram, href: BRAND_INSTAGRAM_URL, label: 'Instagram' },
+                    { Icon: Facebook, href: BRAND_FACEBOOK_URL, label: 'Facebook' },
+                    { Icon: TikTokIcon, href: BRAND_TIKTOK_URL, label: 'TikTok' },
+                  ].map(({ Icon, href, label }) => (
                     <motion.a
-                      key={i}
-                      href="#"
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
                       whileHover={{ y: -4, color: '#c5a059' }}
                       className="text-[#0b2a3d]/40 transition-colors"
                     >
