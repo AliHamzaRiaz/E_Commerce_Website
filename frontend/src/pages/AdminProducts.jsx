@@ -215,33 +215,42 @@ const AdminProducts = () => {
     });
   };
 
-  const handleColorImageFile = (color, file) => {
-    if (!file) return;
+  const handleColorImageFile = (color, fileOrFiles) => {
+    const files = Array.from(fileOrFiles?.length != null ? fileOrFiles : fileOrFiles ? [fileOrFiles] : []);
+    if (!files.length) return;
     setError('');
-    if (file.size > 2 * 1024 * 1024) {
-      setError(`Image for ${color} is too large. Max 2MB.`);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : '';
-      setForm((p) => {
-        // Use a consistent key by finding existing key case-insensitively or using the new one
-        const existingKey = Object.keys(p.colorImages).find(k => k.trim().toLowerCase() === color.trim().toLowerCase());
-        const keyToUse = existingKey || color;
-        
-        const currentImages = Array.isArray(p.colorImages[keyToUse]) ? p.colorImages[keyToUse] : (p.colorImages[keyToUse] ? [p.colorImages[keyToUse]] : []);
-        return {
-          ...p,
-          colorImages: { 
-            ...p.colorImages, 
-            [keyToUse]: [...currentImages, result] 
-          },
-        };
-      });
-    };
-    reader.onerror = () => setError(`Failed to read image for ${color}`);
-    reader.readAsDataURL(file);
+
+    files.forEach((file) => {
+      if (file.size > 2 * 1024 * 1024) {
+        setError(`Image for ${color} is too large. Max 2MB.`);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : '';
+        if (!result) return;
+        setForm((p) => {
+          const existingKey = Object.keys(p.colorImages).find(
+            (k) => k.trim().toLowerCase() === color.trim().toLowerCase()
+          );
+          const keyToUse = existingKey || color;
+          const currentImages = Array.isArray(p.colorImages[keyToUse])
+            ? p.colorImages[keyToUse]
+            : p.colorImages[keyToUse]
+              ? [p.colorImages[keyToUse]]
+              : [];
+          return {
+            ...p,
+            colorImages: {
+              ...p.colorImages,
+              [keyToUse]: [...currentImages, result],
+            },
+          };
+        });
+      };
+      reader.onerror = () => setError(`Failed to read image for ${color}`);
+      reader.readAsDataURL(file);
+    });
   };
 
   const removeColorImage = (color, index) => {
@@ -780,7 +789,11 @@ const AdminProducts = () => {
                                   <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => handleColorImageFile(color, e.target.files?.[0])}
+                                    multiple
+                                    onChange={(e) => {
+                                      handleColorImageFile(color, e.target.files);
+                                      e.target.value = '';
+                                    }}
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                   />
                                 </div>

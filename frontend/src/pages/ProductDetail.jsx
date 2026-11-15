@@ -119,20 +119,20 @@ const ProductDetail = () => {
   }, [id, fetchReviews]);
 
   useEffect(() => {
-    if (!product || !selectedColor) return;
+    if (!product) return;
     const colorImagesObj = product.colorImages || {};
     const colorKey = Object.keys(colorImagesObj).find(
-      (k) => k.trim().toLowerCase() === String(selectedColor).trim().toLowerCase()
+      (k) => k.trim().toLowerCase() === String(selectedColor || '').trim().toLowerCase()
     );
     if (colorKey && colorImagesObj[colorKey]) {
       const images = colorImagesObj[colorKey];
-      const targetImg = Array.isArray(images) ? images[0] : images;
-      if (targetImg) {
-        setCurrentImage(targetImg);
+      const list = Array.isArray(images) ? images.filter(Boolean) : images ? [images] : [];
+      if (list.length) {
+        setCurrentImage(list[0]);
         return;
       }
     }
-    setCurrentImage(product.image);
+    setCurrentImage(product.image || '');
   }, [selectedColor, product]);
 
   const inCart = useMemo(() => {
@@ -177,18 +177,27 @@ const ProductDetail = () => {
   }
 
   const discountPercent = getDiscountPercent(product);
+
+  const getImagesForColor = (color) => {
+    const colorImagesObj = product?.colorImages || {};
+    const colorKey = Object.keys(colorImagesObj).find(
+      (k) => k.trim().toLowerCase() === String(color || '').trim().toLowerCase()
+    );
+    const raw = colorKey ? colorImagesObj[colorKey] : null;
+    const list = Array.isArray(raw) ? raw.filter(Boolean) : raw ? [raw] : [];
+    if (list.length) return list;
+    return product?.image ? [product.image] : [];
+  };
+
+  const galleryImages = (() => {
+    const fromColor = getImagesForColor(selectedColor);
+    if (fromColor.length) return fromColor;
+    return product.image ? [product.image] : [];
+  })();
+
   const colorThumbs = (product.colors || []).map((color) => {
-    const colorKey = product.colorImages
-      ? Object.keys(product.colorImages).find(
-          (k) => k.trim().toLowerCase() === String(color).trim().toLowerCase()
-        )
-      : null;
-    let img = product.image;
-    if (colorKey && product.colorImages[colorKey]) {
-      const imgs = product.colorImages[colorKey];
-      img = Array.isArray(imgs) ? imgs[0] : imgs;
-    }
-    return { color, img };
+    const imgs = getImagesForColor(color);
+    return { color, img: imgs[0] || product.image };
   });
 
   return (
@@ -202,15 +211,38 @@ const ProductDetail = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
-          {/* Left image */}
+          {/* Left image + gallery of all admin uploads */}
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-neutral-50 border border-neutral-100">
               <img
-                src={currentImage || product.image}
+                src={currentImage || galleryImages[0] || product.image}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
             </div>
+            {galleryImages.length > 1 ? (
+              <div className="flex flex-wrap gap-2" role="list" aria-label="Product images">
+                {galleryImages.map((img, idx) => {
+                  const active =
+                    String(currentImage || galleryImages[0] || '') === String(img);
+                  return (
+                    <button
+                      key={`${img}-${idx}`}
+                      type="button"
+                      role="listitem"
+                      onClick={() => setCurrentImage(img)}
+                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border-2 transition-colors ${
+                        active ? 'border-black' : 'border-neutral-200 hover:border-neutral-400'
+                      }`}
+                      aria-label={`View image ${idx + 1}`}
+                      aria-pressed={active}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
 
           {/* Right details */}
