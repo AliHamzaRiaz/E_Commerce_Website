@@ -4,6 +4,7 @@ import {
   Heart,
   Share2,
   ChevronLeft,
+  ChevronRight,
   Star,
   X,
   CheckCircle2,
@@ -13,6 +14,7 @@ import {
   Factory,
   Droplets,
   Gem,
+  Maximize2,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import apiClient from '../utils/api';
@@ -32,6 +34,7 @@ const ProductDetail = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [currentImage, setCurrentImage] = useState('');
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [giftWrap, setGiftWrap] = useState(false);
 
@@ -195,6 +198,17 @@ const ProductDetail = () => {
     return product.image ? [product.image] : [];
   })();
 
+  const activeImage = currentImage || galleryImages[0] || product.image || '';
+  const activeIndex = Math.max(
+    0,
+    galleryImages.findIndex((img) => String(img) === String(activeImage))
+  );
+  const goToImage = (index) => {
+    if (!galleryImages.length) return;
+    const next = (index + galleryImages.length) % galleryImages.length;
+    setCurrentImage(galleryImages[next]);
+  };
+
   const colorThumbs = (product.colors || []).map((color) => {
     const imgs = getImagesForColor(color);
     return { color, img: imgs[0] || product.image };
@@ -211,27 +225,23 @@ const ProductDetail = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
-          {/* Left image + gallery of all admin uploads */}
-          <div className="space-y-4">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-neutral-50 border border-neutral-100">
-              <img
-                src={currentImage || galleryImages[0] || product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
+          {/* Vertical thumbs + main image carousel (reference layout) */}
+          <div className="flex gap-3 sm:gap-4">
             {galleryImages.length > 1 ? (
-              <div className="flex flex-wrap gap-2" role="list" aria-label="Product images">
+              <div
+                className="hidden sm:flex flex-col gap-2 w-16 shrink-0 max-h-[520px] overflow-y-auto"
+                role="list"
+                aria-label="Product images"
+              >
                 {galleryImages.map((img, idx) => {
-                  const active =
-                    String(currentImage || galleryImages[0] || '') === String(img);
+                  const active = String(activeImage) === String(img);
                   return (
                     <button
                       key={`${img}-${idx}`}
                       type="button"
                       role="listitem"
                       onClick={() => setCurrentImage(img)}
-                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border-2 transition-colors ${
+                      className={`aspect-square w-full rounded-md overflow-hidden border transition-colors ${
                         active ? 'border-black' : 'border-neutral-200 hover:border-neutral-400'
                       }`}
                       aria-label={`View image ${idx + 1}`}
@@ -243,6 +253,65 @@ const ProductDetail = () => {
                 })}
               </div>
             ) : null}
+
+            <div className="relative flex-1 aspect-square rounded-xl overflow-hidden bg-neutral-50 border border-neutral-100 group">
+              <img
+                src={activeImage}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+
+              {galleryImages.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => goToImage(activeIndex - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 border border-neutral-200 shadow-sm flex items-center justify-center text-neutral-700 hover:bg-white"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goToImage(activeIndex + 1)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 border border-neutral-200 shadow-sm flex items-center justify-center text-neutral-700 hover:bg-white"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="absolute bottom-3 right-3 w-9 h-9 rounded-md bg-white/90 border border-neutral-200 shadow-sm flex items-center justify-center text-neutral-700 hover:bg-white"
+                aria-label="Expand image"
+              >
+                <Maximize2 size={16} />
+              </button>
+
+              {galleryImages.length > 1 ? (
+                <div className="sm:hidden absolute bottom-3 left-3 right-14 flex gap-1.5 overflow-x-auto">
+                  {galleryImages.map((img, idx) => {
+                    const active = String(activeImage) === String(img);
+                    return (
+                      <button
+                        key={`m-${img}-${idx}`}
+                        type="button"
+                        onClick={() => setCurrentImage(img)}
+                        className={`h-12 w-12 shrink-0 rounded overflow-hidden border ${
+                          active ? 'border-black' : 'border-white/80'
+                        }`}
+                        aria-label={`View image ${idx + 1}`}
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* Right details */}
@@ -549,6 +618,44 @@ const ProductDetail = () => {
               </button>
             </form>
           </div>
+        </div>
+      ) : null}
+
+      {lightboxOpen ? (
+        <div className="fixed inset-0 z-[110] bg-black/90 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute top-4 right-4 text-white/80 hover:text-white"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close"
+          >
+            <X size={28} />
+          </button>
+          {galleryImages.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => goToImage(activeIndex - 1)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+                aria-label="Previous image"
+              >
+                <ChevronLeft size={22} />
+              </button>
+              <button
+                type="button"
+                onClick={() => goToImage(activeIndex + 1)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+                aria-label="Next image"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </>
+          ) : null}
+          <img
+            src={activeImage}
+            alt={product.name}
+            className="max-h-[90vh] max-w-[90vw] object-contain"
+          />
         </div>
       ) : null}
     </div>
