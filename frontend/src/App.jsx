@@ -17,7 +17,6 @@ import ResetPassword from './pages/ResetPassword';
 import Contact from './pages/Contact';
 import Shipping from './pages/Shipping';
 import Returns from './pages/Returns';
-import SizeGuide from './pages/SizeGuide';
 import FAQ from './pages/FAQ';
 import AdminOrders from './pages/AdminOrders';
 import AdminProducts from './pages/AdminProducts';
@@ -82,7 +81,6 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/shipping" element={<Shipping />} />
                     <Route path="/returns" element={<Returns />} />
-                    <Route path="/size-guide" element={<SizeGuide />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/admin/login" element={<AdminLogin />} />
                     <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />

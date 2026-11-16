@@ -418,12 +418,7 @@ const ProductDetail = () => {
 
             {(product.sizes || []).length > 0 ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-700">Size</p>
-                  <Link to="/size-guide" className="text-xs underline underline-offset-2 text-neutral-500">
-                    Size Chart
-                  </Link>
-                </div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-700">Size</p>
                 <div className="flex flex-wrap gap-2">
                   {(product.sizes || []).map((size) => (
                     <button
